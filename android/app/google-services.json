@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "116648559321",
+    "firebase_url": "https://the-spot-255718.firebaseio.com",
+    "project_id": "the-spot-255718",
+    "storage_bucket": "the-spot-255718.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:116648559321:android:ed9d0414ee04ec0ab874c8",
+        "android_client_info": {
+          "package_name": "com.x1026.the_spot"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "116648559321-l0e65khes2tglujk99m0jugmfpt77sj6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-tZB9iGY6HKdI9nsbEjrKIljpnggzcVQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "116648559321-l0e65khes2tglujk99m0jugmfpt77sj6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
