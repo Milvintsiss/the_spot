@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>116648559321-pi8nskcd5v0mgpupb78839opl5soknfb.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.116648559321-pi8nskcd5v0mgpupb78839opl5soknfb</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBQ1B8aiBuNWfwUN7DxBDApyc5s6kmRhAg</string>
+	<key>GCM_SENDER_ID</key>
+	<string>116648559321</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.x1026.the-spot</string>
+	<key>PROJECT_ID</key>
+	<string>the-spot-255718</string>
+	<key>STORAGE_BUCKET</key>
+	<string>the-spot-255718.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:116648559321:ios:71a807060e317c7ab874c8</string>
+	<key>DATABASE_URL</key>
+	<string>https://the-spot-255718.firebaseio.com</string>
+</dict>
+</plist>
