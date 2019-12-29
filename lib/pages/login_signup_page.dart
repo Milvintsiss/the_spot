@@ -89,14 +89,15 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
+    return SafeArea(
+      child: Scaffold(
         backgroundColor: Colors.blueGrey[700],
         body: Stack(
           children: <Widget>[
             showForm(),
             showCircularProgress(),
           ],
-        ));
+        )));
   }
 
   Widget showCircularProgress() {
@@ -111,11 +112,10 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
 
   Widget showForm() {
     return new Container(
-      padding: EdgeInsets.all(16.0),
       child: new Form(
         key: _formKey,
         child: new ListView(
-          shrinkWrap: true,
+          shrinkWrap: false,
           children: <Widget>[
             showLogo(),
             showEmailInput(),
@@ -133,7 +133,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
     return new Hero(
         tag: 'hero',
         child: Padding(
-          padding: EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 20.0),
+          padding: EdgeInsets.fromLTRB(16.0, 36.0, 16.0, 20.0),
           child: CircleAvatar(
               backgroundColor: Colors.transparent,
               radius: 100.0,
@@ -144,7 +144,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
 
   Widget showEmailInput() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),
+      padding: EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 0.0),
       child: new TextFormField(
         style: TextStyle(color: Colors.white),
         maxLines: 1,
@@ -171,7 +171,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
 
   Widget showPasswordInput() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(0.0, 15.0, 0.0, 0.0),
+      padding: const EdgeInsets.fromLTRB(16.0, 15.0, 16.0, 0.0),
       child: new TextFormField(
         style: TextStyle(color: Colors.white),
         maxLines: 1,
@@ -198,7 +198,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
 
   Widget showPrimaryButton() {
     return new Padding(
-      padding: EdgeInsets.fromLTRB(0.0, 45.0, 0.0, 0.0),
+      padding: EdgeInsets.fromLTRB(16.0, 45.0, 16.0, 0.0),
       child: SizedBox(
         height: 40.0,
         child: new RaisedButton(

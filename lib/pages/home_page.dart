@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:the_spot/services/authentication.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:the_spot/models/todo.dart';
 import 'dart:async';
 
@@ -19,14 +18,10 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<Todo> _todoList;
 
-  final FirebaseDatabase _database = FirebaseDatabase.instance;
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   final _textEditingController = TextEditingController();
-  StreamSubscription<Event> _onTodoAddedSubscription;
-  StreamSubscription<Event> _onTodoChangedSubscription;
 
-  Query _todoQuery;
 
   //bool _isEmailVerified = false;
 
@@ -37,15 +32,6 @@ class _HomePageState extends State<HomePage> {
     //_checkEmailVerification();
 
     _todoList = new List();
-    _todoQuery = _database
-        .reference()
-        .child("todo")
-        .orderByChild("userId")
-        .equalTo(widget.userId);
-    _onTodoAddedSubscription = _todoQuery.onChildAdded.listen(onEntryAdded);
-    _onTodoChangedSubscription =
-        _todoQuery.onChildChanged.listen(onEntryChanged);
-  }
 
 //  void _checkEmailVerification() async {
 //    _isEmailVerified = await widget.auth.isEmailVerified();
@@ -108,29 +94,10 @@ class _HomePageState extends State<HomePage> {
 //    );
 //  }
 
-  @override
-  void dispose() {
-    _onTodoAddedSubscription.cancel();
-    _onTodoChangedSubscription.cancel();
-    super.dispose();
+
+
   }
 
-  onEntryChanged(Event event) {
-    var oldEntry = _todoList.singleWhere((entry) {
-      return entry.key == event.snapshot.key;
-    });
-
-    setState(() {
-      _todoList[_todoList.indexOf(oldEntry)] =
-          Todo.fromSnapshot(event.snapshot);
-    });
-  }
-
-  onEntryAdded(Event event) {
-    setState(() {
-      _todoList.add(Todo.fromSnapshot(event.snapshot));
-    });
-  }
 
   signOut() async {
     try {
@@ -141,29 +108,9 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  addNewTodo(String todoItem) {
-    if (todoItem.length > 0) {
-      Todo todo = new Todo(todoItem.toString(), widget.userId, false);
-      _database.reference().child("todo").push().set(todo.toJson());
-    }
-  }
 
-  updateTodo(Todo todo) {
-    //Toggle completed
-    todo.completed = !todo.completed;
-    if (todo != null) {
-      _database.reference().child("todo").child(todo.key).set(todo.toJson());
-    }
-  }
 
-  deleteTodo(String todoId, int index) {
-    _database.reference().child("todo").child(todoId).remove().then((_) {
-      print("Delete $todoId successful");
-      setState(() {
-        _todoList.removeAt(index);
-      });
-    });
-  }
+
 
   showAddTodoDialog(BuildContext context) async {
     _textEditingController.clear();
@@ -190,11 +137,7 @@ class _HomePageState extends State<HomePage> {
                     Navigator.pop(context);
                   }),
               new FlatButton(
-                  child: const Text('Save'),
-                  onPressed: () {
-                    addNewTodo(_textEditingController.text.toString());
-                    Navigator.pop(context);
-                  })
+                  child: const Text('Save'))
             ],
           );
         });
@@ -213,9 +156,6 @@ class _HomePageState extends State<HomePage> {
             return Dismissible(
               key: Key(todoId),
               background: Container(color: Colors.red),
-              onDismissed: (direction) async {
-                deleteTodo(todoId, index);
-              },
               child: ListTile(
                 title: Text(
                   subject,
@@ -229,11 +169,8 @@ class _HomePageState extends State<HomePage> {
                       size: 20.0,
                     )
                         : Icon(Icons.done, color: Colors.grey, size: 20.0),
-                    onPressed: () {
-                      updateTodo(_todoList[index]);
-                    }),
               ),
-            );
+            ));
           });
     } else {
       return Center(
@@ -247,23 +184,25 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-        appBar: new AppBar(
-          title: new Text('Flutter login demo'),
-          actions: <Widget>[
-            new FlatButton(
-                child: new Text('Logout',
-                    style: new TextStyle(fontSize: 17.0, color: Colors.white)),
-                onPressed: signOut)
-          ],
-        ),
-        body: showTodoList(),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            showAddTodoDialog(context);
-          },
-          tooltip: 'Increment',
-          child: Icon(Icons.add),
-        ));
+    return SafeArea(
+      child: new Scaffold(
+          appBar: new AppBar(
+            title: new Text('Flutter login demo'),
+            actions: <Widget>[
+              new FlatButton(
+                  child: new Text('Logout',
+                      style: new TextStyle(fontSize: 17.0, color: Colors.white)),
+                  onPressed: signOut)
+            ],
+          ),
+          body: showTodoList(),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              showAddTodoDialog(context);
+            },
+            tooltip: 'Increment',
+            child: Icon(Icons.add),
+          )),
+    );
   }
 }
