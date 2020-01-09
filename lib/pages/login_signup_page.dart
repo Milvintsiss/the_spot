@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:the_spot/services/authentication.dart';
 
+import 'package:the_spot/app_localizations.dart';
+import 'package:the_spot/theme.dart';
+
+
 class LoginSignupPage extends StatefulWidget {
   LoginSignupPage({this.auth, this.loginCallBack});
 
@@ -91,7 +95,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Colors.blueGrey[700],
+        backgroundColor: PrimaryColorDark,
         body: Stack(
           children: <Widget>[
             showForm(),
@@ -153,7 +157,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
         decoration: new InputDecoration(
             hintText: 'Email',
             hintStyle: TextStyle(color: Colors.blueGrey[100]),
-            fillColor: Colors.blueGrey[500],
+            fillColor: SecondaryColorDark,
             filled: true,
             contentPadding: new EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
             border: new OutlineInputBorder(
@@ -163,7 +167,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
               Icons.mail,
               color: Colors.blueGrey[100],
             )),
-        validator: (value) => value.isEmpty ? 'Email can\'t be empty' : null,
+        validator: (value) => value.isEmpty ? AppLocalizations.of(context).translate('Email can\'t be empty') : null,
         onSaved: (value) => _email = value.trim(),
       ),
     );
@@ -178,9 +182,9 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
         obscureText: true,
         autofocus: false,
         decoration: new InputDecoration(
-            hintText: 'Password',
+            hintText: AppLocalizations.of(context).translate('Password'),
             hintStyle: TextStyle(color: Colors.blueGrey[100]),
-            fillColor: Colors.blueGrey[500],
+            fillColor: SecondaryColorDark,
             filled: true,
             contentPadding: new EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
             border: new OutlineInputBorder(
@@ -190,7 +194,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
               Icons.lock,
               color: Colors.blueGrey[100],
             )),
-        validator: (value) => value.isEmpty ? 'Password can\'t be empty' : null,
+        validator: (value) => value.isEmpty ? AppLocalizations.of(context).translate('Password can\'t be empty') : null,
         onSaved: (value) => _password = value.trim(),
       ),
     );
@@ -205,9 +209,9 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
           elevation: 5.0,
           shape: new RoundedRectangleBorder(
               borderRadius: new BorderRadius.circular(30.0)),
-          color: Colors.blueGrey[500],
+          color: SecondaryColorDark,
           child: new Text(
-            _isLoginForm ? 'Login' : 'Create account',
+            _isLoginForm ? AppLocalizations.of(context).translate('Login') : AppLocalizations.of(context).translate('Create account'),
             style: new TextStyle(fontSize: 20.0, color: Colors.white),
           ),
           onPressed: () => validateAndSubmit(),
@@ -219,7 +223,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   Widget showSecondaryButton() {
     return new FlatButton(
       child: new Text(
-        _isLoginForm ? 'Create an account' : 'Have an account? Sign in',
+        _isLoginForm ? AppLocalizations.of(context).translate('Create an account') : AppLocalizations.of(context).translate('Have an account? Sign in'),
         style: new TextStyle(
             fontSize: 16.0, fontWeight: FontWeight.w500, color: Colors.white),
       ),

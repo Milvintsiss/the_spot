@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/pages/root_page.dart';
 
+import 'package:the_spot/theme.dart';
+
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:the_spot/app_localizations.dart';
 
@@ -13,15 +15,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(
+    return MaterialApp(
         title: 'The Spot',
-        theme: new ThemeData(
-          primarySwatch: Colors.blue,
-        ),
+        theme: MyTheme.defaultTheme,
       // List all of the app's supported locales here
       supportedLocales: [
-        Locale('en'),
-        Locale('fr'),
+        Locale('en', 'US'),
+        Locale('fr', 'FR'),
       ],
       // These delegates make sure that the localization data for the proper language is loaded
       localizationsDelegates: [

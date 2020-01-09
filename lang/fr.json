@@ -1,4 +1,12 @@
 {
   "Username": "Pseudo",
-  "second_string": "Super tutoriel 😉"
+  "Next": "Suivant",
+  "Pseudo can\\'t be empty": "Avec  un Pseudo c'est mieux!",
+  "Email can\\'t be empty": "Avec un email c'est mieux!",
+  "Password can\\'t be empty": "Avec un Mot de Passe c'est mieux!",
+  "Password": "Mot de Passe",
+  "Login": "Se connecter",
+  "Create account": "Créer un compte",
+  "Create an account": "Créer un compte",
+  "Have an account? Sign in": "J'ai déjà un compte"
 }

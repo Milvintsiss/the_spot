@@ -1,4 +1,12 @@
 {
   "Username": "Username",
-  "second_string": "If this tutorial helps you, give it a like and subscribe to Reso Coder 😉"
+  "Next": "Next",
+  "Pseudo can\\'t be empty": "With username it's better!",
+  "Email can\\'t be empty": "With email it's better!",
+  "Password can\\'t be empty": "With password it's better!",
+  "Password": "Password",
+  "Login": "Login",
+  "Create account": "Create account",
+  "Create an account": "Create an account",
+  "Have an account? Sign in": "Have an account? Sign in"
 }
