@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:the_spot/app_localizations.dart';
+import 'package:the_spot/theme.dart';
 
 class InscriptionPage extends StatefulWidget {
   const InscriptionPage({Key key}) : super(key: key);
@@ -16,7 +17,7 @@ class _InscriptionPage extends State<InscriptionPage> {
   Widget build(BuildContext context) {
     return SafeArea(
         child: Scaffold(
-            backgroundColor: Colors.blueGrey[700],
+            backgroundColor: PrimaryColorDark,
             body:
 
 
@@ -43,14 +44,14 @@ class _InscriptionPage extends State<InscriptionPage> {
         decoration: new InputDecoration(
             hintText: AppLocalizations.of(context).translate('Username'),
             hintStyle: TextStyle(color: Colors.blueGrey[100]),
-            fillColor: Colors.blueGrey[500],
+            fillColor: SecondaryColorDark,
             filled: true,
             contentPadding: new EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
             border: new OutlineInputBorder(
               borderRadius: new BorderRadius.circular(12.0),
             ),
             ),
-        validator: (value) => value.isEmpty ? 'Pseudo can\'t be empty' : null,
+        validator: (value) => value.isEmpty ? AppLocalizations.of(context).translate('Pseudo can\'t be empty') : null,
         onSaved: (value) => _pseudo = value.trim(),
       ),
     );
@@ -65,11 +66,11 @@ class _InscriptionPage extends State<InscriptionPage> {
           elevation: 5.0,
           shape: new RoundedRectangleBorder(
               borderRadius: new BorderRadius.circular(30.0)),
-          color: Colors.blueGrey[500],
+          color: SecondaryColorDark,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              new Text('Next',
+              new Text(AppLocalizations.of(context).translate('Next'),
                 style: new TextStyle(fontSize: 15.0, color: Colors.white),
               ),
               Padding(

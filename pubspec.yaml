@@ -33,7 +33,17 @@ dependencies:
   #for languages
   flutter_localizations:
     sdk: flutter
+
+  #theme, darkmode
+  dynamic_theme: ^1.0.1
+
+
   shared_preferences: ^0.5.6
+
+
+  dependencies:
+
+
 
 
 
