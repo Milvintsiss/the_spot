@@ -73,6 +73,11 @@ flutter:
     - assets/logos/Logo_TheSpot_blackWhite_whitoutText.svg
     - assets/logos/Logo_TheSpot_blackWhite_whitoutText.png
     - assets/logos/google.jpg
+
+    - assets/images/BMX.png
+    - assets/images/Skateboard.png
+    - assets/images/Scooter.png
+    - assets/images/Roller.png
     #languages
     - lang/en.json
     - lang/fr.json

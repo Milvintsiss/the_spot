@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:the_spot/app_localizations.dart';
+import 'package:the_spot/pages/main.dart';
 import 'package:the_spot/theme.dart';
 
 class InscriptionPage extends StatefulWidget {
@@ -12,6 +13,10 @@ class InscriptionPage extends StatefulWidget {
 
 class _InscriptionPage extends State<InscriptionPage> {
   String _pseudo;
+  bool _BMX = false;
+  bool _Skateboard = false;
+  bool _Scooter = false;
+  bool _Roller = false;
 
   @override
   Widget build(BuildContext context) {
@@ -22,13 +27,14 @@ class _InscriptionPage extends State<InscriptionPage> {
 
 
           Padding(
-              padding: EdgeInsets.fromLTRB(40.0, 0.0, 40.0, 0.0),
+              padding: EdgeInsets.fromLTRB(30.0, 0.0, 30.0, 0.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   showPseudoInput(),
-                  showPrimaryButton(),
+                  showPracticesButtons(),
+                  showNextButton(),
                 ],
               ),
             )));
@@ -44,7 +50,7 @@ class _InscriptionPage extends State<InscriptionPage> {
         decoration: new InputDecoration(
             hintText: AppLocalizations.of(context).translate('Username'),
             hintStyle: TextStyle(color: Colors.blueGrey[100]),
-            fillColor: SecondaryColorDark,
+            fillColor: PrimaryColorLight,
             filled: true,
             contentPadding: new EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
             border: new OutlineInputBorder(
@@ -57,7 +63,95 @@ class _InscriptionPage extends State<InscriptionPage> {
     );
   }
 
-  Widget showPrimaryButton() {
+  Widget showPracticesButtons() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
+      child: Material(
+        shape: RoundedRectangleBorder(
+          borderRadius: new BorderRadius.circular(20.0),
+        ),
+        color: PrimaryColorLight,
+        child: Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Material(
+                color: PrimaryColorDark,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text("Select your hobby(ies)", style: TextStyle(color: PrimaryColorLight, fontSize: 20)),
+                  )),
+            ),
+            Container(
+              height: 90,
+              child: new ListView(
+                shrinkWrap: false,
+                scrollDirection: Axis.horizontal,
+                children: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      practiceButton("assets/images/BMX.png"),
+                      practiceButton("assets/images/Skateboard.png"),
+                      practiceButton("assets/images/Scooter.png"),
+                      practiceButton("assets/images/Roller.png")
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  Widget practiceButton (String practice){
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: Material(
+        // needed
+        shape: RoundedRectangleBorder(
+          borderRadius: new BorderRadius.circular(14.0),
+          side: BorderSide(width: 3, color: practice == "assets/images/Roller.png" && _Roller
+              || practice == "assets/images/BMX.png" && _BMX
+              || practice == "assets/images/Skateboard.png" && _Skateboard
+              || practice == "assets/images/Scooter.png" && _Scooter
+              ? Colors.white : PrimaryColorDark)
+        ),
+        color: PrimaryColor,
+
+        child: GestureDetector(
+          onTap: () => onTapPractices(practice),
+          child: Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Image.asset(practice,
+              width: 45,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  void onTapPractices(String practice){
+    switch (practice) {
+      case "assets/images/Roller.png" : _Roller = !_Roller;
+      break;
+      case "assets/images/BMX.png" : _BMX = !_BMX;
+      break;
+      case "assets/images/Skateboard.png" : _Skateboard = !_Skateboard;
+      break;
+      case "assets/images/Scooter.png" : _Scooter = !_Scooter;
+      break;
+    }
+    setState(() {
+      practiceButton(practice);
+    });
+
+  }
+
+  Widget showNextButton() {
     return new Padding(
       padding: EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 0.0),
       child: SizedBox(
@@ -79,7 +173,7 @@ class _InscriptionPage extends State<InscriptionPage> {
               )
             ],
           ),
-          onPressed: () => 'next',
+          onPressed: () => print("next"),
         ),
       ),
     );
