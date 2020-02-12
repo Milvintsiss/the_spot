@@ -3,6 +3,7 @@ import 'package:the_spot/pages/inscription_page.dart';
 import 'package:the_spot/pages/login_signup_page.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/pages/home_page.dart';
+import 'package:the_spot/services/database.dart';
 
 enum AuthStatus {
   NOT_DETERMINED,

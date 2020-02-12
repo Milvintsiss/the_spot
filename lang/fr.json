@@ -1,13 +1,15 @@
 {
   "Username": "Pseudo",
   "Next": "Suivant",
-  "Pseudo can\\'t be empty": "Avec  un Pseudo c'est mieux!",
-  "Email can\\'t be empty": "Avec un email c'est mieux!",
-  "Password can\\'t be empty": "Avec un Mot de Passe c'est mieux!",
+  "Pseudo can t be empty": "Avec  un Pseudo c'est mieux!",
+  "Email can t be empty": "Avec un email c'est mieux!",
+  "Password can t be empty": "Avec un Mot de Passe c'est mieux!",
   "Password": "Mot de Passe",
   "Login": "Se connecter",
   "Create account": "Créer un compte",
   "Create an account": "Créer un compte",
   "Have an account? Sign in": "J'ai déjà un compte",
-  "Select your hobby(ies)": "Sélectionnez vos disciplines"
+  "Select your hobby(ies)": "Sélectionnez vos disciplines",
+  "Your Pseudo is too long!": "Tu as vraiment besoin d'un Pseudo aussi long?!",
+  "Please connect to internet!": "Connectez-vous à internet pour continuer!"
 }

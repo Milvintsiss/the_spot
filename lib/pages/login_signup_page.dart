@@ -119,7 +119,6 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
       child: new Form(
         key: _formKey,
         child: new ListView(
-          shrinkWrap: false,
           children: <Widget>[
             showLogo(),
             showEmailInput(),
@@ -167,7 +166,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
               Icons.mail,
               color: Colors.blueGrey[100],
             )),
-        validator: (value) => value.isEmpty ? AppLocalizations.of(context).translate('Email can\'t be empty') : null,
+        validator: (value) => value.isEmpty ? AppLocalizations.of(context).translate('Email can t be empty') : null,
         onSaved: (value) => _email = value.trim(),
       ),
     );
@@ -194,7 +193,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
               Icons.lock,
               color: Colors.blueGrey[100],
             )),
-        validator: (value) => value.isEmpty ? AppLocalizations.of(context).translate('Password can\'t be empty') : null,
+        validator: (value) => value.isEmpty ? AppLocalizations.of(context).translate('Password can t be empty') : null,
         onSaved: (value) => _password = value.trim(),
       ),
     );

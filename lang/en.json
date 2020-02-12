@@ -1,13 +1,15 @@
 {
   "Username": "Username",
   "Next": "Next",
-  "Pseudo can\\'t be empty": "With username it's better!",
-  "Email can\\'t be empty": "With email it's better!",
-  "Password can\\'t be empty": "With password it's better!",
+  "Pseudo can t be empty": "With username it's better!",
+  "Email can t be empty": "With email it's better!",
+  "Password can t be empty": "With password it's better!",
   "Password": "Password",
   "Login": "Login",
   "Create account": "Create account",
   "Create an account": "Create an account",
   "Have an account? Sign in": "Have an account? Sign in",
-  "Select your hobby(ies)": "Select your hobby(ies)"
+  "Select your hobby(ies)": "Select your hobby(ies)",
+  "Your Pseudo is too long!": "Do you really need an username that long?!",
+  "Please connect to internet!": "Please connect to internet!"
 }
