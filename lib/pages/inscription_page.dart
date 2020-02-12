@@ -1,9 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/main.dart';
 import 'package:the_spot/theme.dart';
+import 'package:the_spot/services/authentication.dart';
+import 'package:the_spot/services/database.dart';
 
 class InscriptionPage extends StatefulWidget {
   const InscriptionPage({Key key}) : super(key: key);
@@ -13,11 +16,26 @@ class InscriptionPage extends StatefulWidget {
 }
 
 class _InscriptionPage extends State<InscriptionPage> {
+
+  final _formKey = new GlobalKey<FormState>();
+
+  String _userID;
   String _pseudo;
   bool _BMX = false;
   bool _Skateboard = false;
   bool _Scooter = false;
   bool _Roller = false;
+
+  bool validateAndSave() {
+    final form = _formKey.currentState;
+    if (form.validate()) {
+      form.save();
+      return true;
+    }
+    return false;
+  }
+
+  FirebaseAuth auth = FirebaseAuth.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -44,22 +62,19 @@ class _InscriptionPage extends State<InscriptionPage> {
             backgroundColor: PrimaryColorLight,
             radius: 80,
             foregroundColor: PrimaryColorDark,
-            child: Stack(
-              overflow: Overflow.visible,
-                children: <Widget>[
+            child: Stack(overflow: Overflow.visible, children: <Widget>[
               Icon(
                 Icons.person,
                 size: 100,
               ),
               Positioned(
-                bottom: -40,
+                  bottom: -40,
                   right: -40,
                   child: Icon(
                     Icons.add_circle,
                     size: 60,
                     color: SecondaryColor,
-                  )
-              ),
+                  )),
             ]),
           ),
         ));
@@ -68,24 +83,38 @@ class _InscriptionPage extends State<InscriptionPage> {
   Widget showPseudoInput() {
     return Padding(
       padding: EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),
-      child: new TextFormField(
-        style: TextStyle(color: Colors.white),
-        maxLines: 1,
-        autofocus: false,
-        decoration: new InputDecoration(
-          hintText: AppLocalizations.of(context).translate('Username'),
-          hintStyle: TextStyle(color: Colors.blueGrey[100]),
-          fillColor: PrimaryColorLight,
-          filled: true,
-          contentPadding: new EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
-          border: new OutlineInputBorder(
-            borderRadius: new BorderRadius.circular(12.0),
+      child: new Form(
+        key: _formKey,
+        child: new TextFormField(
+          style: TextStyle(color: Colors.white),
+          maxLines: 1,
+          autofocus: false,
+          decoration: new InputDecoration(
+            hintText: AppLocalizations.of(context).translate('Username'),
+            hintStyle: TextStyle(color: Colors.blueGrey[100]),
+            fillColor: PrimaryColorLight,
+            filled: true,
+            contentPadding: new EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
+            border: new OutlineInputBorder(
+              borderRadius: new BorderRadius.circular(12.0),
+            ),
           ),
+          validator: (String str) {
+            if (str.isEmpty) {
+              return AppLocalizations.of(context)
+                  .translate('Pseudo can t be empty');
+            } else if (str.length > 20){
+              print('Pseudo is too long');
+              return AppLocalizations.of(context).translate('Your Pseudo is too long!');
+            }else{
+              return null;
+            }
+          },
+          onChanged: (str) {validateAndSave();},
+          onSaved: (String str) {
+            _pseudo = str.trim();
+          },
         ),
-        validator: (value) => value.isEmpty
-            ? AppLocalizations.of(context).translate('Pseudo can\'t be empty')
-            : null,
-        onSaved: (value) => _pseudo = value.trim(),
       ),
     );
   }
@@ -219,7 +248,16 @@ class _InscriptionPage extends State<InscriptionPage> {
               )
             ],
           ),
-          onPressed: () => print("next"),
+          onPressed: () {
+            if (validateAndSave()) {
+              final myFuture = auth.currentUser();
+              myFuture.then((response) {
+                Database().updateProfile(
+                    response.uid, _pseudo, _BMX, _Roller, _Scooter,
+                    _Skateboard, context);
+              });
+            }
+          },
         ),
       ),
     );
