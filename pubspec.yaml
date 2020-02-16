@@ -20,6 +20,8 @@ dependencies:
   flutter:
     sdk: flutter
 
+  flutter_plugin_android_lifecycle: ^1.0.5
+
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -28,6 +30,13 @@ dependencies:
 
   firebase_auth: ^0.15.3
   cloud_firestore: ^0.13.0+1
+  firebase_storage: ^3.1.1
+
+  #load images from gallery
+  image_picker: ^0.6.3+1
+
+  image: ^2.1.12
+  image_cropper: ^1.2.1
 
 
   #for languages
@@ -48,8 +57,8 @@ dependencies:
 
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
+  #flutter_test:
+   # sdk: flutter
 
 
 # For information on the generic Dart part of this file, see the
@@ -78,6 +87,7 @@ flutter:
     - assets/images/Skateboard.png
     - assets/images/Scooter.png
     - assets/images/Roller.png
+    - assets/images/Avatar.png
     #languages
     - lang/en.json
     - lang/fr.json
