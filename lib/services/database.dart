@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:the_spot/app_localizations.dart';
-import 'package:the_spot/pages/inscription_page.dart';
 
  class Database {
 
@@ -56,31 +55,42 @@ import 'package:the_spot/pages/inscription_page.dart';
     }
   }
 
+  Future <bool> updateProfile(String ID, String Pseudo, bool BMX, bool Roller, bool Scooter, bool Skateboard, BuildContext context) async {
+    final connectionState =  await checkConnection();
 
-  void updateProfile(String ID, String Pseudo, bool BMX, bool Roller, bool Scooter, bool Skateboard, BuildContext context){
-
-    Future connection = checkConnection();
-    connection.then((connectionState){
-      if (connectionState){
-        try {
-          databaseReference
-              .collection('users')
-              .document(ID)
-              .setData({'Pseudo': Pseudo, 'BMX': BMX, 'Roller': Roller, 'Scooter': Scooter, 'Skateboard': Skateboard})
-              .catchError((error){
-            error(error, context);
-            print(error);});
-
-
-        } catch (e) {
-          print(e.toString());
-          error(e, context);
-        }
-      }else{
-        error(AppLocalizations.of(context).translate('Please connect to internet!'), context);
+    if (!connectionState) {
+      error(
+          AppLocalizations.of(context).translate('Please connect to internet!'),
+          context);
+      return false;
+    }
+    else{
+      try {
+        await databaseReference
+            .collection('users')
+            .document(ID)
+            .setData({
+          'Pseudo': Pseudo,
+          'BMX': BMX,
+          'Roller': Roller,
+          'Scooter': Scooter,
+          'Skateboard': Skateboard
+        })
+            .catchError((error) {
+          error(error, context);
+          print(error);
+          return false;
+        });
+      } catch (e) {
+        print(e);
+        error(e, context);
+        return false;
       }
-    });
+    }
+    return true;
   }
+
+
 
   Future<bool> checkConnection() async {
     bool hasConnection;

@@ -1,12 +1,16 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/main.dart';
 import 'package:the_spot/theme.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
+import 'package:image_picker/image_picker.dart';
 
 class InscriptionPage extends StatefulWidget {
   const InscriptionPage({Key key}) : super(key: key);
@@ -25,6 +29,8 @@ class _InscriptionPage extends State<InscriptionPage> {
   bool _Skateboard = false;
   bool _Scooter = false;
   bool _Roller = false;
+
+  File _avatar;
 
   bool validateAndSave() {
     final form = _formKey.currentState;
@@ -57,19 +63,41 @@ class _InscriptionPage extends State<InscriptionPage> {
     return Padding(
         padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
         child: GestureDetector(
-          onTap: () => print("add an Avatar"),
+          onTap: () => loadAvatar(),
           child: CircleAvatar(
             backgroundColor: PrimaryColorLight,
             radius: 80,
             foregroundColor: PrimaryColorDark,
             child: Stack(overflow: Overflow.visible, children: <Widget>[
-              Icon(
+              _avatar == null
+                  ? Icon(
                 Icons.person,
                 size: 100,
+              )
+                  : Container(
+                height: 160,
+                    width: 160,
+                    child: ClipRRect(
+                borderRadius: BorderRadius.circular(200),
+                child: Image.file(
+                    _avatar,
+                  fit: BoxFit.fill,
+                ),
               ),
-              Positioned(
+                  ),
+
+              _avatar == null
+                ? Positioned(
                   bottom: -40,
                   right: -40,
+                  child: Icon(
+                    Icons.add_circle,
+                    size: 60,
+                    color: SecondaryColor,
+                  ))
+                  : Positioned(
+                  bottom: -10,
+                  right: -10,
                   child: Icon(
                     Icons.add_circle,
                     size: 60,
@@ -79,6 +107,33 @@ class _InscriptionPage extends State<InscriptionPage> {
           ),
         ));
   }
+
+  void loadAvatar () async{
+    print("add an Avatar");
+      _avatar = await ImagePicker.pickImage(source: ImageSource.gallery);
+
+      _avatar = await ImageCropper.cropImage(
+        sourcePath: _avatar.path,
+        aspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
+        cropStyle: CropStyle.circle,
+        androidUiSettings: AndroidUiSettings(
+          toolbarTitle: 'Profile Picture',
+          toolbarColor: PrimaryColorDark,
+          toolbarWidgetColor: Colors.white,
+          activeControlsWidgetColor: PrimaryColorLight,
+          lockAspectRatio: true,
+        ),
+        iosUiSettings: IOSUiSettings(
+          aspectRatioLockEnabled: true,
+          resetAspectRatioEnabled: false,
+        )
+      );
+
+      setState(() {
+      showAvatarWidget();
+      });
+    }
+
 
   Widget showPseudoInput() {
     return Padding(
@@ -252,9 +307,16 @@ class _InscriptionPage extends State<InscriptionPage> {
             if (validateAndSave()) {
               final myFuture = auth.currentUser();
               myFuture.then((response) {
-                Database().updateProfile(
+                final _future = Database().updateProfile(
                     response.uid, _pseudo, _BMX, _Roller, _Scooter,
                     _Skateboard, context);
+                _future.then((databaseUpdated){
+                  if (databaseUpdated){
+                    print("Profile updated with success");
+                  }else{
+                    print("Error when updating the Profile...");
+                  }
+                });
               });
             }
           },
