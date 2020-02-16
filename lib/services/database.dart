@@ -55,7 +55,7 @@ import 'package:the_spot/app_localizations.dart';
     }
   }
 
-  Future <bool> updateProfile(String ID, String Pseudo, bool BMX, bool Roller, bool Scooter, bool Skateboard, BuildContext context) async {
+  Future <bool> updateProfile(String ID, String pseudo, bool BMX, bool Roller, bool Scooter, bool Skateboard, BuildContext context) async {
     final connectionState =  await checkConnection();
 
     if (!connectionState) {
@@ -70,7 +70,7 @@ import 'package:the_spot/app_localizations.dart';
             .collection('users')
             .document(ID)
             .setData({
-          'Pseudo': Pseudo,
+          'Pseudo': pseudo,
           'BMX': BMX,
           'Roller': Roller,
           'Scooter': Scooter,
