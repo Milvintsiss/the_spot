@@ -87,7 +87,6 @@ flutter:
     - assets/images/Skateboard.png
     - assets/images/Scooter.png
     - assets/images/Roller.png
-    - assets/images/Avatar.png
     #languages
     - lang/en.json
     - lang/fr.json
