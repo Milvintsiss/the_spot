@@ -1,22 +1,15 @@
-# the_spot
+# **The Spot**
+This application is designed for riders by riders.
+The Spot is a place where you **share** places that you can ride with others. All the places are listed on a **map** and you can check if there is a spot near you **wherever** you are!
+The which of **The Spot** is to create a **real social** media to bring together all the riders of the **world**!
 
-A new Flutter application.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+In the future The Spot will integrate a news page, a publication page (like Instagram or Facebook page), city chats and more...
 
 
-##To implement for iOS
+
+##Notes
+###To implement for iOS
 - verify Map
 - image_picker
 - crop image
+
