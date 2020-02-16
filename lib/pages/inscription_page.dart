@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image_cropper/image_cropper.dart';
 
 import 'package:the_spot/app_localizations.dart';
+import 'package:the_spot/pages/home_page.dart';
 import 'package:the_spot/pages/main.dart';
 import 'package:the_spot/theme.dart';
 import 'package:the_spot/services/authentication.dart';
@@ -25,6 +27,7 @@ class _InscriptionPage extends State<InscriptionPage> {
 
   String _userID;
   String _pseudo;
+  String _profilePicturePath;
   bool _BMX = false;
   bool _Skateboard = false;
   bool _Scooter = false;
@@ -60,52 +63,58 @@ class _InscriptionPage extends State<InscriptionPage> {
   }
 
   Widget showAvatarWidget() {
-    return Padding(
-        padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
-        child: GestureDetector(
-          onTap: () => loadAvatar(),
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => loadAvatar(),
+      child: Padding(
+          padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
           child: CircleAvatar(
-            backgroundColor: PrimaryColorLight,
-            radius: 80,
-            foregroundColor: PrimaryColorDark,
-            child: Stack(overflow: Overflow.visible, children: <Widget>[
-              _avatar == null
-                  ? Icon(
-                Icons.person,
-                size: 100,
-              )
-                  : Container(
-                height: 160,
-                    width: 160,
-                    child: ClipRRect(
-                borderRadius: BorderRadius.circular(200),
-                child: Image.file(
-                    _avatar,
-                  fit: BoxFit.fill,
-                ),
-              ),
+            backgroundColor: PrimaryColor,
+            radius: 85,
+            child: CircleAvatar(
+              backgroundColor: PrimaryColorLight,
+              radius: 80,
+              foregroundColor: PrimaryColorDark,
+              child: Stack(
+                  overflow: Overflow.visible, children: <Widget>[
+                _avatar == null
+                    ? Icon(
+                  Icons.person,
+                  size: 100,
+                )
+                    : Container(
+                  height: 160,
+                      width: 160,
+                      child: ClipRRect(
+                  borderRadius: BorderRadius.circular(200),
+                  child: Image.file(
+                      _avatar,
+                    fit: BoxFit.fill,
                   ),
+                ),
+                    ),
 
-              _avatar == null
-                ? Positioned(
-                  bottom: -40,
-                  right: -40,
-                  child: Icon(
-                    Icons.add_circle,
-                    size: 60,
-                    color: SecondaryColor,
-                  ))
-                  : Positioned(
-                  bottom: -10,
-                  right: -10,
-                  child: Icon(
-                    Icons.add_circle,
-                    size: 60,
-                    color: SecondaryColor,
-                  )),
-            ]),
-          ),
-        ));
+                _avatar == null
+                  ? Positioned(
+                    bottom: -40,
+                    right: -40,
+                    child: Icon(
+                      Icons.add_circle,
+                      size: 60,
+                      color: SecondaryColor,
+                    ))
+                    : Positioned(
+                    bottom: -10,
+                    right: -10,
+                    child: Icon(
+                      Icons.add_circle,
+                      size: 60,
+                      color: SecondaryColor,
+                    )),
+              ]),
+            ),
+          )),
+    );
   }
 
   void loadAvatar () async{
@@ -116,6 +125,9 @@ class _InscriptionPage extends State<InscriptionPage> {
         sourcePath: _avatar.path,
         aspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
         cropStyle: CropStyle.circle,
+        maxHeight: 150,
+        maxWidth: 150,
+        compressQuality: 75,
         androidUiSettings: AndroidUiSettings(
           toolbarTitle: 'Profile Picture',
           toolbarColor: PrimaryColorDark,
@@ -128,6 +140,12 @@ class _InscriptionPage extends State<InscriptionPage> {
           resetAspectRatioEnabled: false,
         )
       );
+
+      final user = await auth.currentUser();
+
+      final StorageReference storageReference = FirebaseStorage().ref().child("ProfilePictures/" + user.uid);
+      final StorageUploadTask uploadTask = storageReference.putFile(_avatar);
+      await uploadTask.onComplete;
 
       setState(() {
       showAvatarWidget();
@@ -313,6 +331,9 @@ class _InscriptionPage extends State<InscriptionPage> {
                 _future.then((databaseUpdated){
                   if (databaseUpdated){
                     print("Profile updated with success");
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => new HomePage()));
                   }else{
                     print("Error when updating the Profile...");
                   }

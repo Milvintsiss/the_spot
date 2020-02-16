@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:the_spot/pages/inscription_page.dart';
 import 'package:the_spot/pages/login_signup_page.dart';
@@ -26,20 +28,30 @@ class _RootPageState extends State<RootPage> {
   AuthStatus authStatus = AuthStatus.NOT_DETERMINED;
   String _userId = "";
 
+  final databaseReference = Firestore.instance;
+
+
   bool _inscriptionState = true; // true if inscription no-complete
 
   @override
   void initState() {
     super.initState();
-    widget.auth.getCurrentUser().then((user) {
-      setState(() {
-        if (user != null) {
-          _userId = user?.uid;
-        }
-        authStatus =
-        user?.uid == null ? AuthStatus.NOT_LOGGED_IN : AuthStatus.LOGGED_IN;
-      });
-    });
+     verifyIfConnectedAndInscriptionFinished();
+  }
+
+  void verifyIfConnectedAndInscriptionFinished () async {
+    FirebaseUser user = await widget.auth.getCurrentUser();
+
+    if (user != null) {
+      _userId = user.uid;
+      var data = await databaseReference.document("users/" + _userId).get();
+      if (data.exists) {
+        _inscriptionState = false;
+      }
+    }
+    authStatus =
+    user == null ? AuthStatus.NOT_LOGGED_IN : AuthStatus.LOGGED_IN;
+    setState(() {});
   }
 
   void loginCallback() {
