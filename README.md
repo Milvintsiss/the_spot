@@ -7,9 +7,9 @@ The which of **TheSpot** is to create a **real social** media to bring together 
 
 
 
-##Notes
+## Notes
 
-######To implement for iOS:
+#### To implement for iOS:
 - verify Map
 - image_picker
 - crop image
