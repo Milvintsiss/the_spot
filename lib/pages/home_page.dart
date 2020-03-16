@@ -32,7 +32,7 @@ class _HomePageState extends State<HomePage> {
 
     //_checkEmailVerification();
 
-    _todoList = new List();
+    //_todoList = new List();
 
 //  void _checkEmailVerification() async {
 //    _isEmailVerified = await widget.auth.isEmailVerified();
@@ -113,7 +113,7 @@ class _HomePageState extends State<HomePage> {
 
 
 
-  showAddTodoDialog(BuildContext context) async {
+  /*showAddTodoDialog(BuildContext context) async {
     _textEditingController.clear();
     await showDialog<String>(
         context: context,
@@ -181,7 +181,7 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 30.0),
           ));
     }
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
@@ -193,13 +193,15 @@ class _HomePageState extends State<HomePage> {
               new FlatButton(
                   child: new Text('Logout',
                       style: new TextStyle(fontSize: 17.0, color: Colors.white)),
-                  onPressed: signOut)
+                  onPressed: () => signOut()
+              )
             ],
           ),
-          body: showTodoList(),
+          body: Container(
+            color: Colors.black,
+          ),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
-              showAddTodoDialog(context);
             },
             tooltip: 'Increment',
             child: Icon(Icons.add),

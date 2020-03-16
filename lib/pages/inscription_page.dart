@@ -8,7 +8,7 @@ import 'package:image_cropper/image_cropper.dart';
 
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/home_page.dart';
-import 'package:the_spot/pages/main.dart';
+import 'package:the_spot/main.dart';
 import 'package:the_spot/theme.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
