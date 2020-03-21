@@ -9,20 +9,26 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/home_page.dart';
 import 'package:the_spot/main.dart';
+import 'package:the_spot/pages/root_page.dart';
 import 'package:the_spot/theme.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:vibrate/vibrate.dart';
 
 class InscriptionPage extends StatefulWidget {
-  const InscriptionPage({Key key}) : super(key: key);
+  const InscriptionPage({Key key, this.auth, this.userId, this.logoutCallback})
+      : super(key: key);
+
+  final BaseAuth auth;
+  final VoidCallback logoutCallback;
+  final String userId;
 
   @override
   _InscriptionPage createState() => _InscriptionPage();
 }
 
 class _InscriptionPage extends State<InscriptionPage> {
-
   final _formKey = new GlobalKey<FormState>();
 
   String _userID;
@@ -41,33 +47,31 @@ class _InscriptionPage extends State<InscriptionPage> {
       form.save();
       return true;
     }
+    Vibrate.feedback(FeedbackType.warning);
     return false;
   }
 
-  FirebaseAuth auth = FirebaseAuth.instance;
-
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-        child: Scaffold(
-            backgroundColor: PrimaryColorDark,
-            body: ListView(
-              padding: EdgeInsets.fromLTRB(30.0, 0.0, 30.0, 0.0),
-              children: <Widget>[
-                showAvatarWidget(),
-                showPseudoInput(),
-                showPracticesButtons(),
-                showNextButton(),
-              ],
-            )));
+    return Scaffold(
+        backgroundColor: PrimaryColorDark,
+        body: ListView(
+          padding: EdgeInsets.fromLTRB(30.0, 0.0, 30.0, 0.0),
+          children: <Widget>[
+            showAvatarWidget(),
+            showPseudoInput(),
+            showPracticesButtons(),
+            showNextButton(),
+          ],
+        ));
   }
 
   Widget showAvatarWidget() {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onTap: () => loadAvatar(),
+      onTap: loadAvatar,
       child: Padding(
-          padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
+          padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
           child: CircleAvatar(
             backgroundColor: PrimaryColor,
             radius: 85,
@@ -75,53 +79,51 @@ class _InscriptionPage extends State<InscriptionPage> {
               backgroundColor: PrimaryColorLight,
               radius: 80,
               foregroundColor: PrimaryColorDark,
-              child: Stack(
-                  overflow: Overflow.visible, children: <Widget>[
+              child: Stack(overflow: Overflow.visible, children: <Widget>[
                 _avatar == null
                     ? Icon(
-                  Icons.person,
-                  size: 100,
-                )
+                        Icons.person,
+                        size: 100,
+                      )
                     : Container(
-                  height: 160,
-                      width: 160,
-                      child: ClipRRect(
-                  borderRadius: BorderRadius.circular(200),
-                  child: Image.file(
-                      _avatar,
-                    fit: BoxFit.fill,
-                  ),
-                ),
-                    ),
-
+                        height: 160,
+                        width: 160,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(200),
+                          child: Image.file(
+                            _avatar,
+                            fit: BoxFit.fill,
+                          ),
+                        ),
+                      ),
                 _avatar == null
-                  ? Positioned(
-                    bottom: -40,
-                    right: -40,
-                    child: Icon(
-                      Icons.add_circle,
-                      size: 60,
-                      color: SecondaryColor,
-                    ))
+                    ? Positioned(
+                        bottom: -40,
+                        right: -40,
+                        child: Icon(
+                          Icons.add_circle,
+                          size: 60,
+                          color: SecondaryColor,
+                        ))
                     : Positioned(
-                    bottom: -10,
-                    right: -10,
-                    child: Icon(
-                      Icons.add_circle,
-                      size: 60,
-                      color: SecondaryColor,
-                    )),
+                        bottom: -10,
+                        right: -10,
+                        child: Icon(
+                          Icons.add_circle,
+                          size: 60,
+                          color: SecondaryColor,
+                        )),
               ]),
             ),
           )),
     );
   }
 
-  void loadAvatar () async{
+  void loadAvatar() async {
     print("add an Avatar");
-      _avatar = await ImagePicker.pickImage(source: ImageSource.gallery);
+    _avatar = await ImagePicker.pickImage(source: ImageSource.gallery);
 
-      _avatar = await ImageCropper.cropImage(
+    _avatar = await ImageCropper.cropImage(
         sourcePath: _avatar.path,
         aspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
         cropStyle: CropStyle.circle,
@@ -138,20 +140,17 @@ class _InscriptionPage extends State<InscriptionPage> {
         iosUiSettings: IOSUiSettings(
           aspectRatioLockEnabled: true,
           resetAspectRatioEnabled: false,
-        )
-      );
+        ));
 
-      final user = await auth.currentUser();
+    final StorageReference storageReference =
+        FirebaseStorage().ref().child("ProfilePictures/" + widget.userId);
+    final StorageUploadTask uploadTask = storageReference.putFile(_avatar);
+    await uploadTask.onComplete;
 
-      final StorageReference storageReference = FirebaseStorage().ref().child("ProfilePictures/" + user.uid);
-      final StorageUploadTask uploadTask = storageReference.putFile(_avatar);
-      await uploadTask.onComplete;
-
-      setState(() {
+    setState(() {
       showAvatarWidget();
-      });
-    }
-
+    });
+  }
 
   Widget showPseudoInput() {
     return Padding(
@@ -176,14 +175,17 @@ class _InscriptionPage extends State<InscriptionPage> {
             if (str.isEmpty) {
               return AppLocalizations.of(context)
                   .translate('Pseudo can t be empty');
-            } else if (str.length > 20){
+            } else if (str.length > 20) {
               print('Pseudo is too long');
-              return AppLocalizations.of(context).translate('Your Pseudo is too long!');
-            }else{
+              return AppLocalizations.of(context)
+                  .translate('Your Pseudo is too long!');
+            } else {
               return null;
             }
           },
-          onChanged: (str) {validateAndSave();},
+          onChanged: (str) {
+            validateAndSave();
+          },
           onSaved: (String str) {
             _pseudo = str.trim();
           },
@@ -323,21 +325,21 @@ class _InscriptionPage extends State<InscriptionPage> {
           ),
           onPressed: () {
             if (validateAndSave()) {
-              final myFuture = auth.currentUser();
-              myFuture.then((response) {
-                final _future = Database().updateProfile(
-                    response.uid, _pseudo, _BMX, _Roller, _Scooter,
-                    _Skateboard, context);
-                _future.then((databaseUpdated){
-                  if (databaseUpdated){
-                    print("Profile updated with success");
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => new HomePage()));
-                  }else{
-                    print("Error when updating the Profile...");
-                  }
-                });
+              final _future = Database().updateProfile(widget.userId, _pseudo,
+                  _BMX, _Roller, _Scooter, _Skateboard, context);
+              _future.then((databaseUpdated) {
+                if (databaseUpdated) {
+                  print("Profile updated with success");
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => new RootPage(
+                                auth: widget.auth,
+                              )));
+                } else {
+                  Vibrate.feedback(FeedbackType.warning);
+                  print("Error when updating the Profile...");
+                }
               });
             }
           },

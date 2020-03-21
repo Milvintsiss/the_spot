@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:the_spot/pages/home_page/feature_not_available.dart';
 import 'package:the_spot/services/authentication.dart';
-import 'package:the_spot/models/todo.dart';
 import 'dart:async';
+import 'package:the_spot/pages/home_page/map.dart';
+import 'package:the_spot/pages/home_page/profile.dart';
+
+import '../theme.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key, this.auth, this.userId, this.logoutCallback})
@@ -16,91 +21,23 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Todo> _todoList;
+  int _currentIndex = 3;
+  List<Widget> _children;
 
-
-  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-
-  final _textEditingController = TextEditingController();
-
-
-  //bool _isEmailVerified = false;
 
   @override
   void initState() {
     super.initState();
-
-    //_checkEmailVerification();
-
-    //_todoList = new List();
-
-//  void _checkEmailVerification() async {
-//    _isEmailVerified = await widget.auth.isEmailVerified();
-//    if (!_isEmailVerified) {
-//      _showVerifyEmailDialog();
-//    }
-//  }
-
-//  void _resentVerifyEmail(){
-//    widget.auth.sendEmailVerification();
-//    _showVerifyEmailSentDialog();
-//  }
-
-//  void _showVerifyEmailDialog() {
-//    showDialog(
-//      context: context,
-//      builder: (BuildContext context) {
-//        // return object of type Dialog
-//        return AlertDialog(
-//          title: new Text("Verify your account"),
-//          content: new Text("Please verify account in the link sent to email"),
-//          actions: <Widget>[
-//            new FlatButton(
-//              child: new Text("Resent link"),
-//              onPressed: () {
-//                Navigator.of(context).pop();
-//                _resentVerifyEmail();
-//              },
-//            ),
-//            new FlatButton(
-//              child: new Text("Dismiss"),
-//              onPressed: () {
-//                Navigator.of(context).pop();
-//              },
-//            ),
-//          ],
-//        );
-//      },
-//    );
-//  }
-
-//  void _showVerifyEmailSentDialog() {
-//    showDialog(
-//      context: context,
-//      builder: (BuildContext context) {
-//        // return object of type Dialog
-//        return AlertDialog(
-//          title: new Text("Verify your account"),
-//          content: new Text("Link to verify account has been sent to your email"),
-//          actions: <Widget>[
-//            new FlatButton(
-//              child: new Text("Dismiss"),
-//              onPressed: () {
-//                Navigator.of(context).pop();
-//              },
-//            ),
-//          ],
-//        );
-//      },
-//    );
-//  }
-
-
-
+    _children = [
+      FeatureNotAvailable(),
+      FeatureNotAvailable(),
+      FeatureNotAvailable(),
+      Map(),
+      Profile(auth: widget.auth, userId: widget.userId, logoutCallback: widget.logoutCallback,)
+    ];
   }
 
-
-  signOut() async {
+  void signOut() async {
     try {
       await widget.auth.signOut();
       widget.logoutCallback();
@@ -109,103 +46,85 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
-
-
-
-  /*showAddTodoDialog(BuildContext context) async {
-    _textEditingController.clear();
-    await showDialog<String>(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            content: new Row(
-              children: <Widget>[
-                new Expanded(
-                    child: new TextField(
-                      controller: _textEditingController,
-                      autofocus: true,
-                      decoration: new InputDecoration(
-                        labelText: 'Add new todo',
-                      ),
-                    ))
-              ],
-            ),
-            actions: <Widget>[
-              new FlatButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  }),
-              new FlatButton(
-                  child: const Text('Save'))
-            ],
-          );
-        });
+  void onTabTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
   }
 
-  Widget showTodoList() {
-    if (_todoList.length > 0) {
-      return ListView.builder(
-          shrinkWrap: true,
-          itemCount: _todoList.length,
-          itemBuilder: (BuildContext context, int index) {
-            String todoId = _todoList[index].key;
-            String subject = _todoList[index].subject;
-            bool completed = _todoList[index].completed;
-            String userId = _todoList[index].userId;
-            return Dismissible(
-              key: Key(todoId),
-              background: Container(color: Colors.red),
-              child: ListTile(
-                title: Text(
-                  subject,
-                  style: TextStyle(fontSize: 20.0),
-                ),
-                trailing: IconButton(
-                    icon: (completed)
-                        ? Icon(
-                      Icons.done_outline,
-                      color: Colors.green,
-                      size: 20.0,
-                    )
-                        : Icon(Icons.done, color: Colors.grey, size: 20.0),
-              ),
-            ));
-          });
-    } else {
-      return Center(
-          child: Text(
-            "Welcome. Your list is empty",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 30.0),
-          ));
-    }
-  }*/
+  Widget showListTile(String title, IconData icon, String function) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Container(
+        padding: EdgeInsets.all(0),
+        decoration: BoxDecoration(
+            border: Border.all(
+                color: PrimaryColor, width: 2, style: BorderStyle.solid),
+            borderRadius: BorderRadius.all(Radius.circular(30))),
+        child: ListTile(
+          title: Text(title),
+          leading: Icon(
+            icon,
+            color: PrimaryColorLight,
+          ),
+          onTap: () {
+            switch (function) {
+              case "logout":
+                signOut();
+                break;
+              case "updateCotes":
+                break;
+            }
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: new Scaffold(
-          appBar: new AppBar(
-            title: new Text('Flutter login demo'),
-            actions: <Widget>[
-              new FlatButton(
-                  child: new Text('Logout',
-                      style: new TextStyle(fontSize: 17.0, color: Colors.white)),
-                  onPressed: () => signOut()
-              )
+    return new Scaffold(
+      drawer: Drawer(
+        child: Container(
+          color: PrimaryColorDark,
+          padding: EdgeInsets.fromLTRB(0, 10, 0, 0),
+          child: ListView(
+            children: <Widget>[
+              showListTile("Deconnexion", Icons.power_settings_new, "logout"),
             ],
           ),
-          body: Container(
-            color: Colors.black,
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () {
-            },
-            tooltip: 'Increment',
-            child: Icon(Icons.add),
-          )),
+        ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+          onTap: onTabTapped,
+          currentIndex: _currentIndex,
+          backgroundColor: PrimaryColor,
+          selectedItemColor: Colors.white,
+          type: BottomNavigationBarType.fixed,
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.message),
+              title: Text("Messages"),
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.short_text),
+              title: Text("News"),
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              title: Text("Home"),
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.map),
+              title: Text("Map"),
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              title: Text("Profile")
+            )
+          ]),
+
+      body: _children[_currentIndex],//build the corresponding page
     );
   }
 }

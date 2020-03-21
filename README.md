@@ -14,3 +14,8 @@ The which of **TheSpot** is to create a **real social** media to bring together 
 - image_picker
 - crop image
 
+
+add following in Podfile:
+pod 'Firebase/Auth'
+
+

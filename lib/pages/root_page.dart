@@ -47,11 +47,11 @@ class _RootPageState extends State<RootPage> {
       var data = await databaseReference.document("users/" + _userId).get();
       if (data.exists) {
         _inscriptionState = false;
-      }
+      }else {_inscriptionState = true;}
     }
-    authStatus =
-    user == null ? AuthStatus.NOT_LOGGED_IN : AuthStatus.LOGGED_IN;
-    setState(() {});
+
+    setState(() {authStatus =
+    user == null ? AuthStatus.NOT_LOGGED_IN : AuthStatus.LOGGED_IN;});
   }
 
   void loginCallback() {
@@ -60,15 +60,13 @@ class _RootPageState extends State<RootPage> {
         _userId = user.uid.toString();
       });
     });
-    setState(() {
-      authStatus = AuthStatus.LOGGED_IN;
-    });
+    verifyIfConnectedAndInscriptionFinished();
   }
 
   void logoutCallback() {
     setState(() {
       authStatus = AuthStatus.NOT_LOGGED_IN;
-      _userId = "";
+      _userId = null;
     });
   }
 
@@ -96,7 +94,11 @@ class _RootPageState extends State<RootPage> {
       case AuthStatus.LOGGED_IN:
         if (_userId.length > 0 && _userId != null) {
           if (_inscriptionState) //if inscription complete go to HomePage
-            return new InscriptionPage();
+            return new InscriptionPage(
+              userId: _userId,
+              auth: widget.auth,
+              logoutCallback: logoutCallback,
+            );
           else {
             return new HomePage(
               userId: _userId,
