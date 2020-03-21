@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:the_spot/app_localizations.dart';
+import 'package:vibrate/vibrate.dart';
 
  class Database {
 
@@ -111,6 +112,9 @@ import 'package:the_spot/app_localizations.dart';
 
 
   void error(String error, BuildContext context){
+
+    Vibrate.feedback(FeedbackType.warning);
+
 
     AlertDialog errorAlertDialog = new AlertDialog(
       content: Text(error, style: TextStyle(color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold),)

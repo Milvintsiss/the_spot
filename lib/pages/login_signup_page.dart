@@ -3,7 +3,7 @@ import 'package:the_spot/services/authentication.dart';
 
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/theme.dart';
-
+import 'package:vibrate/vibrate.dart';
 
 class LoginSignupPage extends StatefulWidget {
   LoginSignupPage({this.auth, this.loginCallBack});
@@ -32,17 +32,18 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
       form.save();
       return true;
     }
+    Vibrate.feedback(FeedbackType.warning);
     return false;
   }
 
   //Perform login or signup
   void validateAndSubmit() async {
-    setState(() {
-      _errorMessage = "";
-      _isLoading = true;
-    });
     if (validateAndSave()) {
       String userId = "";
+      setState(() {
+        _errorMessage = "";
+        _isLoading = true;
+      });
       try {
         if (_isLoginForm) {
           userId = await widget.auth.signIn(_email, _password);
@@ -59,9 +60,15 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
 
         if (userId.length > 0 && userId != null && _isLoginForm) {
           widget.loginCallBack();
+        } else {
+          Vibrate.feedback(FeedbackType.warning);
+          setState(() {
+            _errorMessage = "Error";
+          });
         }
       } catch (e) {
         print('Error: $e');
+        Vibrate.feedback(FeedbackType.warning);
         setState(() {
           _isLoading = false;
           _errorMessage = e.message;
@@ -93,15 +100,14 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: PrimaryColorDark,
         body: Stack(
           children: <Widget>[
             showForm(),
             showCircularProgress(),
           ],
-        )));
+        ));
   }
 
   Widget showCircularProgress() {
@@ -166,7 +172,9 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
               Icons.mail,
               color: Colors.blueGrey[100],
             )),
-        validator: (value) => value.isEmpty ? AppLocalizations.of(context).translate('Email can t be empty') : null,
+        validator: (value) => value.isEmpty
+            ? AppLocalizations.of(context).translate('Email can t be empty')
+            : null,
         onSaved: (value) => _email = value.trim(),
       ),
     );
@@ -193,7 +201,9 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
               Icons.lock,
               color: Colors.blueGrey[100],
             )),
-        validator: (value) => value.isEmpty ? AppLocalizations.of(context).translate('Password can t be empty') : null,
+        validator: (value) => value.isEmpty
+            ? AppLocalizations.of(context).translate('Password can t be empty')
+            : null,
         onSaved: (value) => _password = value.trim(),
       ),
     );
@@ -210,7 +220,9 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
               borderRadius: new BorderRadius.circular(30.0)),
           color: SecondaryColorDark,
           child: new Text(
-            _isLoginForm ? AppLocalizations.of(context).translate('Login') : AppLocalizations.of(context).translate('Create account'),
+            _isLoginForm
+                ? AppLocalizations.of(context).translate('Login')
+                : AppLocalizations.of(context).translate('Create account'),
             style: new TextStyle(fontSize: 20.0, color: Colors.white),
           ),
           onPressed: () => validateAndSubmit(),
@@ -222,7 +234,10 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   Widget showSecondaryButton() {
     return new FlatButton(
       child: new Text(
-        _isLoginForm ? AppLocalizations.of(context).translate('Create an account') : AppLocalizations.of(context).translate('Have an account? Sign in'),
+        _isLoginForm
+            ? AppLocalizations.of(context).translate('Create an account')
+            : AppLocalizations.of(context)
+                .translate('Have an account? Sign in'),
         style: new TextStyle(
             fontSize: 16.0, fontWeight: FontWeight.w500, color: Colors.white),
       ),
