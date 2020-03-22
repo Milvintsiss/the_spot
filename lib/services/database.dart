@@ -1,5 +1,3 @@
-
-
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -9,19 +7,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:the_spot/app_localizations.dart';
 import 'package:vibrate/vibrate.dart';
 
- class Database {
-
-  final databaseReference = Firestore.instance;
-
-
+class Database {
+  final database = Firestore.instance;
 
   void createRecord() async {
-    await databaseReference.collection("books").document("1").setData({
+    await database.collection("books").document("1").setData({
       'title': 'Mastering Flutter',
       'description': 'Programming Guide for Dart'
     });
 
-    DocumentReference ref = await databaseReference.collection("books").add({
+    DocumentReference ref = await database.collection("books").add({
       'title': 'Flutter in Action',
       'description': 'Complete Programming Guide to learn Flutter'
     });
@@ -29,17 +24,14 @@ import 'package:vibrate/vibrate.dart';
   }
 
   void getData() {
-    databaseReference
-        .collection("books")
-        .getDocuments()
-        .then((QuerySnapshot snapshot) {
+    database.collection("books").getDocuments().then((QuerySnapshot snapshot) {
       snapshot.documents.forEach((f) => print('${f.data}}'));
     });
   }
 
   void updateData() {
     try {
-      databaseReference
+      database
           .collection('books')
           .document('1')
           .updateData({'description': 'Head First Flutter'});
@@ -50,50 +42,121 @@ import 'package:vibrate/vibrate.dart';
 
   void deleteData() {
     try {
-      databaseReference.collection('books').document('1').delete();
+      database.collection('books').document('1').delete();
     } catch (e) {
       print(e.toString());
     }
   }
 
-  Future <bool> updateProfile(String ID, String pseudo, bool BMX, bool Roller, bool Scooter, bool Skateboard, BuildContext context) async {
-    final connectionState =  await checkConnection();
+  Future<bool> updateProfile(BuildContext context, String userId,
+      {bool onCreate = false,
+      String pseudo,
+      bool BMX,
+      bool Roller,
+      bool Scooter,
+      bool Skateboard}) async {
+    final connectionState = await checkConnection(context);
 
-    if (!connectionState) {
-      error(
-          AppLocalizations.of(context).translate('Please connect to internet!'),
-          context);
-      return false;
-    }
-    else{
+    String updateDate = DateTime.now().toIso8601String();
+    String creationDate;
+    if (onCreate) creationDate = updateDate;
+
+    Map update = new Map<String, dynamic>.identity();
+    if (pseudo != null) update['Pseudo'] = pseudo;
+    if (BMX != null) update['BMX'] = BMX;
+    if (Roller != null) update['Roller'] = Roller;
+    if (Scooter != null) update['Scooter'] = Scooter;
+    if (Skateboard != null) update['Skateboard'] = Skateboard;
+    if (creationDate != null) update['CreationDate'] = creationDate;
+
+    update['LastUpdate'] = updateDate;
+
+    print(update);
+
+    if (connectionState) {
       try {
-        await databaseReference
-            .collection('users')
-            .document(ID)
-            .setData({
-          'Pseudo': pseudo,
-          'BMX': BMX,
-          'Roller': Roller,
-          'Scooter': Scooter,
-          'Skateboard': Skateboard
-        })
-            .catchError((error) {
-          error(error, context);
-          print(error);
-          return false;
-        });
+        if (onCreate) {
+          await database
+              .collection('users')
+              .document(userId)
+              .setData(update)
+              .catchError((error) {
+            error(error.toString(), context);
+            print(error);
+            return false;
+          });
+        } else {
+          await database
+              .collection('users')
+              .document(userId)
+              .updateData(update)
+              .catchError((error) {
+            error(error.toString(), context);
+            print(error);
+            return false;
+          });
+        }
       } catch (e) {
         print(e);
-        error(e, context);
+        error(e.toString(), context);
         return false;
       }
+    } else {
+      return false;
     }
     return true;
   }
 
+  Future<Map> getProfileData(String userId, BuildContext context) async {
+    final connectionState = await checkConnection(context);
+    DocumentSnapshot document;
+    if (connectionState) {
+      try {
+        document = await database
+            .collection("users")
+            .document(userId)
+            .get()
+            .catchError((err) {
+          print(err);
+          error(err.toString(), context);
+          return null;
+        });
+      } catch (err) {
+        print(err);
+        error(err.toString(), context);
+        return null;
+      }
+      Map data = document.data;
+      return data;
+    }
+  }
 
+  Future<bool> deleteProfileData(BuildContext context, String userId) async {
+    final bool connectionState = await checkConnection(context);
 
-  Future<bool> checkConnection() async {
+    if (connectionState) {
+      try {
+        await database
+            .collection('users')
+            .document(userId)
+            .delete()
+            .catchError((err) {
+          print(err);
+          error(err.toString(), context);
+          return false;
+        });
+      } catch (err) {
+        print(err);
+        error(err.toString(), context);
+        return false;
+      }
+    } else {
+      return false;
+    }
+    return true;
+  }
+
+  Future<bool> checkConnection(BuildContext context) async {
     bool hasConnection;
 
     try {
@@ -103,22 +166,27 @@ import 'package:vibrate/vibrate.dart';
       } else {
         hasConnection = false;
       }
-    } on SocketException catch(_) {
+    } on SocketException catch (_) {
       hasConnection = false;
+    }
+    if (!hasConnection) {
+      error(
+          AppLocalizations.of(context).translate('Please connect to internet!'),
+          context);
     }
     return hasConnection;
   }
 
-
-
-  void error(String error, BuildContext context){
-
+  void error(String error, BuildContext context) {
     Vibrate.feedback(FeedbackType.warning);
 
-
     AlertDialog errorAlertDialog = new AlertDialog(
-      content: Text(error, style: TextStyle(color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold),)
-    );
+        elevation: 0,
+        content: SelectableText(
+          error,
+          style: TextStyle(
+              color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold),
+        ));
 
     showDialog(context: context, child: errorAlertDialog);
   }

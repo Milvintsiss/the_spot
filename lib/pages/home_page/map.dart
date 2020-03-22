@@ -18,6 +18,8 @@ class Map extends StatefulWidget {
 class _Map extends State<Map> {
   final Completer<GoogleMapController> _mapController = Completer();
 
+  GoogleMapController _controller;
+
   /// Set of displayed markers and cluster markers on the map
   final Set<Marker> _markers = Set();
 
@@ -67,6 +69,8 @@ class _Map extends State<Map> {
   void _onMapCreated(GoogleMapController controller) {
     _mapController.complete(controller);
 
+    _controller = controller;
+
     setState(() {
       _isMapLoading = false;
     });
@@ -76,8 +80,6 @@ class _Map extends State<Map> {
 
   /// Inits [Fluster] and all the markers with network images and updates the loading state.
   void _initMarkers() async {
-
-
     for (LatLng markerLocation in _markerLocations) {
       final BitmapDescriptor markerImage =
           await MapHelper.getMarkerImageFromUrl(_markerImageUrl);
@@ -130,13 +132,161 @@ class _Map extends State<Map> {
     });
   }
 
-  void onMapTapped (LatLng tapPosition) async {
-    markers.add(
-        MapMarker(
-          id: tapPosition.toString(),
-          position: tapPosition,
-          icon: BitmapDescriptor.defaultMarker,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: <Widget>[
+          // Google Map widget
+          Opacity(
+            opacity: _isMapLoading ? 0 : 1,
+            child: GoogleMap(
+              compassEnabled: true,
+              mapType: _mapType ? MapType.normal : MapType.hybrid,
+              initialCameraPosition: CameraPosition(
+                target: LatLng(41.143029, -8.611274),
+                zoom: _currentZoom,
+              ),
+              markers: _markers,
+              onMapCreated: (controller) => _onMapCreated(controller),
+              onCameraMove: (position) => _updateMarkers(position.zoom),
+              onLongPress: showDialogConfirmCreateSpot,
+            ),
+          ),
+
+          // Map loading indicator
+          Opacity(
+            opacity: _isMapLoading ? 1 : 0,
+            child: Center(child: CircularProgressIndicator()),
+          ),
+
+          // Map markers loading indicator
+          _areMarkersLoading
+              ? Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Card(
+                      elevation: 2,
+                      color: PrimaryColor,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Text(
+                          'Loading...',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : Padding(
+                  padding: EdgeInsets.all(0.0),
+                ),
+          Positioned(
+            top: 25,
+            right: 0,
+            child: Column(
+              children: <Widget>[
+                IconButton(
+                  icon: Icon(
+                    Icons.place,
+                    color: SecondaryColorDark,
+                  ),
+                  onPressed: () => print("AddAMarker"),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.add_circle,
+                    color: SecondaryColorDark,
+                  ),
+                  onPressed: showDialogSpotLocation,
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.map,
+                    color: SecondaryColorDark,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _mapType = !_mapType;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void showDialogSpotLocation() {
+    showDialog(
+        context: context,
+        child: AlertDialog(
+          content: Text(
+              "Please show us the location of your spot by a long click on it on the map"),
+          actions: <Widget>[
+            FlatButton(
+              child: Text("Ok"),
+              onPressed: () => Navigator.pop(context),
+            )
+          ],
         ));
+  }
+
+  void showDialogConfirmCreateSpot(LatLng spotLocation) {
+    _controller
+        .animateCamera(CameraUpdate.newLatLngZoom(
+            LatLng(spotLocation.latitude - 0.0001, spotLocation.longitude), 20))
+        .whenComplete(() {
+      Future.delayed(Duration(seconds: 2)).whenComplete(() {
+        setState(() {
+          _markers.add(Marker(
+              markerId: MarkerId(spotLocation.toString()),
+              position: spotLocation));
+          _mapType = false;
+        });
+      });
+    });
+
+    showDialog(
+        context: context,
+        child: AlertDialog(
+          content: Text("Create a spot at this place?"),
+          actions: <Widget>[
+            FlatButton(
+              child: Text("Yes"),
+              onPressed: () {
+                setState(() {
+                  _markers.remove(Marker(
+                      markerId: MarkerId(spotLocation.toString()),
+                      position: spotLocation));
+                });
+                Navigator.pop(context);
+                createSpot(spotLocation);
+              },
+            ),
+            FlatButton(
+                child: Text("No"),
+                onPressed: () {
+                  setState(() {
+                    _markers.remove(Marker(
+                        markerId: MarkerId(spotLocation.toString()),
+                        position: spotLocation));
+                  });
+                  Navigator.pop(context);
+                })
+          ],
+        ));
+  }
+
+  void createSpot(LatLng tapPosition) async {
+    markers.add(MapMarker(
+      id: tapPosition.toString(),
+      position: tapPosition,
+      icon: BitmapDescriptor.defaultMarker,
+    ));
 
     _clusterManager = await MapHelper.initClusterManager(
       markers,
@@ -145,92 +295,5 @@ class _Map extends State<Map> {
     );
 
     _updateMarkers();
-  }
-
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        // Google Map widget
-        Opacity(
-          opacity: _isMapLoading ? 0 : 1,
-          child: GoogleMap(
-            compassEnabled: true,
-            mapType: _mapType ? MapType.normal : MapType.hybrid,
-            initialCameraPosition: CameraPosition(
-              target: LatLng(41.143029, -8.611274),
-              zoom: _currentZoom,
-            ),
-            markers: _markers,
-            onMapCreated: (controller) => _onMapCreated(controller),
-            onCameraMove: (position) => _updateMarkers(position.zoom),
-            onTap: onMapTapped,
-          ),
-        ),
-
-        // Map loading indicator
-        Opacity(
-          opacity: _isMapLoading ? 1 : 0,
-          child: Center(child: CircularProgressIndicator()),
-        ),
-
-        // Map markers loading indicator
-        _areMarkersLoading
-            ? Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Card(
-                    elevation: 2,
-                    color: PrimaryColor,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Text(
-                        'Loading...',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ),
-              )
-            : Padding(
-                padding: EdgeInsets.all(0.0),
-              ),
-    Positioned(
-          top: 25,
-          right: 0,
-          child: Column(
-            children: <Widget>[
-              IconButton(
-                icon: Icon(
-                  Icons.place,
-                  color: SecondaryColorDark,
-                ),
-                onPressed: () => print("AddAMarker"),
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.add_circle,
-                  color: SecondaryColorDark,
-                ),
-                onPressed: () => print("AddAMarker"),
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.map,
-                  color: SecondaryColorDark,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _mapType = !_mapType;
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
   }
 }
