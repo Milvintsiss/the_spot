@@ -325,8 +325,8 @@ class _InscriptionPage extends State<InscriptionPage> {
           ),
           onPressed: () {
             if (validateAndSave()) {
-              final _future = Database().updateProfile(widget.userId, _pseudo,
-                  _BMX, _Roller, _Scooter, _Skateboard, context);
+              final _future = Database().updateProfile(context, widget.userId, pseudo: _pseudo,
+                 BMX: _BMX, Roller: _Roller, Scooter: _Scooter, Skateboard: _Skateboard, onCreate: true);
               _future.then((databaseUpdated) {
                 if (databaseUpdated) {
                   print("Profile updated with success");

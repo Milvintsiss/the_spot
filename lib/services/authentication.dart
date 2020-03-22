@@ -58,4 +58,13 @@ class Auth implements BaseAuth {
     FirebaseUser user = await _firebaseAuth.currentUser();
     return user.isEmailVerified;
   }
+
+  Future<bool> deleteCurrentUser() async {
+    FirebaseUser user = await _firebaseAuth.currentUser();
+    user.delete().catchError((err) {
+      print("Auth: " + err.toString());
+      return false;
+    });
+    return true;
+  }
 }

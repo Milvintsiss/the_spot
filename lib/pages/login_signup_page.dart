@@ -18,12 +18,16 @@ class LoginSignupPage extends StatefulWidget {
 class _LoginSignupPageState extends State<LoginSignupPage> {
   final _formKey = new GlobalKey<FormState>();
 
+  final FocusNode _emailFocus = FocusNode();
+  final FocusNode _passwordFocus = FocusNode();
+
   bool _isLoading;
   bool _isLoginForm;
 
   String _email;
   String _password;
   String _errorMessage;
+
 
   // Check if form is valid before perform login or signup
   bool validateAndSave() {
@@ -58,7 +62,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
           _isLoading = false;
         });
 
-        if (userId.length > 0 && userId != null && _isLoginForm) {
+        if (userId.length > 0 && userId != null) {
           widget.loginCallBack();
         } else {
           Vibrate.feedback(FeedbackType.warning);
@@ -158,6 +162,12 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
         style: TextStyle(color: Colors.white),
         maxLines: 1,
         keyboardType: TextInputType.emailAddress,
+        textInputAction: TextInputAction.next,
+        focusNode: _emailFocus,
+        onFieldSubmitted: (term) {
+          _emailFocus.unfocus();
+          FocusScope.of(context).requestFocus(_passwordFocus);
+        },
         autofocus: false,
         decoration: new InputDecoration(
             hintText: 'Email',
@@ -172,7 +182,8 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
               Icons.mail,
               color: Colors.blueGrey[100],
             )),
-        validator: (value) => value.isEmpty
+        validator: (value) =>
+        value.isEmpty
             ? AppLocalizations.of(context).translate('Email can t be empty')
             : null,
         onSaved: (value) => _email = value.trim(),
@@ -188,6 +199,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
         maxLines: 1,
         obscureText: true,
         autofocus: false,
+        focusNode: _passwordFocus,
         decoration: new InputDecoration(
             hintText: AppLocalizations.of(context).translate('Password'),
             hintStyle: TextStyle(color: Colors.blueGrey[100]),
@@ -201,7 +213,8 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
               Icons.lock,
               color: Colors.blueGrey[100],
             )),
-        validator: (value) => value.isEmpty
+        validator: (value) =>
+        value.isEmpty
             ? AppLocalizations.of(context).translate('Password can t be empty')
             : null,
         onSaved: (value) => _password = value.trim(),
@@ -237,7 +250,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
         _isLoginForm
             ? AppLocalizations.of(context).translate('Create an account')
             : AppLocalizations.of(context)
-                .translate('Have an account? Sign in'),
+            .translate('Have an account? Sign in'),
         style: new TextStyle(
             fontSize: 16.0, fontWeight: FontWeight.w500, color: Colors.white),
       ),
