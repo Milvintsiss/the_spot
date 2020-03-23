@@ -3,13 +3,16 @@ import 'dart:async';
 import 'package:fluster/fluster.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/map_helper.dart';
 import 'package:the_spot/services/mapmarker.dart';
 
 import '../../theme.dart';
 
 class Map extends StatefulWidget {
-  const Map({Key key}) : super(key: key);
+  const Map({Key key, this.userId}) : super(key: key);
+
+  final String userId;
 
   @override
   _Map createState() => _Map();
@@ -80,17 +83,13 @@ class _Map extends State<Map> {
 
   /// Inits [Fluster] and all the markers with network images and updates the loading state.
   void _initMarkers() async {
-    for (LatLng markerLocation in _markerLocations) {
-      final BitmapDescriptor markerImage =
-          await MapHelper.getMarkerImageFromUrl(_markerImageUrl);
 
-      markers.add(
-        MapMarker(
-          id: _markerLocations.indexOf(markerLocation).toString(),
-          position: markerLocation,
-          icon: BitmapDescriptor.defaultMarker,
-        ),
-      );
+    List spots = await Database().getSpots(context);
+
+    if (spots != null) {
+      for(MapMarker mapMarker in spots) {
+        markers.add(mapMarker);
+      }
     }
 
     _clusterManager = await MapHelper.initClusterManager(
@@ -282,18 +281,23 @@ class _Map extends State<Map> {
   }
 
   void createSpot(LatLng tapPosition) async {
-    markers.add(MapMarker(
-      id: tapPosition.toString(),
-      position: tapPosition,
-      icon: BitmapDescriptor.defaultMarker,
-    ));
 
-    _clusterManager = await MapHelper.initClusterManager(
-      markers,
-      _minClusterZoom,
-      _maxClusterZoom,
-    );
+    String spotId = await Database().addASpot(context, tapPosition, widget.userId);
 
-    _updateMarkers();
+    if(spotId != null) {
+      markers.add(MapMarker(
+        id: spotId,
+        position: tapPosition,
+        icon: BitmapDescriptor.defaultMarker,
+      ));
+
+      _clusterManager = await MapHelper.initClusterManager(
+        markers,
+        _minClusterZoom,
+        _maxClusterZoom,
+      );
+
+      _updateMarkers();
+    }
   }
 }

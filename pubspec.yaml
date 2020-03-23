@@ -58,8 +58,6 @@ dependencies:
 
   vibrate:
 
-  fluttertoast: ^2.1.4
-
   flutter_cache_manager:
 
 
