@@ -32,7 +32,7 @@ class _HomePageState extends State<HomePage> {
       FeatureNotAvailable(),
       FeatureNotAvailable(),
       FeatureNotAvailable(),
-      Map(),
+      Map(userId: widget.userId),
       Profile(auth: widget.auth, userId: widget.userId, logoutCallback: widget.logoutCallback,)
     ];
   }

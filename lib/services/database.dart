@@ -4,7 +4,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:the_spot/app_localizations.dart';
+import 'package:the_spot/services/mapmarker.dart';
 import 'package:vibrate/vibrate.dart';
 
 class Database {
@@ -29,32 +31,14 @@ class Database {
     });
   }
 
-  void updateData() {
-    try {
-      database
-          .collection('books')
-          .document('1')
-          .updateData({'description': 'Head First Flutter'});
-    } catch (e) {
-      print(e.toString());
-    }
-  }
-
-  void deleteData() {
-    try {
-      database.collection('books').document('1').delete();
-    } catch (e) {
-      print(e.toString());
-    }
-  }
-
   Future<bool> updateProfile(BuildContext context, String userId,
       {bool onCreate = false,
       String pseudo,
       bool BMX,
       bool Roller,
       bool Scooter,
-      bool Skateboard}) async {
+      bool Skateboard,
+      String description}) async {
     final connectionState = await checkConnection(context);
 
     String updateDate = DateTime.now().toIso8601String();
@@ -67,6 +51,7 @@ class Database {
     if (Roller != null) update['Roller'] = Roller;
     if (Scooter != null) update['Scooter'] = Scooter;
     if (Skateboard != null) update['Skateboard'] = Skateboard;
+    if (description != null) update['Description'] = description;
     if (creationDate != null) update['CreationDate'] = creationDate;
 
     update['LastUpdate'] = updateDate;
@@ -154,6 +139,116 @@ class Database {
       return false;
     }
     return true;
+  }
+
+  Future<String> addASpot(
+      BuildContext context, LatLng spotLocation, String creatorId,
+      {String spotName, String spotDescription}) async {
+    final bool connectionState = await checkConnection(context);
+
+    String spotId;
+
+    if (connectionState) {
+      Map _spotData = spotData(true, spotLocation.latitude,
+          spotLocation.longitude, creatorId, spotName, spotDescription);
+
+      await database
+          .collection("spots")
+          .add(_spotData)
+          .then((value) => spotId = value.documentID)
+          .catchError((err) {
+        print(err);
+        error(err.toString(), context);
+        return null;
+      });
+    } else {
+      return null;
+    }
+    print(spotId);
+    return spotId;
+  }
+
+  Future<bool> updateASpot(
+      BuildContext context, String spotId, String creatorId,
+      {LatLng spotLocation, String spotName, String spotDescription}) async {
+    final bool connectionState = await checkConnection(context);
+
+    if (connectionState) {
+      Map _spotData = spotData(false, spotLocation.latitude,
+          spotLocation.longitude, creatorId, spotName, spotDescription);
+
+      await database
+          .collection("spots")
+          .document(spotId)
+          .updateData(_spotData)
+          .catchError((err) {
+        print(err);
+        error(err.toString(), context);
+        return false;
+      });
+    } else {
+      return false;
+    }
+    return true;
+  }
+
+  Future<List> getSpots(BuildContext context) async {
+    final bool connectionState = await checkConnection(context);
+
+    List<MapMarker> spots = new List();
+
+    if (connectionState) {
+      await database
+          .collection("spots")
+          .getDocuments()
+          .then((QuerySnapshot snapshot) {
+        snapshot.documents.forEach((document) {
+          Map data = document.data;
+          print(data);
+          MapMarker spot = MapMarker(
+              id: document.documentID,
+              position: new LatLng(data['SpotLocationLatitude'], data['SpotLocationLongitude']),
+              icon: BitmapDescriptor.defaultMarker,
+          );
+          spots.add(spot);
+        });
+      })
+          .catchError((err) {
+        print(err);
+        error(err.toString(), context);
+        return null;
+      });
+    }else{
+      return null;
+    }
+    return spots;
+  }
+
+  Map spotData(
+      bool onCreate,
+      double spotLocationLatitude,
+      double spotLocationLongitude,
+      String creatorId,
+      String spotName,
+      String spotDescription) {
+    String updateDate = DateTime.now().toIso8601String();
+    String creationDate;
+    if (onCreate) creationDate = updateDate;
+
+    Map data = new Map<String, dynamic>.identity();
+
+    if (spotLocationLatitude != null)
+      data['SpotLocationLatitude'] = spotLocationLatitude;
+    if (spotLocationLongitude != null)
+      data['SpotLocationLongitude'] = spotLocationLongitude;
+    if (creatorId != null) data['CreatorId'] = creatorId;
+    if (spotName != null) data['SpotName'] = spotName;
+    if (spotDescription != null) data['SpotDescription'] = spotDescription;
+
+    if (creationDate != null) data['CreationDate'] = creationDate;
+    data['LastUpdate'] = updateDate;
+
+    return data;
   }
 
   Future<bool> checkConnection(BuildContext context) async {
