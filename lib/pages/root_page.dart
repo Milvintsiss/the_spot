@@ -21,7 +21,7 @@ class RootPage extends StatefulWidget {
 
 
   @override
-  State<StatefulWidget> createState() => new _RootPageState();
+  State<StatefulWidget> createState() => _RootPageState();
 }
 
 class _RootPageState extends State<RootPage> {
@@ -86,7 +86,7 @@ class _RootPageState extends State<RootPage> {
         return buildWaitingScreen();
         break;
       case AuthStatus.NOT_LOGGED_IN:
-        return new LoginSignupPage(
+        return LoginSignupPage(
           auth: widget.auth,
           loginCallBack: loginCallback,
         );
@@ -94,13 +94,13 @@ class _RootPageState extends State<RootPage> {
       case AuthStatus.LOGGED_IN:
         if (_userId.length > 0 && _userId != null) {
           if (_inscriptionState) //if inscription complete go to HomePage
-            return new InscriptionPage(
+            return InscriptionPage(
               userId: _userId,
               auth: widget.auth,
               logoutCallback: logoutCallback,
             );
           else {
-            return new HomePage(
+            return HomePage(
               userId: _userId,
               auth: widget.auth,
               logoutCallback: logoutCallback,

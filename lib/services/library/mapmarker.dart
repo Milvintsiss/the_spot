@@ -6,11 +6,13 @@ class MapMarker extends Clusterable {
   final String id;
   final LatLng position;
   BitmapDescriptor icon;
+  final String description;
 
   MapMarker({
     @required this.id,
     @required this.position,
     this.icon,
+    this.description,
     isCluster = false,
     clusterId,
     pointsSize,

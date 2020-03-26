@@ -69,7 +69,7 @@ class DeleteUser {
   void error(String error, BuildContext context) {
     Vibrate.feedback(FeedbackType.warning);
 
-    AlertDialog errorAlertDialog = new AlertDialog(
+    AlertDialog errorAlertDialog = AlertDialog(
         elevation: 0,
         content: SelectableText(
           error,

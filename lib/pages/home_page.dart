@@ -3,7 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:the_spot/pages/home_page/feature_not_available.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'dart:async';
-import 'package:the_spot/pages/home_page/map.dart';
+import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/pages/home_page/Map/map.dart';
 import 'package:the_spot/pages/home_page/profile.dart';
 
 import '../theme.dart';
@@ -17,13 +17,12 @@ class HomePage extends StatefulWidget {
   final String userId;
 
   @override
-  State<StatefulWidget> createState() => new _HomePageState();
+  State<StatefulWidget> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 3;
   List<Widget> _children;
-
 
   @override
   void initState() {
@@ -32,7 +31,7 @@ class _HomePageState extends State<HomePage> {
       FeatureNotAvailable(),
       FeatureNotAvailable(),
       FeatureNotAvailable(),
-      Map(userId: widget.userId),
+      Map(userId: widget.userId, context: context,),
       Profile(auth: widget.auth, userId: widget.userId, logoutCallback: widget.logoutCallback,)
     ];
   }
@@ -83,7 +82,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
+    return Scaffold(
       drawer: Drawer(
         child: Container(
           color: PrimaryColorDark,

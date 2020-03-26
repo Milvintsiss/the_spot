@@ -10,6 +10,6 @@
   "Create an account": "Créer un compte",
   "Have an account? Sign in": "J'ai déjà un compte",
   "Select your hobby(ies)": "Sélectionnez vos disciplines",
-  "Your Pseudo is too long!": "Tu as vraiment besoin d'un Pseudo aussi long?!",
+  "Your Pseudo must not exceed 20 characters!": "Votre pseudo ne doit pas faire plus de 20 caractères",
   "Please connect to internet!": "Connectez-vous à internet pour continuer!"
 }

@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/deleteUser.dart';
+import 'package:the_spot/services/storage.dart';
 import 'package:vibrate/vibrate.dart';
 
 import '../../theme.dart';
@@ -226,32 +227,14 @@ class _Profile extends State<Profile> {
 
   void loadAvatar() async {
     print("add an Avatar");
-    File _avatarFile;
-    _avatarFile = await ImagePicker.pickImage(source: ImageSource.gallery);
-
-    _avatarFile = await ImageCropper.cropImage(
-        sourcePath: _avatarFile.path,
-        aspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
-        cropStyle: CropStyle.circle,
-        maxHeight: 150,
-        maxWidth: 150,
-        compressQuality: 75,
-        androidUiSettings: AndroidUiSettings(
-          toolbarTitle: 'Profile Picture',
-          toolbarColor: PrimaryColorDark,
-          toolbarWidgetColor: Colors.white,
-          activeControlsWidgetColor: PrimaryColorLight,
-          lockAspectRatio: true,
-        ),
-        iosUiSettings: IOSUiSettings(
-          aspectRatioLockEnabled: true,
-          resetAspectRatioEnabled: false,
-        ));
-
-    final StorageReference storageReference =
-        FirebaseStorage().ref().child("ProfilePictures/" + widget.userId);
-    final StorageUploadTask uploadTask = storageReference.putFile(_avatarFile);
-    await uploadTask.onComplete;
+    bool uploadIsSuccessful = await Storage().getPhotoFromUserStorageAndUpload(
+        "ProfilePictures/" + widget.userId,
+      cropStyle: CropStyle.circle,
+      cropAspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
+      maxHeight: 150,
+      maxWidth: 150,
+      compressQuality: 75,
+    );
 
     loadAvatarFromDatabase();
   }

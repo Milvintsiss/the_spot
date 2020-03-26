@@ -1,18 +1,21 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:fluster/fluster.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:the_spot/pages/home_page/Map/createUpdateSpot_page.dart';
 import 'package:the_spot/services/database.dart';
-import 'package:the_spot/services/map_helper.dart';
-import 'package:the_spot/services/mapmarker.dart';
+import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/services/library/map_helper.dart';
+import 'package:the_spot/services/library/mapmarker.dart';
 
-import '../../theme.dart';
+import '../../../theme.dart';
 
 class Map extends StatefulWidget {
-  const Map({Key key, this.userId}) : super(key: key);
+  const Map({Key key, this.userId, this.context}) : super(key: key);
 
   final String userId;
+  final BuildContext context;
 
   @override
   _Map createState() => _Map();
@@ -83,13 +86,12 @@ class _Map extends State<Map> {
 
   /// Inits [Fluster] and all the markers with network images and updates the loading state.
   void _initMarkers() async {
-
-    List spots = await Database().getSpots(context);
+    List<MapMarker> spots = await Database().getSpots(context);
 
     if (spots != null) {
-      for(MapMarker mapMarker in spots) {
-        markers.add(mapMarker);
-      }
+      spots.forEach((spot) {
+        markers.add(spot);
+      });
     }
 
     _clusterManager = await MapHelper.initClusterManager(
@@ -122,13 +124,25 @@ class _Map extends State<Map> {
       80,
     );
 
-    _markers
-      ..clear()
-      ..addAll(updatedMarkers);
+    List<Marker> __markers =  List();
+    __markers.addAll(updatedMarkers);
+    _markers.clear();
+
+    __markers.forEach((marker) {
+      _markers.add( Marker(
+          markerId: marker.markerId,
+          position: marker.position,
+          icon: marker.icon,
+          onTap: () => onMarkerTap(marker.markerId.value)));
+    });
 
     setState(() {
       _areMarkersLoading = false;
     });
+  }
+
+  void onMarkerTap(String markerId) {
+    print(markerId);
   }
 
   @override
@@ -191,7 +205,7 @@ class _Map extends State<Map> {
                     Icons.place,
                     color: SecondaryColorDark,
                   ),
-                  onPressed: () => print("AddAMarker"),
+                  onPressed: () => print("place button pressed"),
                 ),
                 IconButton(
                   icon: Icon(
@@ -280,24 +294,38 @@ class _Map extends State<Map> {
         ));
   }
 
+  void createSpotCallBack(){
+    print(widget.userId);
+  }
+
   void createSpot(LatLng tapPosition) async {
+    String spotId =
+        await Database().addASpot(context, tapPosition, widget.userId);
 
-    String spotId = await Database().addASpot(context, tapPosition, widget.userId);
+    Navigator.push(
+        widget.context,
+        MaterialPageRoute(
+            builder: (context) =>  CreateUpdateSpotPage(
+              spotId,
+              stateCallback: createSpotCallBack,
+            )));
 
-    if(spotId != null) {
-      markers.add(MapMarker(
-        id: spotId,
-        position: tapPosition,
-        icon: BitmapDescriptor.defaultMarker,
-      ));
-
-      _clusterManager = await MapHelper.initClusterManager(
-        markers,
-        _minClusterZoom,
-        _maxClusterZoom,
-      );
-
-      _updateMarkers();
-    }
+//    if (spotId != null) {
+//      markers.add(MapMarker(
+//        id: spotId,
+//        position: tapPosition,
+//        icon: BitmapDescriptor.defaultMarker,
+//      ));
+//
+//      _clusterManager = await MapHelper.initClusterManager(
+//        markers,
+//        _minClusterZoom,
+//        _maxClusterZoom,
+//      );
+//      print("add a spot");
+//
+//
+//      _updateMarkers();
+//    }
   }
 }
