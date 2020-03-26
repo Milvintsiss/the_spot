@@ -10,6 +10,7 @@ import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/home_page.dart';
 import 'package:the_spot/main.dart';
 import 'package:the_spot/pages/root_page.dart';
+import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/theme.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
@@ -29,7 +30,8 @@ class InscriptionPage extends StatefulWidget {
 }
 
 class _InscriptionPage extends State<InscriptionPage> {
-  final _formKey = new GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
+
 
   String _userID;
   String _pseudo;
@@ -39,7 +41,7 @@ class _InscriptionPage extends State<InscriptionPage> {
   bool _Scooter = false;
   bool _Roller = false;
 
-  File _avatar;
+  String avatar;
 
   bool validateAndSave() {
     final form = _formKey.currentState;
@@ -80,7 +82,7 @@ class _InscriptionPage extends State<InscriptionPage> {
               radius: 80,
               foregroundColor: PrimaryColorDark,
               child: Stack(overflow: Overflow.visible, children: <Widget>[
-                _avatar == null
+                avatar == null
                     ? Icon(
                         Icons.person,
                         size: 100,
@@ -90,29 +92,29 @@ class _InscriptionPage extends State<InscriptionPage> {
                         width: 160,
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(200),
-                          child: Image.file(
-                            _avatar,
+                          child: Image.network(
+                            avatar,
                             fit: BoxFit.fill,
                           ),
                         ),
                       ),
-                _avatar == null
+                avatar == null
                     ? Positioned(
-                        bottom: -40,
-                        right: -40,
-                        child: Icon(
-                          Icons.add_circle,
-                          size: 60,
-                          color: SecondaryColor,
-                        ))
+                    bottom: -40,
+                    right: -40,
+                    child: Icon(
+                      Icons.add_circle,
+                      size: 60,
+                      color: SecondaryColor,
+                    ))
                     : Positioned(
-                        bottom: -10,
-                        right: -10,
-                        child: Icon(
-                          Icons.add_circle,
-                          size: 60,
-                          color: SecondaryColor,
-                        )),
+                    bottom: -10,
+                    right: -10,
+                    child: Icon(
+                      Icons.add_circle,
+                      size: 60,
+                      color: SecondaryColor,
+                    )),
               ]),
             ),
           )),
@@ -121,32 +123,22 @@ class _InscriptionPage extends State<InscriptionPage> {
 
   void loadAvatar() async {
     print("add an Avatar");
-    _avatar = await ImagePicker.pickImage(source: ImageSource.gallery);
+    bool uploadIsSuccessful = await Storage().getPhotoFromUserStorageAndUpload(
+      "ProfilePictures/" + widget.userId,
+      cropStyle: CropStyle.circle,
+      cropAspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
+      maxHeight: 150,
+      maxWidth: 150,
+      compressQuality: 75,
+    );
 
-    _avatar = await ImageCropper.cropImage(
-        sourcePath: _avatar.path,
-        aspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
-        cropStyle: CropStyle.circle,
-        maxHeight: 150,
-        maxWidth: 150,
-        compressQuality: 75,
-        androidUiSettings: AndroidUiSettings(
-          toolbarTitle: 'Profile Picture',
-          toolbarColor: PrimaryColorDark,
-          toolbarWidgetColor: Colors.white,
-          activeControlsWidgetColor: PrimaryColorLight,
-          lockAspectRatio: true,
-        ),
-        iosUiSettings: IOSUiSettings(
-          aspectRatioLockEnabled: true,
-          resetAspectRatioEnabled: false,
-        ));
+    loadAvatarFromDatabase();
+  }
 
+  void loadAvatarFromDatabase() async {
     final StorageReference storageReference =
-        FirebaseStorage().ref().child("ProfilePictures/" + widget.userId);
-    final StorageUploadTask uploadTask = storageReference.putFile(_avatar);
-    await uploadTask.onComplete;
-
+    FirebaseStorage().ref().child("ProfilePictures/" + widget.userId);
+    avatar = await storageReference.getDownloadURL();
     setState(() {
       showAvatarWidget();
     });
@@ -155,20 +147,20 @@ class _InscriptionPage extends State<InscriptionPage> {
   Widget showPseudoInput() {
     return Padding(
       padding: EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),
-      child: new Form(
+      child: Form(
         key: _formKey,
-        child: new TextFormField(
+        child: TextFormField(
           style: TextStyle(color: Colors.white),
           maxLines: 1,
           autofocus: false,
-          decoration: new InputDecoration(
+          decoration: InputDecoration(
             hintText: AppLocalizations.of(context).translate('Username'),
             hintStyle: TextStyle(color: Colors.blueGrey[100]),
             fillColor: PrimaryColorLight,
             filled: true,
-            contentPadding: new EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
-            border: new OutlineInputBorder(
-              borderRadius: new BorderRadius.circular(12.0),
+            contentPadding: EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
             ),
           ),
           validator: (String str) {
@@ -176,15 +168,11 @@ class _InscriptionPage extends State<InscriptionPage> {
               return AppLocalizations.of(context)
                   .translate('Pseudo can t be empty');
             } else if (str.length > 20) {
-              print('Pseudo is too long');
               return AppLocalizations.of(context)
-                  .translate('Your Pseudo is too long!');
-            } else {
+                  .translate('Your Pseudo must not exceed 20 characters!');
+            } else{
               return null;
             }
-          },
-          onChanged: (str) {
-            validateAndSave();
           },
           onSaved: (String str) {
             _pseudo = str.trim();
@@ -199,7 +187,7 @@ class _InscriptionPage extends State<InscriptionPage> {
       padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
       child: Material(
         shape: RoundedRectangleBorder(
-          borderRadius: new BorderRadius.circular(20.0),
+          borderRadius: BorderRadius.circular(20.0),
         ),
         color: PrimaryColorLight,
         child: Column(
@@ -221,7 +209,7 @@ class _InscriptionPage extends State<InscriptionPage> {
             ),
             Container(
               height: 90,
-              child: new ListView(
+              child: ListView(
                 shrinkWrap: false,
                 scrollDirection: Axis.horizontal,
                 children: <Widget>[
@@ -251,7 +239,7 @@ class _InscriptionPage extends State<InscriptionPage> {
         child: Material(
           // needed
           shape: RoundedRectangleBorder(
-              borderRadius: new BorderRadius.circular(14.0),
+              borderRadius: BorderRadius.circular(14.0),
               side: BorderSide(
                   width: 3,
                   color: practice == "assets/images/Roller.png" && _Roller ||
@@ -297,21 +285,21 @@ class _InscriptionPage extends State<InscriptionPage> {
   }
 
   Widget showNextButton() {
-    return new Padding(
+    return Padding(
       padding: EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 20.0),
       child: SizedBox(
         height: 40.0,
-        child: new RaisedButton(
+        child: RaisedButton(
           elevation: 5.0,
-          shape: new RoundedRectangleBorder(
-              borderRadius: new BorderRadius.circular(30.0)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.0)),
           color: SecondaryColor,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              new Text(
+              Text(
                 AppLocalizations.of(context).translate('Next'),
-                style: new TextStyle(fontSize: 15.0, color: Colors.white),
+                style: TextStyle(fontSize: 15.0, color: Colors.white),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
@@ -333,7 +321,7 @@ class _InscriptionPage extends State<InscriptionPage> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => new RootPage(
+                          builder: (context) => RootPage(
                                 auth: widget.auth,
                               )));
                 } else {

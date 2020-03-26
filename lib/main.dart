@@ -9,7 +9,7 @@ import 'package:the_spot/app_localizations.dart';
 
 
 
-void main() => runApp(new MyApp());
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
 
@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
         // from the list (English, in this case).
         return supportedLocales.first;
       },
-        home: new RootPage(auth: new Auth()),
+        home: new RootPage(auth: Auth()),
         debugShowCheckedModeBanner: false,
     );
   }

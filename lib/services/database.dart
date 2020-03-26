@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:the_spot/app_localizations.dart';
-import 'package:the_spot/services/mapmarker.dart';
+import 'package:the_spot/services/library/mapmarker.dart';
 import 'package:vibrate/vibrate.dart';
 
 class Database {
@@ -45,7 +45,7 @@ class Database {
     String creationDate;
     if (onCreate) creationDate = updateDate;
 
-    Map update = new Map<String, dynamic>.identity();
+    Map update = Map<String, dynamic>.identity();
     if (pseudo != null) update['Pseudo'] = pseudo;
     if (BMX != null) update['BMX'] = BMX;
     if (Roller != null) update['Roller'] = Roller;
@@ -149,8 +149,7 @@ class Database {
     String spotId;
 
     if (connectionState) {
-      Map _spotData = spotData(true, spotLocation.latitude,
-          spotLocation.longitude, creatorId, spotName, spotDescription);
+      Map _spotData = spotData(true, spotLocation, creatorId, spotName, spotDescription);
 
       await database
           .collection("spots")
@@ -169,13 +168,12 @@ class Database {
   }
 
   Future<bool> updateASpot(
-      BuildContext context, String spotId, String creatorId,
-      {LatLng spotLocation, String spotName, String spotDescription}) async {
+      BuildContext context, String spotId,
+      {String creatorId, LatLng spotLocation, String spotName, String spotDescription}) async {
     final bool connectionState = await checkConnection(context);
 
     if (connectionState) {
-      Map _spotData = spotData(false, spotLocation.latitude,
-          spotLocation.longitude, creatorId, spotName, spotDescription);
+      Map _spotData = spotData(false, spotLocation, creatorId, spotName, spotDescription);
 
       await database
           .collection("spots")
@@ -209,6 +207,7 @@ class Database {
               id: document.documentID,
               position: new LatLng(data['SpotLocationLatitude'], data['SpotLocationLongitude']),
               icon: BitmapDescriptor.defaultMarker,
+              description: data['Description'],
           );
           spots.add(spot);
         });
@@ -226,8 +225,7 @@ class Database {
 
   Map spotData(
       bool onCreate,
-      double spotLocationLatitude,
-      double spotLocationLongitude,
+      LatLng spotLocation,
       String creatorId,
       String spotName,
       String spotDescription) {
@@ -235,12 +233,12 @@ class Database {
     String creationDate;
     if (onCreate) creationDate = updateDate;
 
-    Map data = new Map<String, dynamic>.identity();
+    Map data = Map<String, dynamic>.identity();
 
-    if (spotLocationLatitude != null)
-      data['SpotLocationLatitude'] = spotLocationLatitude;
-    if (spotLocationLongitude != null)
-      data['SpotLocationLongitude'] = spotLocationLongitude;
+    if (spotLocation != null){
+      data['SpotLocationLatitude'] = spotLocation.latitude;
+      data['SpotLocationLongitude'] = spotLocation.longitude;
+    }
     if (creatorId != null) data['CreatorId'] = creatorId;
     if (spotName != null) data['SpotName'] = spotName;
     if (spotDescription != null) data['SpotDescription'] = spotDescription;

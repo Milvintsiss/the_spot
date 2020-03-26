@@ -12,11 +12,11 @@ class LoginSignupPage extends StatefulWidget {
   final VoidCallback loginCallBack;
 
   @override
-  State<StatefulWidget> createState() => new _LoginSignupPageState();
+  State<StatefulWidget> createState() => _LoginSignupPageState();
 }
 
 class _LoginSignupPageState extends State<LoginSignupPage> {
-  final _formKey = new GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
   final FocusNode _emailFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
@@ -125,10 +125,10 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   }
 
   Widget showForm() {
-    return new Container(
-      child: new Form(
+    return Container(
+      child: Form(
         key: _formKey,
-        child: new ListView(
+        child: ListView(
           children: <Widget>[
             showLogo(),
             showEmailInput(),
@@ -143,7 +143,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   }
 
   Widget showLogo() {
-    return new Hero(
+    return Hero(
         tag: 'hero',
         child: Padding(
           padding: EdgeInsets.fromLTRB(16.0, 36.0, 16.0, 20.0),
@@ -158,7 +158,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   Widget showEmailInput() {
     return Padding(
       padding: EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 0.0),
-      child: new TextFormField(
+      child: TextFormField(
         style: TextStyle(color: Colors.white),
         maxLines: 1,
         keyboardType: TextInputType.emailAddress,
@@ -169,16 +169,16 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
           FocusScope.of(context).requestFocus(_passwordFocus);
         },
         autofocus: false,
-        decoration: new InputDecoration(
+        decoration: InputDecoration(
             hintText: 'Email',
             hintStyle: TextStyle(color: Colors.blueGrey[100]),
             fillColor: SecondaryColorDark,
             filled: true,
-            contentPadding: new EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
-            border: new OutlineInputBorder(
-              borderRadius: new BorderRadius.circular(12.0),
+            contentPadding: EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
             ),
-            icon: new Icon(
+            icon: Icon(
               Icons.mail,
               color: Colors.blueGrey[100],
             )),
@@ -194,22 +194,22 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   Widget showPasswordInput() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16.0, 15.0, 16.0, 0.0),
-      child: new TextFormField(
+      child: TextFormField(
         style: TextStyle(color: Colors.white),
         maxLines: 1,
         obscureText: true,
         autofocus: false,
         focusNode: _passwordFocus,
-        decoration: new InputDecoration(
+        decoration: InputDecoration(
             hintText: AppLocalizations.of(context).translate('Password'),
             hintStyle: TextStyle(color: Colors.blueGrey[100]),
             fillColor: SecondaryColorDark,
             filled: true,
-            contentPadding: new EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
-            border: new OutlineInputBorder(
-              borderRadius: new BorderRadius.circular(12.0),
+            contentPadding: EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
             ),
-            icon: new Icon(
+            icon: Icon(
               Icons.lock,
               color: Colors.blueGrey[100],
             )),
@@ -223,20 +223,20 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   }
 
   Widget showPrimaryButton() {
-    return new Padding(
+    return Padding(
       padding: EdgeInsets.fromLTRB(16.0, 45.0, 16.0, 0.0),
       child: SizedBox(
         height: 40.0,
-        child: new RaisedButton(
+        child: RaisedButton(
           elevation: 5.0,
-          shape: new RoundedRectangleBorder(
-              borderRadius: new BorderRadius.circular(30.0)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.0)),
           color: SecondaryColorDark,
-          child: new Text(
+          child: Text(
             _isLoginForm
                 ? AppLocalizations.of(context).translate('Login')
                 : AppLocalizations.of(context).translate('Create account'),
-            style: new TextStyle(fontSize: 20.0, color: Colors.white),
+            style: TextStyle(fontSize: 20.0, color: Colors.white),
           ),
           onPressed: () => validateAndSubmit(),
         ),
@@ -245,13 +245,13 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   }
 
   Widget showSecondaryButton() {
-    return new FlatButton(
-      child: new Text(
+    return FlatButton(
+      child: Text(
         _isLoginForm
             ? AppLocalizations.of(context).translate('Create an account')
             : AppLocalizations.of(context)
             .translate('Have an account? Sign in'),
-        style: new TextStyle(
+        style: TextStyle(
             fontSize: 16.0, fontWeight: FontWeight.w500, color: Colors.white),
       ),
       onPressed: toggleFormMode,
@@ -260,7 +260,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
 
   Widget showErrorMessage() {
     if (_errorMessage != null) {
-      return new Text(
+      return Text(
         _errorMessage,
         style: TextStyle(
             fontSize: 13.0,
@@ -269,7 +269,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
             fontWeight: FontWeight.w300),
       );
     } else {
-      return new Container(
+      return Container(
         height: 0.0,
       );
     }
