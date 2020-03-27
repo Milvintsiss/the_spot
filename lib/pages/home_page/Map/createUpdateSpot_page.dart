@@ -191,6 +191,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
 
       Database().updateASpot(context, widget.spotId, spotName: spotName, spotDescription: spotDescription);
 
+      widget.stateCallback();
       Navigator.pop(context);
     }
   }
