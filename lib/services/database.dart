@@ -207,9 +207,12 @@ class Database {
               id: document.documentID,
               position: new LatLng(data['SpotLocationLatitude'], data['SpotLocationLongitude']),
               icon: BitmapDescriptor.defaultMarker,
-              description: data['Description'],
+              name: data['SpotName'],
+              description: data['SpotDescription'],
           );
-          spots.add(spot);
+          if(data['SpotName'] != null) {//verify if spot has been updated after his creation
+            spots.add(spot);
+          }
         });
       })
           .catchError((err) {

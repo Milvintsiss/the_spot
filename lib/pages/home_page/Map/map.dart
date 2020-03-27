@@ -88,6 +88,8 @@ class _Map extends State<Map> {
   void _initMarkers() async {
     List<MapMarker> spots = await Database().getSpots(context);
 
+    markers.clear();
+
     if (spots != null) {
       spots.forEach((spot) {
         markers.add(spot);
@@ -295,7 +297,7 @@ class _Map extends State<Map> {
   }
 
   void createSpotCallBack(){
-    print(widget.userId);
+    _initMarkers();
   }
 
   void createSpot(LatLng tapPosition) async {
