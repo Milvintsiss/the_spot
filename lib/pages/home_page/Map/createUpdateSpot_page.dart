@@ -21,7 +21,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
 
-  List<String> imageAddress = <String>[];
+  List<String> imagesAddress = <String>[];
 
   int pictureId = 0;
 
@@ -65,8 +65,9 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
         decoration: BoxDecoration(
             color: PrimaryColor,
             borderRadius: BorderRadius.all(Radius.circular(10)),),
-        child: Gallery(imageAddress, height: 200));
+        child: Gallery(imagesAddress, height: 200));
   }
+
   Widget showAddLimitationText(){
     return Text(
       "You can add up to 10 photos",
@@ -106,15 +107,14 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
       pictureId++;
       await Storage().getPhotoFromUserStorageAndUpload(
           "SpotPictures/" + widget.spotId + "/" + pictureId.toString());
-      StorageReference storageReference =
-      FirebaseStorage().ref().child(
-          "SpotPictures/" + widget.spotId + "/" + pictureId.toString());
-      String picture = await storageReference.getDownloadURL();
+
+      String picture = await Storage().getUrlPhoto("SpotPictures/" + widget.spotId + "/" + pictureId.toString());
+
       this.setState(() {
-        imageAddress.add(picture);
+        imagesAddress.add(picture);
         showPhotos();
       });
-      print(imageAddress);
+      print(imagesAddress);
     }else{
       _scaffoldKey.currentState.showSnackBar(SnackBar(
         content: Text("You riched the limit amount of photos!"),
@@ -146,7 +146,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
         validator: (value) {
           if (value.isEmpty)
             return "You must complete this field!";
-          else if (value.length > 20 && inputType == "Spot name")
+          else if (value.length > 35 && inputType == "Spot name")
             return "The spot name must not exceed 20 characters!";
           else if (value.length > 2000 && inputType == "Spot descritpion")
             return "The spot description must not exceed 2000 characters!";
@@ -187,9 +187,9 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
   void save() async {
     if (validateAndSave()){
       print("Spot name: " + spotName);
-      print("Spot description" + spotDescription);
+      print("Spot description: " + spotDescription);
 
-      Database().updateASpot(context, widget.spotId, spotName: spotName, spotDescription: spotDescription);
+      Database().updateASpot(context, widget.spotId, spotName: spotName, spotDescription: spotDescription, imagesDownloadUrls: imagesAddress);
 
       widget.stateCallback();
       Navigator.pop(context);
