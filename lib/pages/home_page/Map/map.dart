@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:the_spot/pages/home_page/Map/createUpdateSpot_page.dart';
 import 'package:the_spot/services/database.dart';
-import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/services/library/map_helper.dart';
+import 'package:the_spot/services/library/gallery.dart';
+import 'package:the_spot/services/library/map_helper.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
 
 import '../../../theme.dart';
@@ -25,6 +26,9 @@ class _Map extends State<Map> {
   final Completer<GoogleMapController> _mapController = Completer();
 
   GoogleMapController _controller;
+
+  double screenWidth;
+  double screenheight;
 
   /// Set of displayed markers and cluster markers on the map
   final Set<Marker> _markers = Set();
@@ -60,13 +64,7 @@ class _Map extends State<Map> {
   /// Color of the cluster text
   final Color _clusterTextColor = Colors.white;
 
-  /// Example marker coordinates
-  final List<LatLng> _markerLocations = [
-    LatLng(41.147125, -8.611249),
-    LatLng(41.145599, -8.610691),
-    LatLng(41.146775, -8.614913),
-    LatLng(41.146982, -8.615682),
-  ];
+  List<MapMarker> spots = List();
 
   final List<MapMarker> markers = [];
 
@@ -86,7 +84,7 @@ class _Map extends State<Map> {
 
   /// Inits [Fluster] and all the markers with network images and updates the loading state.
   void _initMarkers() async {
-    List<MapMarker> spots = await Database().getSpots(context);
+    spots = await Database().getSpots(context);
 
     markers.clear();
 
@@ -126,16 +124,16 @@ class _Map extends State<Map> {
       80,
     );
 
-    List<Marker> __markers =  List();
+    List<Marker> __markers = List();
     __markers.addAll(updatedMarkers);
     _markers.clear();
 
     __markers.forEach((marker) {
-      _markers.add( Marker(
+      _markers.add(Marker(
           markerId: marker.markerId,
           position: marker.position,
           icon: marker.icon,
-          onTap: () => onMarkerTap(marker.markerId.value)));
+          onTap: () => showSpotInfo(marker.markerId.value)));
     });
 
     setState(() {
@@ -143,12 +141,10 @@ class _Map extends State<Map> {
     });
   }
 
-  void onMarkerTap(String markerId) {
-    print(markerId);
-  }
-
   @override
   Widget build(BuildContext context) {
+    screenWidth = MediaQuery.of(context).size.width;
+    screenheight = MediaQuery.of(context).size.height;
     return Scaffold(
       body: Stack(
         children: <Widget>[
@@ -235,6 +231,91 @@ class _Map extends State<Map> {
     );
   }
 
+  void showSpotInfo(String markerId) async {
+    MapMarker spot =
+        spots.firstWhere((element) => element.markerId == markerId);
+    print("SpotId: " + markerId);
+    print("SpotName: " + spot.name);
+    print(spot.imagesDownloadUrls);
+
+    bool _isSpotHasImages;
+    if (spot.imagesDownloadUrls == null || spot.imagesDownloadUrls.length == 0)
+      _isSpotHasImages = false;
+    else
+      _isSpotHasImages = true;
+
+
+    showModalBottomSheet(
+        context: context,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(30),)),
+        builder: (builder) {
+          return Container(
+            height: screenheight * 2/5,
+            decoration: BoxDecoration(
+                color: PrimaryColorDark,
+                borderRadius: BorderRadius.only(topRight: Radius.circular(30), topLeft: Radius.circular(30),)),
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
+              children: <Widget>[
+                _isSpotHasImages ? showSpotPhotosWidget(spot.imagesDownloadUrls) : Container(),
+                showSpotNameWidget(spot.name),
+                showSpotDescriptionWidget(spot.description),
+              ],
+            ),
+          );
+        });
+  }
+
+  Widget showSpotNameWidget(String spotName){
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
+    child:
+      Center(
+      child: Container(
+          padding: EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: SecondaryColorDark,
+            borderRadius: BorderRadius.all(Radius.circular(20)),
+          ),
+          child: Text(
+            spotName,
+            style: TextStyle(color: Colors.white, fontSize: 25),
+          )),
+    ));
+  }
+
+  Widget showSpotPhotosWidget(List<String> imagesAddress) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+      child: Gallery(imagesAddress, height: 100),
+    );
+  }
+
+  Widget showSpotDontHaveImagesMessageWidget() {
+    return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+        child: Text("We don't have pictures of this spot for the moment...")
+    );
+  }
+
+  Widget showSpotDescriptionWidget(String spotName){
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: Center(
+        child: Container(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: PrimaryColor,
+              borderRadius: BorderRadius.all(Radius.circular(15)),
+            ),
+            child: Text(
+              spotName,
+              style: TextStyle(color: Colors.white, fontSize: 15),
+            )),
+      ),
+    );
+  }
+
   void showDialogSpotLocation() {
     showDialog(
         context: context,
@@ -296,7 +377,7 @@ class _Map extends State<Map> {
         ));
   }
 
-  void createSpotCallBack(){
+  void createSpotCallBack() {
     _initMarkers();
   }
 
@@ -307,10 +388,10 @@ class _Map extends State<Map> {
     Navigator.push(
         widget.context,
         MaterialPageRoute(
-            builder: (context) =>  CreateUpdateSpotPage(
-              spotId,
-              stateCallback: createSpotCallBack,
-            )));
+            builder: (context) => CreateUpdateSpotPage(
+                  spotId,
+                  stateCallback: createSpotCallBack,
+                )));
 
 //    if (spotId != null) {
 //      markers.add(MapMarker(

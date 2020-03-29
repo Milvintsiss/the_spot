@@ -143,13 +143,13 @@ class Database {
 
   Future<String> addASpot(
       BuildContext context, LatLng spotLocation, String creatorId,
-      {String spotName, String spotDescription}) async {
+      {String spotName, String spotDescription, List<String> imagesDownloadUrls}) async {
     final bool connectionState = await checkConnection(context);
 
     String spotId;
 
     if (connectionState) {
-      Map _spotData = spotData(true, spotLocation, creatorId, spotName, spotDescription);
+      Map _spotData = spotData(true, spotLocation, creatorId, spotName, spotDescription, imagesDownloadUrls);
 
       await database
           .collection("spots")
@@ -169,11 +169,11 @@ class Database {
 
   Future<bool> updateASpot(
       BuildContext context, String spotId,
-      {String creatorId, LatLng spotLocation, String spotName, String spotDescription}) async {
+      {String creatorId, LatLng spotLocation, String spotName, String spotDescription, List<String> imagesDownloadUrls}) async {
     final bool connectionState = await checkConnection(context);
 
     if (connectionState) {
-      Map _spotData = spotData(false, spotLocation, creatorId, spotName, spotDescription);
+      Map _spotData = spotData(false, spotLocation, creatorId, spotName, spotDescription, imagesDownloadUrls);
 
       await database
           .collection("spots")
@@ -203,12 +203,21 @@ class Database {
         snapshot.documents.forEach((document) {
           Map data = document.data;
           print(data);
+
+          //convert the List<dynamic> into List<String>
+          List <String> imagesDownloadUrls = [];
+          if(data['ImagesDownloadUrls'] != null) {
+            imagesDownloadUrls = data['ImagesDownloadUrls'].cast<String>();
+            print(imagesDownloadUrls);
+          }
+
           MapMarker spot = MapMarker(
               id: document.documentID,
               position: new LatLng(data['SpotLocationLatitude'], data['SpotLocationLongitude']),
               icon: BitmapDescriptor.defaultMarker,
               name: data['SpotName'],
               description: data['SpotDescription'],
+              imagesDownloadUrls: imagesDownloadUrls,
           );
           if(data['SpotName'] != null) {//verify if spot has been updated after his creation
             spots.add(spot);
@@ -231,7 +240,8 @@ class Database {
       LatLng spotLocation,
       String creatorId,
       String spotName,
-      String spotDescription) {
+      String spotDescription,
+      List<String> imagesDownloadUrls) {
     String updateDate = DateTime.now().toIso8601String();
     String creationDate;
     if (onCreate) creationDate = updateDate;
@@ -245,6 +255,7 @@ class Database {
     if (creatorId != null) data['CreatorId'] = creatorId;
     if (spotName != null) data['SpotName'] = spotName;
     if (spotDescription != null) data['SpotDescription'] = spotDescription;
+    if (imagesDownloadUrls != null) data['ImagesDownloadUrls'] = imagesDownloadUrls;
 
     if (creationDate != null) data['CreationDate'] = creationDate;
     data['LastUpdate'] = updateDate;

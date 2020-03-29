@@ -51,4 +51,11 @@ class Storage {
     }
 
   }
+
+  Future<String> getUrlPhoto (String locationOnStorage) async {
+    StorageReference storageReference =
+    FirebaseStorage().ref().child(locationOnStorage);
+    String picture = await storageReference.getDownloadURL();
+    return picture;
+  }
 }

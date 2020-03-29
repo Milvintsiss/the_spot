@@ -8,6 +8,7 @@ class MapMarker extends Clusterable {
   BitmapDescriptor icon;
   final String name;
   final String description;
+  final List<String> imagesDownloadUrls;
 
   MapMarker({
     @required this.id,
@@ -15,6 +16,7 @@ class MapMarker extends Clusterable {
     this.icon,
     this.name,
     this.description,
+    this.imagesDownloadUrls,
     isCluster = false,
     clusterId,
     pointsSize,
