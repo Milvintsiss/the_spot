@@ -7,7 +7,7 @@
 	<key>REVERSED_CLIENT_ID</key>
 	<string>com.googleusercontent.apps.116648559321-pi8nskcd5v0mgpupb78839opl5soknfb</string>
 	<key>API_KEY</key>
-	<string>AIzaSyBQ1B8aiBuNWfwUN7DxBDApyc5s6kmRhAg</string>
+	<string>AIzaSyAbCndcpV9cWFkoEYREJRmZtj8k9Epyxps</string>
 	<key>GCM_SENDER_ID</key>
 	<string>116648559321</string>
 	<key>PLIST_VERSION</key>
@@ -29,7 +29,7 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:116648559321:ios:71a807060e317c7ab874c8</string>
+	<string>1:116648559321:ios:8e94cd634cc01422b874c8</string>
 	<key>DATABASE_URL</key>
 	<string>https://the-spot-255718.firebaseio.com</string>
 </dict>
