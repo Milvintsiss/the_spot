@@ -3,7 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:the_spot/pages/home_page/feature_not_available.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'dart:async';
-import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/pages/home_page/Map/map.dart';
+import 'package:the_spot/pages/home_page/Map/map.dart';
 import 'package:the_spot/pages/home_page/profile.dart';
 
 import '../theme.dart';
