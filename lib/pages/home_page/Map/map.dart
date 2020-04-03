@@ -298,7 +298,7 @@ class _Map extends State<Map> {
     );
   }
 
-  Widget showSpotDescriptionWidget(String spotName){
+  Widget showSpotDescriptionWidget(String spotDescription){
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Center(
@@ -309,7 +309,7 @@ class _Map extends State<Map> {
               borderRadius: BorderRadius.all(Radius.circular(15)),
             ),
             child: Text(
-              spotName,
+              spotDescription,
               style: TextStyle(color: Colors.white, fontSize: 15),
             )),
       ),
