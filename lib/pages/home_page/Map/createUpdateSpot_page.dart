@@ -189,7 +189,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
       print("Spot name: " + spotName);
       print("Spot description: " + spotDescription);
 
-      Database().updateASpot(context, widget.spotId, spotName: spotName, spotDescription: spotDescription, imagesDownloadUrls: imagesAddress);
+      Database().updateASpot(context: context, spotId: widget.spotId, spotName: spotName, spotDescription: spotDescription, imagesDownloadUrls: imagesAddress);
 
       widget.stateCallback();
       Navigator.pop(context);

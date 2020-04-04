@@ -44,7 +44,6 @@ dependencies:
   photo_view: ^0.9.2
   flutter_svg:
 
-
   image: ^2.1.4
   image_cropper: ^1.2.1
 
@@ -58,10 +57,12 @@ dependencies:
 
 
 
-
+  #others
   shared_preferences: ^0.5.6
 
-  vibrate:
+  vibrate: ^0.0.4
+
+  flutter_rating_bar: ^3.0.1+1
 
   flutter_cache_manager:
 

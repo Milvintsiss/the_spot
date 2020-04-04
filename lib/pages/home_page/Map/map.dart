@@ -3,12 +3,14 @@ import 'dart:ui';
 
 import 'package:fluster/fluster.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:the_spot/pages/home_page/Map/createUpdateSpot_page.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/gallery.dart';
 import 'package:the_spot/services/library/map_helper.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
+import 'package:the_spot/services/library/userRate.dart';
 
 import '../../../theme.dart';
 
@@ -28,7 +30,17 @@ class _Map extends State<Map> {
   GoogleMapController _controller;
 
   double screenWidth;
-  double screenheight;
+  double screenHeight;
+
+  bool userIsRatingTheSpot = false;
+  bool spotHasRates = true;
+  bool userRatingNotComplete = false;
+  double spotRate;
+  double spotRateBeauty;
+  double spotRateFloor;
+  double spotRateInput;
+  double spotRateBeautyInput;
+  double spotRateFloorInput;
 
   /// Set of displayed markers and cluster markers on the map
   final Set<Marker> _markers = Set();
@@ -144,7 +156,7 @@ class _Map extends State<Map> {
   @override
   Widget build(BuildContext context) {
     screenWidth = MediaQuery.of(context).size.width;
-    screenheight = MediaQuery.of(context).size.height;
+    screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       body: Stack(
         children: <Widget>[
@@ -232,6 +244,12 @@ class _Map extends State<Map> {
   }
 
   void showSpotInfo(String markerId) async {
+    spotRateInput = null;
+    spotRateBeautyInput = null;
+    spotRateFloorInput = null;
+    userIsRatingTheSpot = false;
+    userRatingNotComplete = false;
+
     MapMarker spot =
         spots.firstWhere((element) => element.markerId == markerId);
     print("SpotId: " + markerId);
@@ -244,44 +262,203 @@ class _Map extends State<Map> {
     else
       _isSpotHasImages = true;
 
-
     showModalBottomSheet(
         context: context,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(30),)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(50),
+          topRight: Radius.circular(50),
+        )),
+        backgroundColor: PrimaryColorDark,
         builder: (builder) {
-          return Container(
-            height: screenheight * 2/5,
-            decoration: BoxDecoration(
-                color: PrimaryColorDark,
-                borderRadius: BorderRadius.only(topRight: Radius.circular(30), topLeft: Radius.circular(30),)),
-            child: ListView(
-              padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
-              children: <Widget>[
-                _isSpotHasImages ? showSpotPhotosWidget(spot.imagesDownloadUrls) : Container(),
-                showSpotNameWidget(spot.name),
-                showSpotDescriptionWidget(spot.description),
-              ],
-            ),
-          );
+          return StatefulBuilder(
+              builder: (BuildContext context, StateSetter setStateBottomSheet) {
+            return Container(
+              height: screenHeight * 4 / 9,
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
+                children: <Widget>[
+                  _isSpotHasImages
+                      ? showSpotPhotosWidget(spot.imagesDownloadUrls)
+                      : Container(),
+                  showSpotNameWidget(spot.name),
+                  showSpotRatesWidget(
+                      spot.usersRates, setStateBottomSheet, spot.markerId),
+                  showSpotDescriptionWidget(spot.description),
+                ],
+              ),
+            );
+          });
         });
   }
 
-  Widget showSpotNameWidget(String spotName){
+  Widget showSpotRatesWidget(List<UserRates> usersRates,
+      StateSetter setStateBottomSheet, String spotId) {
+    spotRate = 0;
+    spotRateFloor = 0;
+    spotRateBeauty = 0;
+
+    if(usersRates.length > 0) {
+      List<double> listSpotRate = [];
+      List<double> listSpotRateBeauty = [];
+      List<double> listSpotRateFloor = [];
+
+      usersRates.forEach((element) {
+        listSpotRate.add(element.spotRate);
+        listSpotRateFloor.add(element.spotRateFloor);
+        listSpotRateBeauty.add(element.spotRateBeauty);
+      });
+
+      spotRate = listSpotRate.reduce((a, b) => a + b) / listSpotRate.length;
+      spotRateFloor =
+          listSpotRateFloor.reduce((a, b) => a + b) / listSpotRateFloor.length;
+      spotRateBeauty = listSpotRateBeauty.reduce((a, b) => a + b) /
+          listSpotRateBeauty.length;
+      print(spotRate);
+      print(spotRateFloor);
+      print(spotRateBeauty);
+    }
+
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
-    child:
-      Center(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Container(
-          padding: EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: SecondaryColorDark,
-            borderRadius: BorderRadius.all(Radius.circular(20)),
-          ),
-          child: Text(
-            spotName,
-            style: TextStyle(color: Colors.white, fontSize: 25),
-          )),
-    ));
+        decoration: BoxDecoration(
+            color: PrimaryColorLight,
+            borderRadius: BorderRadius.all(Radius.circular(10)),
+            border: Border.all(width: 3, color: PrimaryColor)),
+        child: Column(
+          children: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Column(
+                  children: <Widget>[
+                    showSpotRateWidget("Spot:    ", spotRate),
+                    showSpotRateWidget("Floor:   ", spotRateBeauty),
+                    showSpotRateWidget("Beauty:", spotRateFloor),
+                  ],
+                ),
+                Divider(
+                  indent: 30,
+                ),
+                RaisedButton(
+                  child:
+                      Text(userIsRatingTheSpot ? "Confirm" : "Rate this spot"),
+                  onPressed: () =>
+                      onRateButtonPressed(setStateBottomSheet, spotId),
+                )
+              ],
+            ),
+            userRatingNotComplete
+                ? Text(
+                    "You must give a rate for all field! Minimum rate is 1 star.")
+                : Container(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void onRateButtonPressed(
+      StateSetter setStateBottomSheet, String spotId) async {
+    UserRates userRates = UserRates(
+        userId: widget.userId,
+        spotRate: spotRateInput,
+        spotRateFloor: spotRateFloorInput,
+        spotRateBeauty: spotRateBeautyInput);
+    if (userIsRatingTheSpot &&
+        spotRateInput != null &&
+        spotRateBeautyInput != null &&
+        spotRateFloorInput != null) {
+      await Database()
+          .updateASpot(context: context, spotId: spotId, userRate: userRates);
+
+      spotRateInput = null;
+      spotRateBeautyInput = null;
+      spotRateFloorInput = null;
+      userRatingNotComplete = false;
+
+      setStateBottomSheet(() {
+        spots.firstWhere((element) => element.markerId == spotId).usersRates.add(userRates);
+        userIsRatingTheSpot = !userIsRatingTheSpot;
+      });
+    } else if (userIsRatingTheSpot) {
+      setStateBottomSheet(() {
+        userRatingNotComplete = true;
+      });
+    } else {
+      setStateBottomSheet(() {
+        userIsRatingTheSpot = !userIsRatingTheSpot;
+      });
+    }
+  }
+
+  Widget showSpotRateWidget(
+    String spotRateName,
+    double spotRate,
+  ) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Text(
+          spotRateName,
+          style:
+              TextStyle(color: PrimaryColorDark, fontWeight: FontWeight.bold),
+        ),
+        userIsRatingTheSpot
+            ? RatingBar(
+                glow: false,
+                minRating: 1,
+                itemSize: 20,
+                unratedColor: PrimaryColor,
+                itemBuilder: (context, _) => Icon(
+                  Icons.star,
+                  color: Colors.amber,
+                ),
+                onRatingUpdate: (newRate) {
+                  switch (spotRateName) {
+                    case "Spot:    ":
+                      spotRateInput = newRate;
+                      break;
+                    case "Floor:   ":
+                      spotRateFloorInput = newRate;
+                      break;
+                    case "Beauty:":
+                      spotRateBeautyInput = newRate;
+                      break;
+                  }
+                  print(spotRateName + newRate.toString());
+                },
+              )
+            : RatingBarIndicator(
+                rating: spotRate,
+                itemSize: 20,
+                unratedColor: PrimaryColor,
+                itemBuilder: (context, _) => Icon(
+                  Icons.star,
+                  color: Colors.amber,
+                ),
+              ),
+      ],
+    );
+  }
+
+  Widget showSpotNameWidget(String spotName) {
+    return Padding(
+        padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
+        child: Center(
+          child: Container(
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: SecondaryColorDark,
+                borderRadius: BorderRadius.all(Radius.circular(20)),
+              ),
+              child: Text(
+                spotName,
+                style: TextStyle(color: Colors.white, fontSize: 25),
+              )),
+        ));
   }
 
   Widget showSpotPhotosWidget(List<String> imagesAddress) {
@@ -294,11 +471,10 @@ class _Map extends State<Map> {
   Widget showSpotDontHaveImagesMessageWidget() {
     return Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-        child: Text("We don't have pictures of this spot for the moment...")
-    );
+        child: Text("We don't have pictures of this spot for the moment..."));
   }
 
-  Widget showSpotDescriptionWidget(String spotDescription){
+  Widget showSpotDescriptionWidget(String spotDescription) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Center(
@@ -382,8 +558,12 @@ class _Map extends State<Map> {
   }
 
   void createSpot(LatLng tapPosition) async {
-    String spotId =
-        await Database().addASpot(context, tapPosition, widget.userId);
+    String spotId = await Database().updateASpot(
+        context: context,
+        spotId: null,
+        spotLocation: tapPosition,
+        creatorId: widget.userId,
+        onCreate: true);
 
     Navigator.push(
         widget.context,
