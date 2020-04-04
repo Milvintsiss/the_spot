@@ -9,6 +9,8 @@ import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
 import 'package:vibrate/vibrate.dart';
 
+import 'package:the_spot/services/library/userRate.dart';
+
 class Database {
   final database = Firestore.instance;
 
@@ -141,53 +143,94 @@ class Database {
     return true;
   }
 
-  Future<String> addASpot(
-      BuildContext context, LatLng spotLocation, String creatorId,
-      {String spotName, String spotDescription, List<String> imagesDownloadUrls}) async {
+  Future<String> updateASpot(
+      {@required BuildContext context,
+      @required String spotId,
+      String creatorId,
+      LatLng spotLocation,
+      String spotName,
+      String spotDescription,
+      List<String> imagesDownloadUrls,
+      UserRates userRate,
+      bool onCreate = false}) async {
     final bool connectionState = await checkConnection(context);
 
-    String spotId;
+    String state;
 
     if (connectionState) {
-      Map _spotData = spotData(true, spotLocation, creatorId, spotName, spotDescription, imagesDownloadUrls);
+      Map _spotData =  await spotData(context, onCreate, spotId, spotLocation, creatorId, spotName,
+          spotDescription, imagesDownloadUrls, userRate);
 
-      await database
-          .collection("spots")
-          .add(_spotData)
-          .then((value) => spotId = value.documentID)
-          .catchError((err) {
-        print(err);
-        error(err.toString(), context);
-        return null;
-      });
+      if (onCreate) {
+        await database
+            .collection("spots")
+            .add(_spotData)
+            .then((value) => spotId = value.documentID)
+            .catchError((err) {
+          print(err);
+          error(err.toString(), context);
+          state = "error";
+        });
+      } else {
+        await database
+            .collection("spots")
+            .document(spotId)
+            .updateData(_spotData)
+            .catchError((err) {
+          print(err);
+          error(err.toString(), context);
+          state = "error";
+        });
+      }
     } else {
-      return null;
+      return "error";
     }
-    print(spotId);
-    return spotId;
+    if (onCreate) state = spotId;
+    return state;
   }
 
-  Future<bool> updateASpot(
-      BuildContext context, String spotId,
-      {String creatorId, LatLng spotLocation, String spotName, String spotDescription, List<String> imagesDownloadUrls}) async {
-    final bool connectionState = await checkConnection(context);
+  Future <Map> spotData(
+      BuildContext context,
+      bool onCreate,
+      String spotId,
+      LatLng spotLocation,
+      String creatorId,
+      String spotName,
+      String spotDescription,
+      List<String> imagesDownloadUrls,
+      UserRates userRate,) async {
+    Map data = Map<String, dynamic>.identity();
 
-    if (connectionState) {
-      Map _spotData = spotData(false, spotLocation, creatorId, spotName, spotDescription, imagesDownloadUrls);
+    String updateDate = DateTime.now().toIso8601String();
+    String creationDate;
+    if (onCreate) creationDate = updateDate;
 
-      await database
-          .collection("spots")
-          .document(spotId)
-          .updateData(_spotData)
-          .catchError((err) {
-        print(err);
-        error(err.toString(), context);
-        return false;
-      });
-    } else {
-      return false;
+    if (spotLocation != null) {
+      data['SpotLocationLatitude'] = spotLocation.latitude;
+      data['SpotLocationLongitude'] = spotLocation.longitude;
     }
-    return true;
+    if (creatorId != null) data['CreatorId'] = creatorId;
+    if (spotName != null) data['SpotName'] = spotName;
+    if (spotDescription != null) data['SpotDescription'] = spotDescription;
+    if (imagesDownloadUrls != null)
+      data['ImagesDownloadUrls'] = imagesDownloadUrls;
+    if (userRate != null) data['UsersRates'] = await createListUsersRates(context, userRate, spotId);
+
+    if (creationDate != null) data['CreationDate'] = creationDate;
+    data['LastUpdate'] = updateDate;
+
+    return data;
+  }
+  
+  Future<List> createListUsersRates(BuildContext context, UserRates userRate, String spotId) async {
+    List<MapMarker> spots = await getSpots(context);
+
+    MapMarker spot = spots.firstWhere((element) => element.markerId == spotId);
+    spot.usersRates.add(userRate);
+
+    List<Map> usersRates = ConvertUsersRatesToMap(spot.usersRates);
+
+    return usersRates;
   }
 
   Future<List> getSpots(BuildContext context) async {
@@ -205,63 +248,47 @@ class Database {
           print(data);
 
           //convert the List<dynamic> into List<String>
-          List <String> imagesDownloadUrls = [];
-          if(data['ImagesDownloadUrls'] != null) {
+          List<String> imagesDownloadUrls = [];
+          if (data['ImagesDownloadUrls'] != null) {
             imagesDownloadUrls = data['ImagesDownloadUrls'].cast<String>();
             print(imagesDownloadUrls);
           }
 
+          //convert the List of UserRatess to a List of Map
+          List<UserRates> usersRates = [];
+          if (data['UsersRates'] != null){
+            usersRates = ConvertMapToUsersRates(data['UsersRates'].cast<Map>());
+            usersRates.forEach((element) {
+              print(element.userId + " / " + element.spotRate.toString() + " / " + element.spotRateFloor.toString() + " / " + element.spotRateBeauty.toString());
+            });
+          }
+
           MapMarker spot = MapMarker(
-              id: document.documentID,
-              position: new LatLng(data['SpotLocationLatitude'], data['SpotLocationLongitude']),
-              icon: BitmapDescriptor.defaultMarker,
-              name: data['SpotName'],
-              description: data['SpotDescription'],
-              imagesDownloadUrls: imagesDownloadUrls,
+            id: document.documentID,
+            position: new LatLng(
+                data['SpotLocationLatitude'], data['SpotLocationLongitude']),
+            icon: BitmapDescriptor.defaultMarker,
+            name: data['SpotName'],
+            description: data['SpotDescription'],
+            imagesDownloadUrls: imagesDownloadUrls,
+            usersRates: usersRates,
           );
-          if(data['SpotName'] != null) {//verify if spot has been updated after his creation
+          if (data['SpotName'] != null) {
+            //verify if spot has been updated after his creation
             spots.add(spot);
           }
         });
-      })
-          .catchError((err) {
+      }).catchError((err) {
         print(err);
         error(err.toString(), context);
         return null;
       });
-    }else{
+    } else {
       return null;
     }
     return spots;
   }
 
-  Map spotData(
-      bool onCreate,
-      LatLng spotLocation,
-      String creatorId,
-      String spotName,
-      String spotDescription,
-      List<String> imagesDownloadUrls) {
-    String updateDate = DateTime.now().toIso8601String();
-    String creationDate;
-    if (onCreate) creationDate = updateDate;
-
-    Map data = Map<String, dynamic>.identity();
-
-    if (spotLocation != null){
-      data['SpotLocationLatitude'] = spotLocation.latitude;
-      data['SpotLocationLongitude'] = spotLocation.longitude;
-    }
-    if (creatorId != null) data['CreatorId'] = creatorId;
-    if (spotName != null) data['SpotName'] = spotName;
-    if (spotDescription != null) data['SpotDescription'] = spotDescription;
-    if (imagesDownloadUrls != null) data['ImagesDownloadUrls'] = imagesDownloadUrls;
-
-    if (creationDate != null) data['CreationDate'] = creationDate;
-    data['LastUpdate'] = updateDate;
-
-    return data;
-  }
 
   Future<bool> checkConnection(BuildContext context) async {
     bool hasConnection;
