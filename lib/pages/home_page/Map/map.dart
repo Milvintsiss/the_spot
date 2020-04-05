@@ -10,7 +10,7 @@ import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/gallery.dart';
 import 'package:the_spot/services/library/map_helper.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
-import 'package:the_spot/services/library/userRate.dart';
+import 'package:the_spot/services/library/userGrade.dart';
 
 import '../../../theme.dart';
 
@@ -28,19 +28,20 @@ class _Map extends State<Map> {
   final Completer<GoogleMapController> _mapController = Completer();
 
   GoogleMapController _controller;
+  bool waitUserShowLocation = false;
 
   double screenWidth;
   double screenHeight;
 
   bool userIsRatingTheSpot = false;
-  bool spotHasRates = true;
+  bool spotHasGrades = true;
   bool userRatingNotComplete = false;
-  double spotRate;
-  double spotRateBeauty;
-  double spotRateFloor;
-  double spotRateInput;
-  double spotRateBeautyInput;
-  double spotRateFloorInput;
+  double spotGrade;
+  double spotGradeBeauty;
+  double spotGradeFloor;
+  double spotGradeInput;
+  double spotGradeBeautyInput;
+  double spotGradeFloorInput;
 
   /// Set of displayed markers and cluster markers on the map
   final Set<Marker> _markers = Set();
@@ -155,8 +156,14 @@ class _Map extends State<Map> {
 
   @override
   Widget build(BuildContext context) {
-    screenWidth = MediaQuery.of(context).size.width;
-    screenHeight = MediaQuery.of(context).size.height;
+    screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
+    screenHeight = MediaQuery
+        .of(context)
+        .size
+        .height;
     return Scaffold(
       body: Stack(
         children: <Widget>[
@@ -173,6 +180,7 @@ class _Map extends State<Map> {
               markers: _markers,
               onMapCreated: (controller) => _onMapCreated(controller),
               onCameraMove: (position) => _updateMarkers(position.zoom),
+              onTap: (tapLocation){if(waitUserShowLocation) showDialogConfirmCreateSpot(tapLocation);},
               onLongPress: showDialogConfirmCreateSpot,
             ),
           ),
@@ -186,25 +194,25 @@ class _Map extends State<Map> {
           // Map markers loading indicator
           _areMarkersLoading
               ? Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Card(
-                      elevation: 2,
-                      color: PrimaryColor,
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Text(
-                          'Loading...',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
+            padding: const EdgeInsets.all(8.0),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Card(
+                elevation: 2,
+                color: PrimaryColor,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Text(
+                    'Loading...',
+                    style: TextStyle(color: Colors.white),
                   ),
-                )
-              : Padding(
-                  padding: EdgeInsets.all(0.0),
                 ),
+              ),
+            ),
+          )
+              : Padding(
+            padding: EdgeInsets.all(0.0),
+          ),
           Positioned(
             top: 25,
             right: 0,
@@ -212,7 +220,16 @@ class _Map extends State<Map> {
               children: <Widget>[
                 IconButton(
                   icon: Icon(
+                    Icons.refresh,
+                    size: 30,
+                    color: SecondaryColorDark,
+                  ),
+                  onPressed: _initMarkers,
+                ),
+                IconButton(
+                  icon: Icon(
                     Icons.place,
+                    size: 30,
                     color: SecondaryColorDark,
                   ),
                   onPressed: () => print("place button pressed"),
@@ -244,14 +261,14 @@ class _Map extends State<Map> {
   }
 
   void showSpotInfo(String markerId) async {
-    spotRateInput = null;
-    spotRateBeautyInput = null;
-    spotRateFloorInput = null;
+    spotGradeInput = null;
+    spotGradeBeautyInput = null;
+    spotGradeFloorInput = null;
     userIsRatingTheSpot = false;
     userRatingNotComplete = false;
 
     MapMarker spot =
-        spots.firstWhere((element) => element.markerId == markerId);
+    spots.firstWhere((element) => element.markerId == markerId);
     print("SpotId: " + markerId);
     print("SpotName: " + spot.name);
     print(spot.imagesDownloadUrls);
@@ -266,59 +283,58 @@ class _Map extends State<Map> {
         context: context,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(50),
-          topRight: Radius.circular(50),
-        )),
+              topLeft: Radius.circular(50),
+              topRight: Radius.circular(50),
+            )),
         backgroundColor: PrimaryColorDark,
         builder: (builder) {
           return StatefulBuilder(
               builder: (BuildContext context, StateSetter setStateBottomSheet) {
-            return Container(
-              height: screenHeight * 4 / 9,
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
-                children: <Widget>[
-                  _isSpotHasImages
-                      ? showSpotPhotosWidget(spot.imagesDownloadUrls)
-                      : Container(),
-                  showSpotNameWidget(spot.name),
-                  showSpotRatesWidget(
-                      spot.usersRates, setStateBottomSheet, spot.markerId),
-                  showSpotDescriptionWidget(spot.description),
-                ],
-              ),
-            );
-          });
+                return Container(
+                  height: screenHeight * 4 / 9,
+                  child: ListView(
+                    padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
+                    children: <Widget>[
+                      _isSpotHasImages
+                          ? showSpotPhotosWidget(spot.imagesDownloadUrls)
+                          : Container(),
+                      showSpotNameWidget(spot.name),
+                      showSpotGradesWidget(
+                          spot.usersGrades, setStateBottomSheet, spot.markerId),
+                      showSpotDescriptionWidget(spot.description),
+                    ],
+                  ),
+                );
+              });
         });
   }
 
-  Widget showSpotRatesWidget(List<UserRates> usersRates,
+  Widget showSpotGradesWidget(List<UserGrades> usersGrades,
       StateSetter setStateBottomSheet, String spotId) {
-    spotRate = 0;
-    spotRateFloor = 0;
-    spotRateBeauty = 0;
+    spotGrade = 0;
+    spotGradeFloor = 0;
+    spotGradeBeauty = 0;
 
-    if(usersRates.length > 0) {
-      List<double> listSpotRate = [];
-      List<double> listSpotRateBeauty = [];
-      List<double> listSpotRateFloor = [];
+    if (usersGrades.length > 0) {
+      List<double> listSpotGrade = [];
+      List<double> listSpotGradeBeauty = [];
+      List<double> listSpotGradeFloor = [];
 
-      usersRates.forEach((element) {
-        listSpotRate.add(element.spotRate);
-        listSpotRateFloor.add(element.spotRateFloor);
-        listSpotRateBeauty.add(element.spotRateBeauty);
+      usersGrades.forEach((element) {
+        listSpotGrade.add(element.spotGrade);
+        listSpotGradeFloor.add(element.spotGradeFloor);
+        listSpotGradeBeauty.add(element.spotGradeBeauty);
       });
 
-      spotRate = listSpotRate.reduce((a, b) => a + b) / listSpotRate.length;
-      spotRateFloor =
-          listSpotRateFloor.reduce((a, b) => a + b) / listSpotRateFloor.length;
-      spotRateBeauty = listSpotRateBeauty.reduce((a, b) => a + b) /
-          listSpotRateBeauty.length;
-      print(spotRate);
-      print(spotRateFloor);
-      print(spotRateBeauty);
+      spotGrade = listSpotGrade.reduce((a, b) => a + b) / listSpotGrade.length;
+      spotGradeFloor =
+          listSpotGradeFloor.reduce((a, b) => a + b) / listSpotGradeFloor.length;
+      spotGradeBeauty = listSpotGradeBeauty.reduce((a, b) => a + b) /
+          listSpotGradeBeauty.length;
+      print(spotGrade);
+      print(spotGradeFloor);
+      print(spotGradeBeauty);
     }
-
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
@@ -334,9 +350,11 @@ class _Map extends State<Map> {
               children: <Widget>[
                 Column(
                   children: <Widget>[
-                    showSpotRateWidget("Spot:    ", spotRate),
-                    showSpotRateWidget("Floor:   ", spotRateBeauty),
-                    showSpotRateWidget("Beauty:", spotRateFloor),
+                    Text("This spot was rated " + usersGrades.length.toString() + " times!",
+                    style: TextStyle(color: PrimaryColorDark, fontStyle: FontStyle.italic),),
+                    showSpotGradeWidget("Spot:    ", spotGrade),
+                    showSpotGradeWidget("Floor:   ", spotGradeBeauty),
+                    showSpotGradeWidget("Beauty:", spotGradeFloor),
                   ],
                 ),
                 Divider(
@@ -344,15 +362,37 @@ class _Map extends State<Map> {
                 ),
                 RaisedButton(
                   child:
-                      Text(userIsRatingTheSpot ? "Confirm" : "Rate this spot"),
+                  Text(userIsRatingTheSpot ? "Confirm" : "Grade this spot"),
                   onPressed: () =>
-                      onRateButtonPressed(setStateBottomSheet, spotId),
+                      onGradeButtonPressed(setStateBottomSheet, spotId),
+                ),
+                userIsRatingTheSpot
+                    ? SizedBox(
+                  width: 50,
+                  child: RaisedButton(
+                    child: Icon(
+                      Icons.undo,
+                      size: 20,
+                    ),
+                    onPressed: () =>
+                        setStateBottomSheet(() {
+                          userIsRatingTheSpot = false;
+                          userRatingNotComplete = false;
+                          spotGradeInput = null;
+                          spotGradeBeautyInput = null;
+                          spotGradeFloorInput = null;
+                        }),
+                  ),
                 )
+                    : Container()
               ],
             ),
             userRatingNotComplete
                 ? Text(
-                    "You must give a rate for all field! Minimum rate is 1 star.")
+              "You must give a grade for all fields! Minimum grade is 1 star.",
+              style: TextStyle(
+                  color: Colors.red, fontWeight: FontWeight.bold),
+            )
                 : Container(),
           ],
         ),
@@ -360,27 +400,33 @@ class _Map extends State<Map> {
     );
   }
 
-  void onRateButtonPressed(
-      StateSetter setStateBottomSheet, String spotId) async {
-    UserRates userRates = UserRates(
+  void onGradeButtonPressed(StateSetter setStateBottomSheet,
+      String spotId) async {
+    UserGrades userGrades = UserGrades(
         userId: widget.userId,
-        spotRate: spotRateInput,
-        spotRateFloor: spotRateFloorInput,
-        spotRateBeauty: spotRateBeautyInput);
+        spotGrade: spotGradeInput,
+        spotGradeFloor: spotGradeFloorInput,
+        spotGradeBeauty: spotGradeBeautyInput);
     if (userIsRatingTheSpot &&
-        spotRateInput != null &&
-        spotRateBeautyInput != null &&
-        spotRateFloorInput != null) {
+        spotGradeInput != null &&
+        spotGradeBeautyInput != null &&
+        spotGradeFloorInput != null) {
       await Database()
-          .updateASpot(context: context, spotId: spotId, userRate: userRates);
+          .updateASpot(context: context,
+          spotId: spotId,
+          userGrade: userGrades,
+          creatorId: widget.userId);
 
-      spotRateInput = null;
-      spotRateBeautyInput = null;
-      spotRateFloorInput = null;
+      spotGradeInput = null;
+      spotGradeBeautyInput = null;
+      spotGradeFloorInput = null;
       userRatingNotComplete = false;
 
       setStateBottomSheet(() {
-        spots.firstWhere((element) => element.markerId == spotId).usersRates.add(userRates);
+        spots
+            .firstWhere((element) => element.markerId == spotId)
+            .usersGrades
+            .add(userGrades);
         userIsRatingTheSpot = !userIsRatingTheSpot;
       });
     } else if (userIsRatingTheSpot) {
@@ -394,52 +440,52 @@ class _Map extends State<Map> {
     }
   }
 
-  Widget showSpotRateWidget(
-    String spotRateName,
-    double spotRate,
-  ) {
+  Widget showSpotGradeWidget(String spotGradeName,
+      double spotGrade,) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
         Text(
-          spotRateName,
+          spotGradeName,
           style:
-              TextStyle(color: PrimaryColorDark, fontWeight: FontWeight.bold),
+          TextStyle(color: PrimaryColorDark, fontWeight: FontWeight.bold),
         ),
         userIsRatingTheSpot
             ? RatingBar(
-                glow: false,
-                minRating: 1,
-                itemSize: 20,
-                unratedColor: PrimaryColor,
-                itemBuilder: (context, _) => Icon(
-                  Icons.star,
-                  color: Colors.amber,
-                ),
-                onRatingUpdate: (newRate) {
-                  switch (spotRateName) {
-                    case "Spot:    ":
-                      spotRateInput = newRate;
-                      break;
-                    case "Floor:   ":
-                      spotRateFloorInput = newRate;
-                      break;
-                    case "Beauty:":
-                      spotRateBeautyInput = newRate;
-                      break;
-                  }
-                  print(spotRateName + newRate.toString());
-                },
-              )
-            : RatingBarIndicator(
-                rating: spotRate,
-                itemSize: 20,
-                unratedColor: PrimaryColor,
-                itemBuilder: (context, _) => Icon(
-                  Icons.star,
-                  color: Colors.amber,
-                ),
+          glow: false,
+          minRating: 1,
+          itemSize: 20,
+          unratedColor: PrimaryColor,
+          itemBuilder: (context, _) =>
+              Icon(
+                Icons.star,
+                color: Colors.amber,
               ),
+          onRatingUpdate: (newGrade) {
+            switch (spotGradeName) {
+              case "Spot:    ":
+                spotGradeInput = newGrade;
+                break;
+              case "Floor:   ":
+                spotGradeFloorInput = newGrade;
+                break;
+              case "Beauty:":
+                spotGradeBeautyInput = newGrade;
+                break;
+            }
+            print(spotGradeName + newGrade.toString());
+          },
+        )
+            : RatingBarIndicator(
+          rating: spotGrade,
+          itemSize: 20,
+          unratedColor: PrimaryColor,
+          itemBuilder: (context, _) =>
+              Icon(
+                Icons.star,
+                color: Colors.amber,
+              ),
+        ),
       ],
     );
   }
@@ -497,20 +543,24 @@ class _Map extends State<Map> {
         context: context,
         child: AlertDialog(
           content: Text(
-              "Please show us the location of your spot by a long click on it on the map"),
+              "Please show us the location of your spot by a click on it on the map"),
           actions: <Widget>[
             FlatButton(
               child: Text("Ok"),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                Navigator.pop(context);
+                waitUserShowLocation = true;
+              },
             )
           ],
         ));
   }
 
   void showDialogConfirmCreateSpot(LatLng spotLocation) {
+    waitUserShowLocation = false;
     _controller
         .animateCamera(CameraUpdate.newLatLngZoom(
-            LatLng(spotLocation.latitude - 0.0001, spotLocation.longitude), 20))
+        LatLng(spotLocation.latitude - 0.0001, spotLocation.longitude), 20))
         .whenComplete(() {
       Future.delayed(Duration(seconds: 2)).whenComplete(() {
         setState(() {
@@ -568,27 +618,11 @@ class _Map extends State<Map> {
     Navigator.push(
         widget.context,
         MaterialPageRoute(
-            builder: (context) => CreateUpdateSpotPage(
-                  spotId,
+            builder: (context) =>
+                CreateUpdateSpotPage(
+                  userId: widget.userId,
+                  spotId: spotId,
                   stateCallback: createSpotCallBack,
                 )));
-
-//    if (spotId != null) {
-//      markers.add(MapMarker(
-//        id: spotId,
-//        position: tapPosition,
-//        icon: BitmapDescriptor.defaultMarker,
-//      ));
-//
-//      _clusterManager = await MapHelper.initClusterManager(
-//        markers,
-//        _minClusterZoom,
-//        _maxClusterZoom,
-//      );
-//      print("add a spot");
-//
-//
-//      _updateMarkers();
-//    }
   }
 }

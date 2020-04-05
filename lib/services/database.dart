@@ -9,7 +9,7 @@ import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
 import 'package:vibrate/vibrate.dart';
 
-import 'package:the_spot/services/library/userRate.dart';
+import 'package:the_spot/services/library/userGrade.dart';
 
 class Database {
   final database = Firestore.instance;
@@ -151,7 +151,7 @@ class Database {
       String spotName,
       String spotDescription,
       List<String> imagesDownloadUrls,
-      UserRates userRate,
+      UserGrades userGrade,
       bool onCreate = false}) async {
     final bool connectionState = await checkConnection(context);
 
@@ -159,7 +159,7 @@ class Database {
 
     if (connectionState) {
       Map _spotData =  await spotData(context, onCreate, spotId, spotLocation, creatorId, spotName,
-          spotDescription, imagesDownloadUrls, userRate);
+          spotDescription, imagesDownloadUrls, userGrade);
 
       if (onCreate) {
         await database
@@ -198,7 +198,7 @@ class Database {
       String spotName,
       String spotDescription,
       List<String> imagesDownloadUrls,
-      UserRates userRate,) async {
+      UserGrades userGrade,) async {
     Map data = Map<String, dynamic>.identity();
 
     String updateDate = DateTime.now().toIso8601String();
@@ -214,7 +214,7 @@ class Database {
     if (spotDescription != null) data['SpotDescription'] = spotDescription;
     if (imagesDownloadUrls != null)
       data['ImagesDownloadUrls'] = imagesDownloadUrls;
-    if (userRate != null) data['UsersRates'] = await createListUsersRates(context, userRate, spotId);
+    if (userGrade != null) data['UsersGrades'] = await createListUsersGrades(context, userGrade, spotId, creatorId);
 
     if (creationDate != null) data['CreationDate'] = creationDate;
     data['LastUpdate'] = updateDate;
@@ -222,15 +222,23 @@ class Database {
     return data;
   }
   
-  Future<List> createListUsersRates(BuildContext context, UserRates userRate, String spotId) async {
+  Future<List> createListUsersGrades(BuildContext context, UserGrades userGrade, String spotId, String userId) async {
     List<MapMarker> spots = await getSpots(context);
-
     MapMarker spot = spots.firstWhere((element) => element.markerId == spotId);
-    spot.usersRates.add(userRate);
 
-    List<Map> usersRates = ConvertUsersRatesToMap(spot.usersRates);
+    //verify if the user don't have already rated this spot, if yes update his grade
+    int index = spot.usersGrades.indexWhere((element) => element.userId == userId);
 
-    return usersRates;
+    if(index == -1) {
+      spot.usersGrades.add(userGrade);
+    }else{
+      print("update");
+      spot.usersGrades[index] = userGrade;
+    }
+
+    List<Map> usersGrades = ConvertUsersGradesToMap(spot.usersGrades);
+
+    return usersGrades;
   }
 
   Future<List> getSpots(BuildContext context) async {
@@ -254,12 +262,12 @@ class Database {
             print(imagesDownloadUrls);
           }
 
-          //convert the List of UserRatess to a List of Map
-          List<UserRates> usersRates = [];
-          if (data['UsersRates'] != null){
-            usersRates = ConvertMapToUsersRates(data['UsersRates'].cast<Map>());
-            usersRates.forEach((element) {
-              print(element.userId + " / " + element.spotRate.toString() + " / " + element.spotRateFloor.toString() + " / " + element.spotRateBeauty.toString());
+          //convert the List of UserGradess to a List of Map
+          List<UserGrades> usersGrades = [];
+          if (data['UsersGrades'] != null){
+            usersGrades = ConvertMapToUsersGrades(data['UsersGrades'].cast<Map>());
+            usersGrades.forEach((element) {
+              print(element.userId + " / " + element.spotGrade.toString() + " / " + element.spotGradeFloor.toString() + " / " + element.spotGradeBeauty.toString());
             });
           }
 
@@ -271,7 +279,7 @@ class Database {
             name: data['SpotName'],
             description: data['SpotDescription'],
             imagesDownloadUrls: imagesDownloadUrls,
-            usersRates: usersRates,
+            usersGrades: usersGrades,
           );
           if (data['SpotName'] != null) {
             //verify if spot has been updated after his creation
