@@ -1,7 +1,7 @@
 import 'package:fluster/fluster.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:meta/meta.dart';
-import 'package:the_spot/services/library/userRate.dart';
+import 'package:the_spot/services/library/userGrade.dart';
 
 class MapMarker extends Clusterable {
   final String id;
@@ -10,7 +10,7 @@ class MapMarker extends Clusterable {
   final String name;
   final String description;
   final List<String> imagesDownloadUrls;
-  final List<UserRates> usersRates;
+  final List<UserGrades> usersGrades;
 
   MapMarker({
     @required this.id,
@@ -19,7 +19,7 @@ class MapMarker extends Clusterable {
     this.name,
     this.description,
     this.imagesDownloadUrls,
-    this.usersRates,
+    this.usersGrades,
     isCluster = false,
     clusterId,
     pointsSize,

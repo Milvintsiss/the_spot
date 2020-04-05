@@ -1,15 +1,18 @@
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/gallery.dart';
+import 'package:the_spot/services/library/userGrade.dart';
 import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/theme.dart';
 import 'package:vibrate/vibrate.dart';
 
 class CreateUpdateSpotPage extends StatefulWidget {
-  CreateUpdateSpotPage(this.spotId, {Key key, this.stateCallback}) : super(key: key);
+  CreateUpdateSpotPage( {Key key, this.userId, this.spotId, this.stateCallback}) : super(key: key);
 
+  final String userId;
   final String spotId;
   final VoidCallback stateCallback;
 
@@ -27,6 +30,11 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
 
   String spotName;
   String spotDescription;
+
+
+  double spotGradeInput;
+  double spotGradeBeautyInput;
+  double spotGradeFloorInput;
 
   final int maxAmountOfPictures = 10;
   @override
@@ -53,6 +61,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
               showAddButton(),
               showInput("Spot name", Icons.text_fields),
               showInput("Spot description", Icons.textsms, maxLines: 6),
+              showSpotGradesWidget(),
               showConfirmButton(),
             ],
           ),
@@ -116,6 +125,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
       });
       print(imagesAddress);
     }else{
+      Vibrate.feedback(FeedbackType.warning);
       _scaffoldKey.currentState.showSnackBar(SnackBar(
         content: Text("You riched the limit amount of photos!"),
         duration: Duration(milliseconds: 1500),
@@ -167,6 +177,64 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
     );
   }
 
+  Widget showSpotGradesWidget() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+      child: Container(
+        decoration: BoxDecoration(
+            color: SecondaryColorDark,
+            borderRadius: BorderRadius.all(Radius.circular(10)),
+        ),
+        child: Column(
+          children: <Widget>[
+            showSpotGradeWidget("Spot:    "),
+            showSpotGradeWidget("Floor:   "),
+            showSpotGradeWidget("Beauty:"),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget showSpotGradeWidget(String spotGradeName) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Text(
+          spotGradeName,
+          style:
+          TextStyle(color: PrimaryColorDark, fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+    Divider(indent: 40,),
+    RatingBar(
+          glow: false,
+          minRating: 1,
+          itemSize: 30,
+          unratedColor: PrimaryColor,
+          itemBuilder: (context, _) =>
+              Icon(
+                Icons.star,
+                color: Colors.amber,
+              ),
+          onRatingUpdate: (newGrade) {
+            switch (spotGradeName) {
+              case "Spot:    ":
+                spotGradeInput = newGrade;
+                break;
+              case "Floor:   ":
+                spotGradeFloorInput = newGrade;
+                break;
+              case "Beauty:":
+                spotGradeBeautyInput = newGrade;
+                break;
+            }
+            print(spotGradeName + newGrade.toString());
+          },
+        ),
+      ],
+    );
+  }
+
   Widget showConfirmButton() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
@@ -186,13 +254,28 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
 
   void save() async {
     if (validateAndSave()){
-      print("Spot name: " + spotName);
-      print("Spot description: " + spotDescription);
+      if (spotGradeInput != null &&
+      spotGradeBeautyInput != null &&
+      spotGradeFloorInput != null) {
+        print("Spot name: " + spotName);
+        print("Spot description: " + spotDescription);
+        UserGrades userGrades = UserGrades(
+            userId: widget.userId,
+            spotGrade: spotGradeInput,
+            spotGradeFloor: spotGradeFloorInput,
+            spotGradeBeauty: spotGradeBeautyInput);
 
-      Database().updateASpot(context: context, spotId: widget.spotId, spotName: spotName, spotDescription: spotDescription, imagesDownloadUrls: imagesAddress);
+        Database().updateASpot(context: context, spotId: widget.spotId, spotName: spotName, spotDescription: spotDescription, imagesDownloadUrls: imagesAddress, userGrade: userGrades);
 
-      widget.stateCallback();
-      Navigator.pop(context);
+        widget.stateCallback();
+        Navigator.pop(context);
+      }else {
+        Vibrate.feedback(FeedbackType.warning);
+        _scaffoldKey.currentState.showSnackBar(SnackBar(
+          content: Text("You must give a global grade, a floor grade and a beauty grade! Minimum grade is 1 star."),
+          duration: Duration(milliseconds: 4000),
+        ));
+      }
     }
   }
 
