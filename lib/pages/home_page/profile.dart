@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/deleteUser.dart';
+import 'package:the_spot/services/library/UserProfile.dart';
 import 'package:the_spot/services/storage.dart';
 import 'package:vibrate/vibrate.dart';
 
@@ -49,10 +50,10 @@ class _Profile extends State<Profile> {
   }
 
   void loadProfileDataFromDatabase() async {
-    Map profileData = await Database().getProfileData(widget.userId, context);
+    UserProfile userProfile = await Database().getProfileData(widget.userId, context);
 
     setState(() {
-      _pseudo = profileData['Pseudo'];
+      _pseudo = userProfile.pseudo;
     });
   }
 

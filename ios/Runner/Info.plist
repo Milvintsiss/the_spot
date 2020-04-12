@@ -43,5 +43,9 @@
 	<false/>
 	<key>io.flutter.embedded_views_preview</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+    <string>To localize you on the map.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>To help us know how many riders are in a spot</string>
 </dict>
 </plist>

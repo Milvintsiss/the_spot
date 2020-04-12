@@ -1,10 +1,15 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:fluster/fluster.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:location/location.dart';
 import 'package:the_spot/pages/home_page/Map/createUpdateSpot_page.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/gallery.dart';
@@ -25,9 +30,15 @@ class Map extends StatefulWidget {
 }
 
 class _Map extends State<Map> {
-  final Completer<GoogleMapController> _mapController = Completer();
+  final Completer<GoogleMapController> _mapControllerCompleter = Completer();
 
-  GoogleMapController _controller;
+  GoogleMapController _mapController;
+
+  Location location = Location();
+  LocationData _locationData;
+  LatLng userLocation;
+  List<LatLng> usersLocations = [];
+
   bool waitUserShowLocation = false;
 
   double screenWidth;
@@ -56,7 +67,7 @@ class _Map extends State<Map> {
   Fluster<MapMarker> _clusterManager;
 
   ///Map type, true = normal  /  false = hybrid
-  bool _mapType = true;
+  bool _mapType = false;
 
   /// Current map zoom. Initial zoom will be 15, street level
   double _currentZoom = 15;
@@ -84,9 +95,9 @@ class _Map extends State<Map> {
   /// Called when the Google Map widget is created. Updates the map loading state
   /// and inits the markers.
   void _onMapCreated(GoogleMapController controller) {
-    _mapController.complete(controller);
+    _mapControllerCompleter.complete(controller);
 
-    _controller = controller;
+    _mapController = controller;
 
     setState(() {
       _isMapLoading = false;
@@ -154,6 +165,28 @@ class _Map extends State<Map> {
     });
   }
 
+  void getUserLocationAndUpdate({bool animateCameraToLocation = false}) async {
+    _locationData = await location.getLocation();
+    userLocation = LatLng(_locationData.latitude, _locationData.longitude);
+    if (animateCameraToLocation == true) {
+      _mapController.animateCamera(CameraUpdate.newLatLngZoom(userLocation, 18));
+    }
+
+    final StorageReference storageReference =
+    FirebaseStorage().ref().child("ProfilePictures/" + widget.userId);
+    String avatarDownloadPath = await storageReference.getDownloadURL();
+    final File _avatar = await DefaultCacheManager().getSingleFile(avatarDownloadPath);
+    Uint8List __avatar = await _avatar.readAsBytes();
+    BitmapDescriptor avatar = BitmapDescriptor.fromBytes(__avatar);
+
+    setState(() {
+      _markers.add(Marker(markerId: MarkerId("UserPosition"), position: userLocation, icon: avatar ));
+    });
+
+    Database().updateUserLocation(context: context, userId: widget.userId, userLocation: userLocation);
+
+  }
+
   @override
   Widget build(BuildContext context) {
     screenWidth = MediaQuery
@@ -172,7 +205,10 @@ class _Map extends State<Map> {
             opacity: _isMapLoading ? 0 : 1,
             child: GoogleMap(
               compassEnabled: true,
+              myLocationEnabled: false,
+              myLocationButtonEnabled: false,
               mapType: _mapType ? MapType.normal : MapType.hybrid,
+              indoorViewEnabled: false,
               initialCameraPosition: CameraPosition(
                 target: LatLng(41.143029, -8.611274),
                 zoom: _currentZoom,
@@ -251,6 +287,14 @@ class _Map extends State<Map> {
                       _mapType = !_mapType;
                     });
                   },
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.my_location,
+                    size: 30,
+                    color: SecondaryColorDark,
+                  ),
+                  onPressed: () => getUserLocationAndUpdate(animateCameraToLocation: true),
                 ),
               ],
             ),
@@ -353,8 +397,8 @@ class _Map extends State<Map> {
                     Text("This spot was rated " + usersGrades.length.toString() + " times!",
                     style: TextStyle(color: PrimaryColorDark, fontStyle: FontStyle.italic),),
                     showSpotGradeWidget("Spot:    ", spotGrade),
-                    showSpotGradeWidget("Floor:   ", spotGradeBeauty),
-                    showSpotGradeWidget("Beauty:", spotGradeFloor),
+                    showSpotGradeWidget("Floor:   ", spotGradeFloor),
+                    showSpotGradeWidget("Beauty:", spotGradeBeauty),
                   ],
                 ),
                 Divider(
@@ -558,7 +602,7 @@ class _Map extends State<Map> {
 
   void showDialogConfirmCreateSpot(LatLng spotLocation) {
     waitUserShowLocation = false;
-    _controller
+    _mapController
         .animateCamera(CameraUpdate.newLatLngZoom(
         LatLng(spotLocation.latitude - 0.0001, spotLocation.longitude), 20))
         .whenComplete(() {
