@@ -19,37 +19,40 @@ class Storage {
   async {
     _file = await ImagePicker.pickImage(source: ImageSource.gallery);
 
-    _file = await ImageCropper.cropImage(
-        sourcePath: _file.path,
-        aspectRatio: cropAspectRatio,
-        cropStyle: cropStyle,
-        maxHeight: maxHeight,
-        maxWidth: maxWidth,
-        compressQuality: compressQuality,
-        androidUiSettings: AndroidUiSettings(
-          toolbarColor: PrimaryColorDark,
-          toolbarWidgetColor: Colors.white,
-          activeControlsWidgetColor: PrimaryColorLight,
-          lockAspectRatio: true,
-        ),
-        iosUiSettings: IOSUiSettings(
-          aspectRatioLockEnabled: true,
-          resetAspectRatioEnabled: false,
-        ));
+    if (_file != null) {
+      _file = await ImageCropper.cropImage(
+          sourcePath: _file.path,
+          aspectRatio: cropAspectRatio,
+          cropStyle: cropStyle,
+          maxHeight: maxHeight,
+          maxWidth: maxWidth,
+          compressQuality: compressQuality,
+          androidUiSettings: AndroidUiSettings(
+            toolbarColor: PrimaryColorDark,
+            toolbarWidgetColor: Colors.white,
+            activeControlsWidgetColor: PrimaryColorLight,
+            lockAspectRatio: true,
+          ),
+          iosUiSettings: IOSUiSettings(
+            aspectRatioLockEnabled: true,
+            resetAspectRatioEnabled: false,
+          ));
 
-    final StorageReference storageReference =
-        FirebaseStorage().ref().child(storageRef);
-    final StorageUploadTask uploadTask = storageReference.putFile(_file);
-    await uploadTask.onComplete;
-    if(uploadTask.isSuccessful){
-      print("Image uploaded with success");
-      return true;
-    }
-    else{
-      print("Error when uploading image...");
-      return false;
-    }
 
+      final StorageReference storageReference =
+      FirebaseStorage().ref().child(storageRef);
+      final StorageUploadTask uploadTask = storageReference.putFile(_file);
+      await uploadTask.onComplete;
+      if (uploadTask.isSuccessful) {
+        print("Image uploaded with success");
+        return true;
+      }
+      else {
+        print("Error when uploading image...");
+        return false;
+      }
+    }
+    return false;
   }
 
   Future<String> getUrlPhoto (String locationOnStorage) async {
