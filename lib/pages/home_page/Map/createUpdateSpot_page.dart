@@ -265,7 +265,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
             spotGradeFloor: spotGradeFloorInput,
             spotGradeBeauty: spotGradeBeautyInput);
 
-        Database().updateASpot(context: context, spotId: widget.spotId, spotName: spotName, spotDescription: spotDescription, imagesDownloadUrls: imagesAddress, userGrade: userGrades);
+        Database().updateASpot(context: context, creatorId: widget.userId, spotId: widget.spotId, spotName: spotName, spotDescription: spotDescription, imagesDownloadUrls: imagesAddress, userGrade: userGrades);
 
         widget.stateCallback();
         Navigator.pop(context);
