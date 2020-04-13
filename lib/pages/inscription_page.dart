@@ -1,20 +1,14 @@
-import 'dart:io';
-
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image_cropper/image_cropper.dart';
 
 import 'package:the_spot/app_localizations.dart';
-import 'package:the_spot/pages/home_page.dart';
-import 'package:the_spot/main.dart';
 import 'package:the_spot/pages/root_page.dart';
 import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/theme.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:vibrate/vibrate.dart';
 
 class InscriptionPage extends StatefulWidget {
@@ -32,10 +26,7 @@ class InscriptionPage extends StatefulWidget {
 class _InscriptionPage extends State<InscriptionPage> {
   final _formKey = GlobalKey<FormState>();
 
-
-  String _userID;
   String _pseudo;
-  String _profilePicturePath;
   bool _BMX = false;
   bool _Skateboard = false;
   bool _Scooter = false;
@@ -123,8 +114,9 @@ class _InscriptionPage extends State<InscriptionPage> {
 
   void loadAvatar() async {
     print("add an Avatar");
-    bool uploadIsSuccessful = await Storage().getPhotoFromUserStorageAndUpload(
-      "ProfilePictures/" + widget.userId,
+    await Storage().getPhotoFromUserStorageAndUpload(
+      storageRef: "ProfilePictures/" + widget.userId,
+      context: context,
       cropStyle: CropStyle.circle,
       cropAspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
       maxHeight: 150,
