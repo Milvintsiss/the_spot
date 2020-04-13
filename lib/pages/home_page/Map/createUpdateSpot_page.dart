@@ -1,4 +1,3 @@
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -10,7 +9,8 @@ import 'package:the_spot/theme.dart';
 import 'package:vibrate/vibrate.dart';
 
 class CreateUpdateSpotPage extends StatefulWidget {
-  CreateUpdateSpotPage( {Key key, this.userId, this.spotId, this.stateCallback}) : super(key: key);
+  CreateUpdateSpotPage({Key key, this.userId, this.spotId, this.stateCallback})
+      : super(key: key);
 
   final String userId;
   final String spotId;
@@ -31,16 +31,16 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
   String spotName;
   String spotDescription;
 
-
   double spotGradeInput;
   double spotGradeBeautyInput;
   double spotGradeFloorInput;
 
   final int maxAmountOfPictures = 10;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
+        key: _scaffoldKey,
         backgroundColor: PrimaryColorDark,
         appBar: AppBar(
           leading: IconButton(
@@ -72,12 +72,13 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
     return Container(
         padding: EdgeInsets.fromLTRB(8, 8, 8, 8),
         decoration: BoxDecoration(
-            color: PrimaryColor,
-            borderRadius: BorderRadius.all(Radius.circular(10)),),
+          color: PrimaryColor,
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+        ),
         child: Gallery(imagesAddress, height: 200));
   }
 
-  Widget showAddLimitationText(){
+  Widget showAddLimitationText() {
     return Text(
       "You can add up to 10 photos",
       style: TextStyle(color: PrimaryColorLight),
@@ -87,8 +88,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
   Widget showAddButton() {
     return RaisedButton(
       elevation: 5.0,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
       color: SecondaryColorDark,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -112,19 +112,22 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
   }
 
   void addImage() async {
-    if(pictureId < maxAmountOfPictures) {
+    if (pictureId < maxAmountOfPictures) {
       pictureId++;
       await Storage().getPhotoFromUserStorageAndUpload(
-          "SpotPictures/" + widget.spotId + "/" + pictureId.toString());
+          storageRef:
+              "SpotPictures/" + widget.spotId + "/" + pictureId.toString(),
+          context: context);
 
-      String picture = await Storage().getUrlPhoto("SpotPictures/" + widget.spotId + "/" + pictureId.toString());
+      String picture = await Storage().getUrlPhoto(
+          "SpotPictures/" + widget.spotId + "/" + pictureId.toString());
 
       this.setState(() {
         imagesAddress.add(picture);
         showPhotos();
       });
       print(imagesAddress);
-    }else{
+    } else {
       Vibrate.feedback(FeedbackType.warning);
       _scaffoldKey.currentState.showSnackBar(SnackBar(
         content: Text("You riched the limit amount of photos!"),
@@ -133,7 +136,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
     }
   }
 
-  Widget showInput(String inputType, IconData icon,{int maxLines = 1}) {
+  Widget showInput(String inputType, IconData icon, {int maxLines = 1}) {
     return Padding(
       padding: EdgeInsets.fromLTRB(0, 20.0, 0, 0.0),
       child: TextFormField(
@@ -182,8 +185,8 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
       padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
       child: Container(
         decoration: BoxDecoration(
-            color: SecondaryColorDark,
-            borderRadius: BorderRadius.all(Radius.circular(10)),
+          color: SecondaryColorDark,
+          borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
         child: Column(
           children: <Widget>[
@@ -202,20 +205,23 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
       children: <Widget>[
         Text(
           spotGradeName,
-          style:
-          TextStyle(color: PrimaryColorDark, fontWeight: FontWeight.bold, fontSize: 20),
+          style: TextStyle(
+              color: PrimaryColorDark,
+              fontWeight: FontWeight.bold,
+              fontSize: 20),
         ),
-    Divider(indent: 40,),
-    RatingBar(
+        Divider(
+          indent: 40,
+        ),
+        RatingBar(
           glow: false,
           minRating: 1,
           itemSize: 30,
           unratedColor: PrimaryColor,
-          itemBuilder: (context, _) =>
-              Icon(
-                Icons.star,
-                color: Colors.amber,
-              ),
+          itemBuilder: (context, _) => Icon(
+            Icons.star,
+            color: Colors.amber,
+          ),
           onRatingUpdate: (newGrade) {
             switch (spotGradeName) {
               case "Spot:    ":
@@ -240,8 +246,8 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
       padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
       child: RaisedButton(
         elevation: 5.0,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30.0)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
         color: SecondaryColorDark,
         child: Text(
           "Save",
@@ -253,10 +259,10 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
   }
 
   void save() async {
-    if (validateAndSave()){
+    if (validateAndSave()) {
       if (spotGradeInput != null &&
-      spotGradeBeautyInput != null &&
-      spotGradeFloorInput != null) {
+          spotGradeBeautyInput != null &&
+          spotGradeFloorInput != null) {
         print("Spot name: " + spotName);
         print("Spot description: " + spotDescription);
         UserGrades userGrades = UserGrades(
@@ -265,14 +271,22 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
             spotGradeFloor: spotGradeFloorInput,
             spotGradeBeauty: spotGradeBeautyInput);
 
-        Database().updateASpot(context: context, creatorId: widget.userId, spotId: widget.spotId, spotName: spotName, spotDescription: spotDescription, imagesDownloadUrls: imagesAddress, userGrade: userGrades);
+        Database().updateASpot(
+            context: context,
+            creatorId: widget.userId,
+            spotId: widget.spotId,
+            spotName: spotName,
+            spotDescription: spotDescription,
+            imagesDownloadUrls: imagesAddress,
+            userGrade: userGrades);
 
         widget.stateCallback();
         Navigator.pop(context);
-      }else {
+      } else {
         Vibrate.feedback(FeedbackType.warning);
         _scaffoldKey.currentState.showSnackBar(SnackBar(
-          content: Text("You must give a global grade, a floor grade and a beauty grade! Minimum grade is 1 star."),
+          content: Text(
+              "You must give a global grade, a floor grade and a beauty grade! Minimum grade is 1 star."),
           duration: Duration(milliseconds: 4000),
         ));
       }

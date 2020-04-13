@@ -1,17 +1,13 @@
-import 'dart:ffi';
-import 'dart:io';
-import 'dart:typed_data';
+
 
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/deleteUser.dart';
 import 'package:the_spot/services/library/UserProfile.dart';
 import 'package:the_spot/services/storage.dart';
-import 'package:vibrate/vibrate.dart';
 
 import '../../theme.dart';
 
@@ -228,8 +224,9 @@ class _Profile extends State<Profile> {
 
   void loadAvatar() async {
     print("add an Avatar");
-    bool uploadIsSuccessful = await Storage().getPhotoFromUserStorageAndUpload(
-        "ProfilePictures/" + widget.userId,
+    await Storage().getPhotoFromUserStorageAndUpload(
+      storageRef: "ProfilePictures/" + widget.userId,
+      context: context,
       cropStyle: CropStyle.circle,
       cropAspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
       maxHeight: 150,
