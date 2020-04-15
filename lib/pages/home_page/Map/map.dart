@@ -12,8 +12,10 @@ import 'package:location/location.dart';
 import 'package:the_spot/pages/home_page/Map/createUpdateSpot_page.dart';
 import 'package:the_spot/pages/home_page/Map/spotInfo.dart';
 import 'package:the_spot/services/database.dart';
+import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/services/library/map_helper.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
+import 'package:the_spot/services/library/search_engine.dart';
 
 import '../../../theme.dart';
 
@@ -43,6 +45,8 @@ class _Map extends State<Map> {
 
   double screenWidth;
   double screenHeight;
+
+  String matchName;
 
   /// Set of displayed markers and cluster markers on the map
   final Set<Marker> _markers = Set();
@@ -80,7 +84,7 @@ class _Map extends State<Map> {
 
   /// Called when the Google Map widget is created. Updates the map loading state
   /// and inits the markers.
-  void _onMapCreated(GoogleMapController controller) {
+  void _onMapCreated(GoogleMapController controller) async {
     _mapControllerCompleter.complete(controller);
 
     _mapController = controller;
@@ -94,7 +98,8 @@ class _Map extends State<Map> {
 
   /// Inits [Fluster] and all the markers with network images and updates the loading state.
   void _initMarkers() async {
-    spots = await Database().getSpots(context);
+
+    spots = await searchSpots(context, matchName: matchName);
 
     markers.clear();
 
@@ -238,58 +243,118 @@ class _Map extends State<Map> {
               : Padding(
                   padding: EdgeInsets.all(0.0),
                 ),
-          Positioned(
-            top: 25,
-            right: 0,
-            child: Column(
-              children: <Widget>[
-                IconButton(
-                  icon: Icon(
-                    Icons.refresh,
-                    size: 30,
-                    color: SecondaryColorDark,
+          onTopMapUI(),
+        ],
+      ),
+    );
+  }
+
+  Widget onTopMapUI() {
+    return Positioned(
+      top: 30,
+      right: 0,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          searchBarWidget(),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Container(
+              decoration: BoxDecoration(
+                  color: transparentColor(PrimaryColorLight, 220),
+                  borderRadius: BorderRadius.all(Radius.circular(30))),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  IconButton(
+                    icon: Icon(
+                      Icons.refresh,
+                      size: 30,
+                      color: PrimaryColorDark,
+                    ),
+                    onPressed: _initMarkers,
                   ),
-                  onPressed: _initMarkers,
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.place,
-                    size: 30,
-                    color: SecondaryColorDark,
+                  IconButton(
+                    icon: Icon(
+                      Icons.place,
+                      size: 30,
+                      color: PrimaryColorDark,
+                    ),
+                    onPressed: () => print("place button pressed"),
                   ),
-                  onPressed: () => print("place button pressed"),
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.add_circle,
-                    color: SecondaryColorDark,
+                  IconButton(
+                    icon: Icon(
+                      Icons.add_circle,
+                      color: PrimaryColorDark,
+                    ),
+                    onPressed: showDialogSpotLocation,
                   ),
-                  onPressed: showDialogSpotLocation,
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.map,
-                    color: SecondaryColorDark,
+                  IconButton(
+                    icon: Icon(
+                      Icons.map,
+                      color: PrimaryColorDark,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _mapType = !_mapType;
+                      });
+                    },
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _mapType = !_mapType;
-                    });
-                  },
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.my_location,
-                    size: 30,
-                    color: SecondaryColorDark,
+                  IconButton(
+                    icon: Icon(
+                      Icons.my_location,
+                      size: 30,
+                      color: PrimaryColorDark,
+                    ),
+                    onPressed: () => getUserLocationAndUpdate(animateCameraToLocation: true),
                   ),
-                  onPressed: () =>
-                      getUserLocationAndUpdate(animateCameraToLocation: true),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget searchBarWidget() {
+    return Container(
+      width: screenWidth,
+      child: Center(
+        child: Container(
+          height: 40,
+          width: screenWidth - 20,
+          decoration: BoxDecoration(
+              color: transparentColor(PrimaryColor, 240),
+              borderRadius: BorderRadius.all(Radius.circular(30))),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              IconButton(
+                icon: Icon(Icons.filter_list),
+                onPressed: () => print("filter"),
+              ),
+              Container(
+                width: screenWidth - 160,
+                child: TextField(
+                  style: TextStyle(color: Colors.white),
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: "Search...",
+                    hintStyle: TextStyle(color: Colors.white70),
+                  ),
+                  onChanged: (value) => matchName = value,
+                  onSubmitted: (value) => _initMarkers(),
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () => _initMarkers(),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -319,8 +384,6 @@ class _Map extends State<Map> {
           });
         });
   }
-
-
 
   void showDialogSpotLocation() {
     showDialog(
