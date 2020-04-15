@@ -284,66 +284,86 @@ class Database {
     return usersGrades;
   }
 
-  Future<List> getSpots(BuildContext context, {bool getAll = false}) async {
+  Future<List> getSpots(BuildContext context, {bool getAll = false, String matchName}) async {
     final bool connectionState = await checkConnection(context);
 
     List<MapMarker> spots = new List();
 
     if (connectionState) {
-      await database
-          .collection("spots")
-          .getDocuments()
-          .then((QuerySnapshot snapshot) {
-        snapshot.documents.forEach((document) {
-          Map data = document.data;
-          print(data);
-
-          //convert the List<dynamic> into List<String>
-          List<String> imagesDownloadUrls = [];
-          if (data['ImagesDownloadUrls'] != null) {
-            imagesDownloadUrls = data['ImagesDownloadUrls'].cast<String>();
-            print(imagesDownloadUrls);
-          }
-
-          //convert the List of UserGradess to a List of Map
-          List<UserGrades> usersGrades = [];
-          if (data['UsersGrades'] != null) {
-            usersGrades =
-                ConvertMapToUsersGrades(data['UsersGrades'].cast<Map>());
-            usersGrades.forEach((element) {
-              print(element.userId +
-                  " / " +
-                  element.spotGrade.toString() +
-                  " / " +
-                  element.spotGradeFloor.toString() +
-                  " / " +
-                  element.spotGradeBeauty.toString());
-            });
-          }
-
-          MapMarker spot = MapMarker(
-            id: document.documentID,
-            position: new LatLng(
-                data['SpotLocationLatitude'], data['SpotLocationLongitude']),
-            icon: BitmapDescriptor.defaultMarker,
-            name: data['SpotName'],
-            description: data['SpotDescription'],
-            imagesDownloadUrls: imagesDownloadUrls,
-            usersGrades: usersGrades,
-          );
-          if (data['SpotName'] != null || getAll) {
-            //verify if spot has been updated after his creation
-            spots.add(spot);
-          }
+      if (matchName == null) {
+        await database
+            .collection("spots")
+            .getDocuments()
+            .then((QuerySnapshot querySnapshot) {
+          spots = convertSpotsData(querySnapshot, getAll);
+        }).catchError((err) {
+          print(err);
+          error(err.toString(), context);
+          return null;
         });
-      }).catchError((err) {
-        print(err);
-        error(err.toString(), context);
-        return null;
-      });
+      }else{
+        await database
+            .collection("spots")
+            .where('SpotName', isEqualTo: matchName, )
+            .getDocuments()
+            .then((QuerySnapshot querySnapshot){
+              spots = convertSpotsData(querySnapshot, getAll);
+        }).catchError((err){
+          print(err);
+          error(err.toString(), context);
+          return null;
+        });
+      }
     } else {
       return null;
     }
+    return spots;
+  }
+
+  List<MapMarker> convertSpotsData(QuerySnapshot querySnapshot, bool getAll){
+    List<MapMarker> spots = [];
+    querySnapshot.documents.forEach((document) {
+      Map data = document.data;
+      print(data);
+
+      //convert the List<dynamic> into List<String>
+      List<String> imagesDownloadUrls = [];
+      if (data['ImagesDownloadUrls'] != null) {
+        imagesDownloadUrls = data['ImagesDownloadUrls'].cast<String>();
+        print(imagesDownloadUrls);
+      }
+
+      //convert the List of UserGradess to a List of Map
+      List<UserGrades> usersGrades = [];
+      if (data['UsersGrades'] != null) {
+        usersGrades =
+            ConvertMapToUsersGrades(data['UsersGrades'].cast<Map>());
+        usersGrades.forEach((element) {
+          print(element.userId +
+              " / " +
+              element.spotGrade.toString() +
+              " / " +
+              element.spotGradeFloor.toString() +
+              " / " +
+              element.spotGradeBeauty.toString());
+        });
+      }
+
+      MapMarker spot = MapMarker(
+        id: document.documentID,
+        position: new LatLng(
+            data['SpotLocationLatitude'], data['SpotLocationLongitude']),
+        icon: BitmapDescriptor.defaultMarker,
+        name: data['SpotName'],
+        description: data['SpotDescription'],
+        imagesDownloadUrls: imagesDownloadUrls,
+        usersGrades: usersGrades,
+      );
+      if (data['SpotName'] != null || getAll) {
+        //verify if spot has been updated after his creation
+        spots.add(spot);
+      }
+  });
     return spots;
   }
 
