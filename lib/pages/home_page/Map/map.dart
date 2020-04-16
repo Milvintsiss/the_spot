@@ -169,8 +169,7 @@ class _Map extends State<Map> {
     String avatarDownloadPath = await storageReference.getDownloadURL();
     final File _avatar =
         await DefaultCacheManager().getSingleFile(avatarDownloadPath);
-    Uint8List __avatar = await _avatar.readAsBytes();
-    BitmapDescriptor avatar = BitmapDescriptor.fromBytes(__avatar);
+    BitmapDescriptor avatar = await convertImageFileToBitmapDescriptor(_avatar, size: 150, title: "User", titleColor: PrimaryColorLight, titleBackgroundColor: PrimaryColorDark, addBorder: true, borderColor: PrimaryColor, borderSize: 15);
 
     setState(() {
       _markers.add(Marker(
