@@ -25,15 +25,15 @@ Future<BitmapDescriptor> convertImageFileToBitmapDescriptor(File imageFile,
   final Path clipPath = Path();
   clipPath.addRRect(RRect.fromRectAndRadius(
       Rect.fromLTWH(0, 0, size.toDouble(), size.toDouble()),
-      Radius.circular(100)));
+      Radius.circular(1000)));
   clipPath.addRRect(RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, size * 8 / 10, size.toDouble(), size * 3 / 10),
+      Rect.fromLTWH(0, size * 8 / 10, size.toDouble(), size * 2 / 10),
       Radius.circular(100)));
   canvas.clipPath(clipPath);
 
   //paintImage
   final Uint8List imageUint8List = await imageFile.readAsBytes();
-  final ui.Codec codec = await ui.instantiateImageCodec(imageUint8List);
+  final ui.Codec codec = await ui.instantiateImageCodec(imageUint8List, targetHeight: size, targetWidth: size);
   final ui.FrameInfo imageFI = await codec.getNextFrame();
   paintImage(
       canvas: canvas,
@@ -57,7 +57,7 @@ Future<BitmapDescriptor> convertImageFileToBitmapDescriptor(File imageFile,
     paint..style = PaintingStyle.fill;
     canvas.drawRRect(
         RRect.fromRectAndRadius(
-            Rect.fromLTWH(0, size * 8 / 10, size.toDouble(), size * 3 / 10),
+            Rect.fromLTWH(0, size * 8 / 10, size.toDouble(), size * 2 / 10),
             Radius.circular(100)),
         paint);
 
@@ -73,12 +73,12 @@ Future<BitmapDescriptor> convertImageFileToBitmapDescriptor(File imageFile,
     textPainter.paint(
         canvas,
         Offset(radius - textPainter.width / 2,
-            size * 9.5 / 10 - textPainter.height / 2));
+            size * 9 / 10 - textPainter.height / 2));
   }
 
   //convert canvas as PNG bytes
   final _image =
-      await pictureRecorder.endRecording().toImage(size, (size * 1.1).toInt());
+      await pictureRecorder.endRecording().toImage(size, size);
   final data = await _image.toByteData(format: ui.ImageByteFormat.png);
 
   //convert PNG bytes as BitmapDescriptor

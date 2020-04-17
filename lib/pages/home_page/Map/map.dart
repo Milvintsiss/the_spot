@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:fluster/fluster.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -16,6 +14,7 @@ import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/services/library/map_helper.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
 import 'package:the_spot/services/library/search_engine.dart';
+import 'package:the_spot/services/storage.dart';
 
 import '../../../theme.dart';
 
@@ -58,7 +57,8 @@ class _Map extends State<Map> {
   final int _maxClusterZoom = 19;
 
   /// [Fluster] instance used to manage the clusters
-  Fluster<MapMarker> _clusterManager;
+  Fluster<MapMarker> _usersClusterManager;
+  Fluster<MapMarker> _spotsClusterManager;
 
   ///Map type, true = normal  /  false = hybrid
   bool _mapType = false;
@@ -72,15 +72,14 @@ class _Map extends State<Map> {
   /// Markers loading flag
   bool _areMarkersLoading = true;
 
-  /// Color of the cluster circle
-  final Color _clusterColor = Colors.blue;
-
   /// Color of the cluster text
   final Color _clusterTextColor = Colors.white;
 
-  List<MapMarker> spots = List();
+  List<MapMarker> spots = [];
+  List<MapMarker> users = [];
 
-  final List<MapMarker> markers = [];
+  final List<MapMarker> spotsMarkers = [];
+  final List<MapMarker> usersMarkers = [];
 
   /// Called when the Google Map widget is created. Updates the map loading state
   /// and inits the markers.
@@ -93,24 +92,46 @@ class _Map extends State<Map> {
       _isMapLoading = false;
     });
 
-    _initMarkers();
+    _initMarkersAndUsers();
   }
 
   /// Inits [Fluster] and all the markers with network images and updates the loading state.
-  void _initMarkers() async {
-
+  void _initMarkersAndUsers() async {
     spots = await searchSpots(context, matchName: matchName);
 
-    markers.clear();
+    await getUserLocationAndUpdate();
+
+    _initUsersCluster();
+    _initSpotsCluster();
+  }
+  
+  void _initUsersCluster() async{
+    usersMarkers.clear();
+
+    if (users != null) {
+      users.forEach((user) {
+        usersMarkers.add(user);
+      });
+    }
+    _usersClusterManager = await MapHelper.initClusterManager(
+      usersMarkers,
+      _minClusterZoom,
+      _maxClusterZoom,
+    );
+
+    await _updateMarkers();
+  }
+
+  void _initSpotsCluster() async{
+    spotsMarkers.clear();
 
     if (spots != null) {
       spots.forEach((spot) {
-        markers.add(spot);
+        spotsMarkers.add(spot);
       });
     }
-
-    _clusterManager = await MapHelper.initClusterManager(
-      markers,
+    _spotsClusterManager = await MapHelper.initClusterManager(
+      spotsMarkers,
       _minClusterZoom,
       _maxClusterZoom,
     );
@@ -121,42 +142,59 @@ class _Map extends State<Map> {
   /// Gets the markers and clusters to be displayed on the map for the current zoom level and
   /// updates state.
   Future<void> _updateMarkers([double updatedZoom]) async {
-    if (_clusterManager == null || updatedZoom == _currentZoom) return;
-
     if (updatedZoom != null) {
       _currentZoom = updatedZoom;
     }
+
+    if (_spotsClusterManager == null && _usersClusterManager == null) return;
 
     setState(() {
       _areMarkersLoading = true;
     });
 
-    final updatedMarkers = await MapHelper.getClusterMarkers(
-      _clusterManager,
-      _currentZoom,
-      _clusterColor,
-      _clusterTextColor,
-      80,
-    );
-
-    List<Marker> __markers = List();
-    __markers.addAll(updatedMarkers);
     _markers.clear();
 
-    __markers.forEach((marker) {
-      _markers.add(Marker(
-          markerId: marker.markerId,
-          position: marker.position,
-          icon: marker.icon,
-          onTap: () => showSpotInfo(marker.markerId.value)));
-    });
+    if(_spotsClusterManager != null) {
+      final spotsUpdatedMarkers = await MapHelper.getClusterMarkers(
+        _spotsClusterManager,
+        _currentZoom,
+        Colors.red,
+        _clusterTextColor,
+        80,
+      );
+      spotsUpdatedMarkers.forEach((marker) {
+        _markers.add(Marker(
+            markerId: marker.markerId,
+            position: marker.position,
+            icon: marker.icon,
+            onTap: () => showSpotInfo(marker.markerId.value)));
+      });
+    }
+
+    if(_usersClusterManager != null) {
+      final usersUpdatedMarkers = await MapHelper.getClusterMarkers(
+        _usersClusterManager,
+        _currentZoom,
+        PrimaryColor,
+        _clusterTextColor,
+        80,
+      );
+      usersUpdatedMarkers.forEach((marker) {
+        _markers.add(Marker(
+            markerId: marker.markerId,
+            position: marker.position,
+            icon: marker.icon,
+            anchor: Offset(0.5, 0.5),
+            onTap: () => showSpotInfo(marker.markerId.value)));
+      });
+    }
 
     setState(() {
       _areMarkersLoading = false;
     });
   }
 
-  void getUserLocationAndUpdate({bool animateCameraToLocation = false}) async {
+  Future getUserLocationAndUpdate({bool animateCameraToLocation = false}) async {
     _locationData = await location.getLocation();
     userLocation = LatLng(_locationData.latitude, _locationData.longitude);
     if (animateCameraToLocation == true) {
@@ -164,19 +202,28 @@ class _Map extends State<Map> {
           .animateCamera(CameraUpdate.newLatLngZoom(userLocation, 18));
     }
 
-    final StorageReference storageReference =
-        FirebaseStorage().ref().child("ProfilePictures/" + widget.userId);
-    String avatarDownloadPath = await storageReference.getDownloadURL();
-    final File _avatar =
-        await DefaultCacheManager().getSingleFile(avatarDownloadPath);
-    BitmapDescriptor avatar = await convertImageFileToBitmapDescriptor(_avatar, size: 150, title: "User", titleColor: PrimaryColorLight, titleBackgroundColor: PrimaryColorDark, addBorder: true, borderColor: PrimaryColor, borderSize: 15);
-
-    setState(() {
-      _markers.add(Marker(
-          markerId: MarkerId("UserPosition"),
+    if(users.where((element) => element.markerId == widget.userId).isEmpty) {
+      //get user avatar and convert it to marker
+      final File avatarFile =
+      await DefaultCacheManager().getSingleFile(
+          await Storage().getUrlPhoto("ProfilePictures/" + widget.userId));
+      BitmapDescriptor avatar = await convertImageFileToBitmapDescriptor(
+          avatarFile, size: 150,
+          title: "Paulo1026",
+          titleColor: PrimaryColorLight,
+          titleBackgroundColor: PrimaryColorDark,
+          addBorder: true,
+          borderColor: PrimaryColor,
+          borderSize: 15);
+      users.add(MapMarker(id: widget.userId,
           position: userLocation,
-          icon: avatar));
-    });
+          icon: avatar,
+          type: Type.User));
+      _initUsersCluster();
+    }else{
+      users.firstWhere((element) => element.markerId == widget.userId).position = userLocation;
+
+    }
 
     Database().updateUserLocation(
         context: context, userId: widget.userId, userLocation: userLocation);
@@ -271,7 +318,7 @@ class _Map extends State<Map> {
                       size: 30,
                       color: PrimaryColorDark,
                     ),
-                    onPressed: _initMarkers,
+                    onPressed: _initMarkersAndUsers,
                   ),
                   IconButton(
                     icon: Icon(
@@ -344,12 +391,12 @@ class _Map extends State<Map> {
                     hintStyle: TextStyle(color: Colors.white70),
                   ),
                   onChanged: (value) => matchName = value,
-                  onSubmitted: (value) => _initMarkers(),
+                  onSubmitted: (value) => _initMarkersAndUsers(),
                 ),
               ),
               IconButton(
                 icon: Icon(Icons.search),
-                onPressed: () => _initMarkers(),
+                onPressed: () => _initMarkersAndUsers(),
               ),
             ],
           ),
@@ -450,7 +497,7 @@ class _Map extends State<Map> {
   }
 
   void createSpotCallBack() {
-    _initMarkers();
+    _initMarkersAndUsers();
   }
 
   void createSpot(LatLng tapPosition) async {

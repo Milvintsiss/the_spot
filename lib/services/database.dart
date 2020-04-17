@@ -358,6 +358,7 @@ class Database {
         description: data['SpotDescription'],
         imagesDownloadUrls: imagesDownloadUrls,
         usersGrades: usersGrades,
+        type: Type.Spot
       );
       if (data['SpotName'] != null || getAll) {
         //verify if spot has been updated after his creation

@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../theme.dart';
 
 class Storage {
-  File _file;
+
 
   Future<bool> getPhotoFromUserStorageAndUpload(
       {@required String storageRef,
@@ -20,6 +20,7 @@ class Storage {
       int maxHeight = 1080,
       int maxWidth = 1080,
       int compressQuality = 75}) async {
+    File _file;
     if (letUserChooseImageSource) {
       getPhotoFromGallery = null;
       AlertDialog errorAlertDialog = new AlertDialog(
