@@ -3,9 +3,15 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:meta/meta.dart';
 import 'package:the_spot/services/library/userGrade.dart';
 
+enum Type{
+  Spot,
+  User
+}
+
 class MapMarker extends Clusterable {
   final String id;
-  final LatLng position;
+  LatLng position;
+  final Type type;
   BitmapDescriptor icon;
   final String name;
   final String description;
@@ -15,6 +21,7 @@ class MapMarker extends Clusterable {
   MapMarker({
     @required this.id,
     @required this.position,
+    @required this.type,
     this.icon,
     this.name,
     this.description,
