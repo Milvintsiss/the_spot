@@ -1,3 +1,4 @@
+import 'package:basic_utils/basic_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:the_spot/services/authentication.dart';
 
@@ -182,10 +183,14 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
               Icons.mail,
               color: Colors.blueGrey[100],
             )),
-        validator: (value) =>
-        value.isEmpty
-            ? AppLocalizations.of(context).translate('Email can t be empty')
-            : null,
+        validator: (value) {
+        if (value.isEmpty)
+          return AppLocalizations.of(context).translate('Email can t be empty');
+        else if(!EmailUtils.isEmail(value)){
+          return AppLocalizations.of(context).translate('Email is badly formatted');
+        }else
+          return null;
+        },
         onSaved: (value) => _email = value.trim(),
       ),
     );

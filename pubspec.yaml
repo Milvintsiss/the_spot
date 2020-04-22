@@ -59,6 +59,8 @@ dependencies:
 
 
   #others
+  basic_utils: ^2.5.3
+
   shared_preferences: ^0.5.6
 
   vibrate: ^0.0.4
