@@ -3,6 +3,7 @@
   "Next": "Next",
   "Pseudo can t be empty": "With username it's better!",
   "Email can t be empty": "With email it's better!",
+  "Email is badly formatted" : "This is not an email!",
   "Password can t be empty": "With password it's better!",
   "Password": "Password",
   "Login": "Login",
