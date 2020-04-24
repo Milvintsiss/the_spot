@@ -43,19 +43,27 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
       _isSpotHasImages = false;
     else
       _isSpotHasImages = true;
-    return Container(
-        height: widget.screenHeight * 4 / 9,
-        child: ListView(
-          padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
-          children: <Widget>[
-            _isSpotHasImages
-                ? showSpotPhotosWidget(widget.spot.imagesDownloadUrls)
-                : Container(),
-            showSpotNameWidget(widget.spot.name),
-            showSpotGradesWidget(widget.spot.usersGrades, widget.spot.markerId),
-            showSpotDescriptionWidget(widget.spot.description),
-          ],
-        ));
+    return ClipRRect(
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(70),
+        topRight: Radius.circular(70),
+      ),
+      child: Container(
+          height: widget.screenHeight * 4 / 9,
+          color: PrimaryColorDark,
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
+            children: <Widget>[
+              _isSpotHasImages
+                  ? showSpotPhotosWidget(widget.spot.imagesDownloadUrls)
+                  : Container(),
+              showSpotNameWidget(widget.spot.name),
+              showSpotGradesWidget(
+                  widget.spot.usersGrades, widget.spot.markerId),
+              showSpotDescriptionWidget(widget.spot.description),
+            ],
+          )),
+    );
   }
 
   Widget showSpotGradesWidget(List<UserGrades> usersGrades, String spotId) {

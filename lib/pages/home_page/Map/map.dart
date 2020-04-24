@@ -245,7 +245,6 @@ class _Map extends State<Map> {
               myLocationEnabled: false,
               myLocationButtonEnabled: false,
               mapType: _mapType ? MapType.normal : MapType.hybrid,
-              indoorViewEnabled: false,
               initialCameraPosition: CameraPosition(
                 target: LatLng(41.143029, -8.611274),
                 zoom: _currentZoom,
@@ -411,12 +410,7 @@ class _Map extends State<Map> {
 
     showModalBottomSheet(
         context: context,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(50),
-          topRight: Radius.circular(50),
-        )),
-        backgroundColor: PrimaryColorDark,
+        backgroundColor: Colors.transparent,
         builder: (builder) {
           return StatefulBuilder(
               builder: (BuildContext context, StateSetter setStateBottomSheet) {

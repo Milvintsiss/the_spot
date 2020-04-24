@@ -1,13 +1,15 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
-import 'package:the_spot/services/library/gallery_item.dart';
 
 class Gallery extends StatefulWidget {
-  Gallery(this.imagesAddress, {Key key, this.height = 200}) : super(key: key);
+  Gallery(this.imagesAddress, {Key key, this.height = 200, this.animate = true}) : super(key: key);
 
   final double height;
+
+  final bool animate;
 
   final List<String> imagesAddress;
 
@@ -23,56 +25,59 @@ class _GalleryState extends State<Gallery> {
   @override
   void initState() {
     super.initState();
-
-    widget.imagesAddress.forEach((element) {
-      galleryItems.add(GalleryItem(
-        id: widget.imagesAddress.indexOf(element).toString(),
-        resource: element,
-      ));
-    });
-
-    galleryItems.forEach((element) {
-      galleryItemsThumbnail.add(GalleryItemThumbnail(
-        galleryItem: element,
-        onTap: () => open(context, galleryItems.indexOf(element)),
-      ));
-    });
+    initGallery();
   }
+
   @override
   void didUpdateWidget(Gallery oldWidget) {
     super.didUpdateWidget(oldWidget);
+    initGallery();
+  }
 
+  void initGallery() {
     galleryItems.clear();
     galleryItemsThumbnail.clear();
 
-    setState(() {
-      widget.imagesAddress.forEach((element) {
-        galleryItems.add(GalleryItem(
-          id: widget.imagesAddress.indexOf(element).toString(),
-          resource: element,
-        ));
-      });
+    if (widget.imagesAddress.length > 0) {
+      setState(() {
+        widget.imagesAddress.forEach((element) {
+          galleryItems.add(GalleryItem(
+            id: widget.imagesAddress.indexOf(element).toString(),
+            resource: element,
+          ));
+        });
 
-      galleryItems.forEach((element) {
-        galleryItemsThumbnail.add(GalleryItemThumbnail(
-          galleryItem: element,
-          onTap: () => open(context, galleryItems.indexOf(element)),
-        ));
+        galleryItems.forEach((element) {
+          galleryItemsThumbnail.add(GalleryItemThumbnail(
+            galleryItem: element,
+            onTap: () => open(context, galleryItems.indexOf(element)),
+          ));
+        });
       });
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        height: widget.height,
-        child: ListView.builder(
+    if(galleryItemsThumbnail.length > 0) {
+      return CarouselSlider.builder(
           itemCount: galleryItemsThumbnail.length,
-          itemBuilder: (BuildContext context, int Itemindex) {
-            return galleryItemsThumbnail[Itemindex];
+          itemBuilder: (BuildContext context, int itemIndex) {
+            return galleryItemsThumbnail[itemIndex];
           },
-          scrollDirection: Axis.horizontal,
-        ));
+          options: CarouselOptions(
+              autoPlay: widget.animate,
+              autoPlayInterval: Duration(seconds: 2),
+              enlargeCenterPage: true,
+              viewportFraction: 0.4,
+              aspectRatio: 1,
+              height: widget.height
+          ));
+    }else{
+      return Text(
+        "Vous n'avez pas encore ajouté de photos!"
+      );
+    }
   }
 
   void open(BuildContext context, final int index) {
@@ -196,5 +201,36 @@ class _GalleryPhotoViewWrapperState extends State<GalleryPhotoViewWrapper> {
             maxScale: PhotoViewComputedScale.covered * 1.1,
             heroAttributes: PhotoViewHeroAttributes(tag: item.id),
           );
+  }
+}
+
+
+class GalleryItem {
+  GalleryItem({this.id, this.resource, this.isSvg = false});
+
+  final String id;
+  final String resource;
+  final bool isSvg;
+}
+
+class GalleryItemThumbnail extends StatelessWidget {
+  const GalleryItemThumbnail(
+      {Key key, this.galleryItem, this.onTap})
+      : super(key: key);
+
+  final GalleryItem galleryItem;
+
+  final GestureTapCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 0.0),
+      child: GestureDetector(
+        onTap: onTap,
+        child: ClipOval(
+            child: Image.network(galleryItem.resource, fit: BoxFit.fitHeight)),
+      ),
+    );
   }
 }

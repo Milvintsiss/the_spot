@@ -24,7 +24,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
 
-  List<String> imagesAddress = <String>[];
+  List<String> imagesAddress = [];
 
   int pictureId = 0;
 
@@ -69,13 +69,13 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
   }
 
   Widget showPhotos() {
-    return Container(
-        padding: EdgeInsets.fromLTRB(8, 8, 8, 8),
-        decoration: BoxDecoration(
-          color: PrimaryColor,
-          borderRadius: BorderRadius.all(Radius.circular(10)),
-        ),
-        child: Gallery(imagesAddress, height: 200));
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(40),
+      child: Container(
+        padding: EdgeInsets.fromLTRB(5, 10, 5, 10),
+        color: SecondaryColorDark,
+          child: Gallery(imagesAddress, height: 100)),
+    );
   }
 
   Widget showAddLimitationText() {
