@@ -29,7 +29,6 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   String _password;
   String _errorMessage;
 
-
   // Check if form is valid before perform login or signup
   bool validateAndSave() {
     final form = _formKey.currentState;
@@ -184,12 +183,15 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
               color: Colors.blueGrey[100],
             )),
         validator: (value) {
-        if (value.isEmpty)
-          return AppLocalizations.of(context).translate('Email can t be empty');
-        else if(!EmailUtils.isEmail(value)){
-          return AppLocalizations.of(context).translate('Email is badly formatted');
-        }else
-          return null;
+          value = value.trim();
+          if (value.isEmpty)
+            return AppLocalizations.of(context)
+                .translate('Email can t be empty');
+          else if (!EmailUtils.isEmail(value))
+            return AppLocalizations.of(context)
+                .translate('Email is badly formatted');
+          else
+            return null;
         },
         onSaved: (value) => _email = value.trim(),
       ),
@@ -218,8 +220,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
               Icons.lock,
               color: Colors.blueGrey[100],
             )),
-        validator: (value) =>
-        value.isEmpty
+        validator: (value) => value.isEmpty
             ? AppLocalizations.of(context).translate('Password can t be empty')
             : null,
         onSaved: (value) => _password = value.trim(),
@@ -234,8 +235,8 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
         height: 40.0,
         child: RaisedButton(
           elevation: 5.0,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30.0)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
           color: SecondaryColorDark,
           child: Text(
             _isLoginForm
@@ -255,7 +256,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
         _isLoginForm
             ? AppLocalizations.of(context).translate('Create an account')
             : AppLocalizations.of(context)
-            .translate('Have an account? Sign in'),
+                .translate('Have an account? Sign in'),
         style: TextStyle(
             fontSize: 16.0, fontWeight: FontWeight.w500, color: Colors.white),
       ),
