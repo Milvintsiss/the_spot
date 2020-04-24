@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:the_spot/pages/home_page/feature_not_available.dart';
 import 'package:the_spot/services/authentication.dart';
-import 'dart:async';
 import 'package:the_spot/pages/home_page/Map/map.dart';
 import 'package:the_spot/pages/home_page/profile.dart';
+import 'package:the_spot/pages/chat_pages/chat_list_page.dart';
 
 import '../theme.dart';
 
@@ -28,7 +27,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _children = [
-      FeatureNotAvailable(),
+      ChatListPage(),
       FeatureNotAvailable(),
       FeatureNotAvailable(),
       Map(userId: widget.userId, context: context,),
@@ -102,8 +101,8 @@ class _HomePageState extends State<HomePage> {
           type: BottomNavigationBarType.fixed,
           items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.message),
-              title: Text("Messages"),
+              icon: Icon(Icons.chat_bubble),
+              title: Text("Chat"),
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.short_text),
