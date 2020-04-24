@@ -372,32 +372,28 @@ class _Map extends State<Map> {
           decoration: BoxDecoration(
               color: transparentColor(PrimaryColor, 240),
               borderRadius: BorderRadius.all(Radius.circular(30))),
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              IconButton(
+          child: TextField(
+            style: TextStyle(color: Colors.white),
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              hintText: "Search...",
+              hintStyle: TextStyle(color: Colors.white70),
+              border: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              errorBorder: InputBorder.none,
+              disabledBorder: InputBorder.none,
+              prefixIcon: IconButton(
                 icon: Icon(Icons.filter_list),
                 onPressed: () => print("filter"),
               ),
-              Container(
-                width: screenWidth - 160,
-                child: TextField(
-                  style: TextStyle(color: Colors.white),
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    hintText: "Search...",
-                    hintStyle: TextStyle(color: Colors.white70),
-                  ),
-                  onChanged: (value) => matchName = value,
-                  onSubmitted: (value) => _initMarkersAndUsers(),
-                ),
-              ),
-              IconButton(
+              suffixIcon: IconButton(
                 icon: Icon(Icons.search),
                 onPressed: () => _initMarkersAndUsers(),
               ),
-            ],
+            ),
+            onChanged: (value) => matchName = value,
+            onSubmitted: (value) => _initMarkersAndUsers(),
           ),
         ),
       ),
