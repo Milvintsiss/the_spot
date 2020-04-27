@@ -17,7 +17,7 @@ class MyTheme {
   static final ThemeData defaultTheme = _buildTheme();
 
   static ThemeData _buildTheme() {
-    final ThemeData base = ThemeData.light();
+    final ThemeData base = ThemeData();
 
     return base.copyWith(
       accentColor: SecondaryColor,
