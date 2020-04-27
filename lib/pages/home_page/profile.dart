@@ -1,6 +1,3 @@
-
-
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:the_spot/services/authentication.dart';
@@ -8,6 +5,7 @@ import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/deleteUser.dart';
 import 'package:the_spot/services/library/UserProfile.dart';
 import 'package:the_spot/services/storage.dart';
+import 'package:the_spot/services/library/library.dart';
 
 import '../../theme.dart';
 
@@ -24,8 +22,7 @@ class Profile extends StatefulWidget {
 }
 
 class _Profile extends State<Profile> {
-  String _avatar;
-  String _pseudo = "loading...";
+  UserProfile userProfile = UserProfile();
 
   void signOut() async {
     try {
@@ -36,21 +33,10 @@ class _Profile extends State<Profile> {
     }
   }
 
-  void loadAvatarFromDatabase() async {
-    final StorageReference storageReference =
-        FirebaseStorage().ref().child("ProfilePictures/" + widget.userId);
-    _avatar = await storageReference.getDownloadURL();
-    setState(() {
-      showAvatarWidget();
-    });
-  }
-
   void loadProfileDataFromDatabase() async {
-    UserProfile userProfile = await Database().getProfileData(widget.userId, context);
+    userProfile = await Database().getProfileData(widget.userId, context);
 
-    setState(() {
-      _pseudo = userProfile.pseudo;
-    });
+    setState(() {});
   }
 
   @override
@@ -58,7 +44,6 @@ class _Profile extends State<Profile> {
     super.initState();
 
     loadProfileDataFromDatabase();
-    loadAvatarFromDatabase();
   }
 
   @override
@@ -90,53 +75,20 @@ class _Profile extends State<Profile> {
   Widget showAvatarWidget() {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onTap: loadAvatar,
+      onTap: uploadAvatar,
       child: Padding(
           padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
-          child: CircleAvatar(
-            backgroundColor: PrimaryColor,
-            radius: 85,
-            child: CircleAvatar(
-              backgroundColor: PrimaryColorLight,
-              radius: 80,
-              foregroundColor: PrimaryColorDark,
-              child: Stack(overflow: Overflow.visible, children: <Widget>[
-                _avatar == null
-                    ? Icon(
-                        Icons.person,
-                        size: 100,
-                      )
-                    : Container(
-                        height: 160,
-                        width: 160,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(200),
-                          child: Image.network(
-                            _avatar,
-                            fit: BoxFit.fill,
-                          ),
-                        ),
-                      ),
-                _avatar == null
-                    ? Positioned(
-                        bottom: -40,
-                        right: -40,
-                        child: Icon(
-                          Icons.add_circle,
-                          size: 60,
-                          color: SecondaryColor,
-                        ))
-                    : Positioned(
-                        bottom: -10,
-                        right: -10,
-                        child: Icon(
-                          Icons.add_circle,
-                          size: 60,
-                          color: SecondaryColor,
-                        )),
-              ]),
-            ),
-          )),
+          child: Stack(overflow: Overflow.visible, children: <Widget>[
+            ProfilePicture(userProfile.profilePictureDownloadPath, size: 180, borderColor: PrimaryColor),
+            Positioned(
+                bottom: -7.5,
+                right: -7.5,
+                child: Icon(
+                  Icons.add_circle,
+                  size: 60,
+                  color: SecondaryColor,
+                ))
+          ])),
     );
   }
 
@@ -144,7 +96,7 @@ class _Profile extends State<Profile> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
       child: Container(
-        padding: EdgeInsets.all(20),
+        padding: EdgeInsets.all(15),
         decoration: BoxDecoration(
             color: PrimaryColorLight,
             borderRadius: BorderRadius.all(Radius.circular(20)),
@@ -152,10 +104,27 @@ class _Profile extends State<Profile> {
                 BorderSide(color: PrimaryColor, width: 3))),
         child: Column(
           children: <Widget>[
+            showUsernameWidget(),
             showPseudoWidget(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget showUsernameWidget() {
+    return RichText(
+      text: TextSpan(
+          style: TextStyle(color: PrimaryColorDark),
+          children: <TextSpan>[
+            TextSpan(
+                text: 'Username: ',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            TextSpan(
+                text: userProfile.username != null
+                    ? userProfile.username
+                    : "loading...")
+          ]),
     );
   }
 
@@ -167,7 +136,10 @@ class _Profile extends State<Profile> {
             TextSpan(
                 text: 'Pseudo: ',
                 style: TextStyle(fontWeight: FontWeight.bold)),
-            TextSpan(text: _pseudo)
+            TextSpan(
+                text: userProfile.pseudo != null
+                    ? userProfile.pseudo
+                    : "loading...")
           ]),
     );
   }
@@ -222,7 +194,7 @@ class _Profile extends State<Profile> {
     );
   }
 
-  void loadAvatar() async {
+  void uploadAvatar() async {
     print("add an Avatar");
     await Storage().getPhotoFromUserStorageAndUpload(
       storageRef: "ProfilePictures/" + widget.userId,
@@ -234,6 +206,14 @@ class _Profile extends State<Profile> {
       compressQuality: 75,
     );
 
-    loadAvatarFromDatabase();
+    String profilePictureDownloadPath =
+        await Storage().getUrlPhoto("ProfilePictures/" + widget.userId);
+
+    await Database().updateProfile(context, widget.userId,
+        profilePictureDownloadPath: profilePictureDownloadPath);
+
+    setState(() {
+      userProfile.profilePictureDownloadPath = profilePictureDownloadPath;
+    });
   }
 }

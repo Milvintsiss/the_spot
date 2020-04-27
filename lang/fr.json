@@ -1,7 +1,11 @@
 {
-  "Username": "Pseudo",
+  "Username": "Nom d'utilisateur",
+  "Pseudo": "Pseudo",
   "Next": "Suivant",
   "Pseudo can t be empty": "Avec  un Pseudo c'est mieux!",
+  "Your Pseudo must not exceed 20 characters!": "Votre pseudo ne doit pas faire plus de 20 caractères",
+  "Your username must not exceed 20 characters!": "Votre nom d'utilisateur ne doit pas faire plus de 20 caractères",
+  "Username can t be empty": "Avec  un nom d'utilisateur c'est mieux!",
   "Email can t be empty": "Avec un email c'est mieux!",
   "Email is badly formatted": "Ceci n'est pas un email!",
   "Password can t be empty": "Avec un Mot de Passe c'est mieux!",
@@ -11,6 +15,6 @@
   "Create an account": "Créer un compte",
   "Have an account? Sign in": "J'ai déjà un compte",
   "Select your hobby(ies)": "Sélectionnez vos disciplines",
-  "Your Pseudo must not exceed 20 characters!": "Votre pseudo ne doit pas faire plus de 20 caractères",
+  "Sorry, this username is already used.": "Désolé, ce nom d'utilisateur est déjà utilisé.",
   "Please connect to internet!": "Connectez-vous à internet pour continuer!"
 }

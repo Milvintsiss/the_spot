@@ -39,6 +39,8 @@ dependencies:
   cloud_firestore: ^0.13.0+1
   firebase_storage: ^3.1.1
 
+  algolia: ^0.1.7
+
   #load images from gallery and view them
   image_picker: ^0.6.3+1
 

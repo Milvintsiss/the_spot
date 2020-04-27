@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class UserProfile {
   UserProfile({
+    this.username,
     this.userId,
     this.pseudo,
     this.description,
@@ -11,10 +11,12 @@ class UserProfile {
     this.Roller,
     this.Scooter,
     this.Skateboard,
+    this.profilePictureDownloadPath,
     this.lastUpdate,
     this.creationDate,
   });
 
+  String username;
   String userId;
   String pseudo;
   bool BMX;
@@ -23,11 +25,13 @@ class UserProfile {
   bool Skateboard;
   String description;
   LatLng actualLocation;
-  String lastUpdate;
-  String creationDate;
+  String profilePictureDownloadPath;
+  final String lastUpdate;
+  final String creationDate;
 
   Map<String, dynamic> toMap() {
     return {
+      'Username': username,
       'Pseudo': pseudo,
       'BMX': BMX,
       'Roller': Roller,
@@ -36,6 +40,7 @@ class UserProfile {
       'Description': description,
       'ActualLocationLongitude': actualLocation.longitude,
       'ActualLocationLatitude': actualLocation.latitude,
+      'ProfilePictureDownloadPath': profilePictureDownloadPath,
       'LastUpdate': lastUpdate,
       'CreationDate': creationDate,
     };
@@ -43,24 +48,23 @@ class UserProfile {
 }
 
 UserProfile ConvertMapToUserProfile(Map userProfile) {
-  UserProfile _userProfile = UserProfile();
-  _userProfile.pseudo = userProfile['Pseudo'];
-  _userProfile.description = userProfile['Description'];
-
-  _userProfile.BMX = userProfile['BMX'];
-  _userProfile.Roller = userProfile['Roller'];
-  _userProfile.Scooter = userProfile['Scooter'];
-  _userProfile.Skateboard = userProfile['Skateboard'];
-
-  if (userProfile['ActualLocationLatitude'] != null &&
-      userProfile['ActualLocationLongitude'] != null)
-    _userProfile.actualLocation = LatLng(
-      userProfile['ActualLocationLatitude'],
-      userProfile['ActualLocationLongitude'],
-    );
-
-  _userProfile.creationDate = userProfile['CreationDate'];
-  _userProfile.lastUpdate = userProfile['LastUpdate'];
-
-  return _userProfile;
+  return UserProfile(
+    username: userProfile['Username'],
+    pseudo: userProfile['Pseudo'],
+    description: userProfile['Description'],
+    BMX: userProfile['BMX'],
+    Roller: userProfile['Roller'],
+    Scooter: userProfile['Scooter'],
+    Skateboard: userProfile['Skateboard'],
+    profilePictureDownloadPath: userProfile['ProfilePictureDownloadPath'],
+    lastUpdate: userProfile['LastUpdate'],
+    creationDate: userProfile['CreationDate'],
+    actualLocation: userProfile['ActualLocationLatitude'] != null &&
+            userProfile['ActualLocationLongitude'] != null
+        ? LatLng(
+            userProfile['ActualLocationLatitude'],
+            userProfile['ActualLocationLongitude'],
+          )
+        : null,
+  );
 }
