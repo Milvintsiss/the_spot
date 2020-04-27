@@ -28,12 +28,19 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
   bool userIsRatingTheSpot = false;
   bool spotHasGrades = true;
   bool userRatingNotComplete = false;
+  int indexOfUserRate; //-1 if the user has not rated the spot
   double spotGrade;
   double spotGradeBeauty;
   double spotGradeFloor;
   double spotGradeInput;
   double spotGradeBeautyInput;
   double spotGradeFloorInput;
+
+  @override
+  void initState() {
+    super.initState();
+    indexOfUserRate = widget.spot.usersGrades.indexWhere((userGrade) => userGrade.userId == widget.userId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +50,7 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
       _isSpotHasImages = false;
     else
       _isSpotHasImages = true;
+
     return ClipRRect(
       borderRadius: BorderRadius.only(
         topLeft: Radius.circular(70),
@@ -55,28 +63,27 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
             padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
             children: <Widget>[
               _isSpotHasImages
-                  ? showSpotPhotosWidget(widget.spot.imagesDownloadUrls)
+                  ? showSpotPhotosWidget()
                   : Container(),
-              showSpotNameWidget(widget.spot.name),
-              showSpotGradesWidget(
-                  widget.spot.usersGrades, widget.spot.markerId),
+              showSpotNameWidget(),
+              showSpotGradesWidget(),
               showSpotDescriptionWidget(widget.spot.description),
             ],
           )),
     );
   }
 
-  Widget showSpotGradesWidget(List<UserGrades> usersGrades, String spotId) {
+  Widget showSpotGradesWidget() {
     spotGrade = 0;
     spotGradeFloor = 0;
     spotGradeBeauty = 0;
 
-    if (usersGrades.length > 0) {
+    if (widget.spot.usersGrades.length > 0) {
       List<double> listSpotGrade = [];
       List<double> listSpotGradeBeauty = [];
       List<double> listSpotGradeFloor = [];
 
-      usersGrades.forEach((element) {
+      widget.spot.usersGrades.forEach((element) {
         listSpotGrade.add(element.spotGrade);
         listSpotGradeFloor.add(element.spotGradeFloor);
         listSpotGradeBeauty.add(element.spotGradeBeauty);
@@ -108,7 +115,7 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
                   children: <Widget>[
                     Text(
                       "This spot was rated " +
-                          usersGrades.length.toString() +
+                          widget.spot.usersGrades.length.toString() +
                           " times!",
                       style: TextStyle(
                           color: PrimaryColorDark, fontStyle: FontStyle.italic),
@@ -123,8 +130,8 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
                 ),
                 RaisedButton(
                   child:
-                      Text(userIsRatingTheSpot ? "Confirm" : "Grade this spot"),
-                  onPressed: () => onGradeButtonPressed(spotId),
+                      Text(userIsRatingTheSpot ? "Confirm" : indexOfUserRate != -1 ? "Change my rating" : "Rate this spot"),
+                  onPressed: () => onGradeButtonPressed(),
                 ),
                 userIsRatingTheSpot
                     ? SizedBox(
@@ -148,7 +155,7 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
             ),
             userRatingNotComplete
                 ? Text(
-                    "You must give a grade for all fields! Minimum grade is 1 star.",
+                    "You must give a grade for all fields! Minimum rating is 1 star.",
                     style: TextStyle(
                         color: Colors.red, fontWeight: FontWeight.bold),
                   )
@@ -159,7 +166,7 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
     );
   }
 
-  void onGradeButtonPressed(String spotId) async {
+  void onGradeButtonPressed() async {
     UserGrades userGrades = UserGrades(
         userId: widget.userId,
         spotGrade: spotGradeInput,
@@ -169,12 +176,22 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
         spotGradeInput != null &&
         spotGradeBeautyInput != null &&
         spotGradeFloorInput != null) {
-      await Database().updateASpot(
-          context: context,
-          spotId: spotId,
-          userGrade: userGrades,
-          creatorId: widget.userId);
-
+      if(indexOfUserRate != -1) {
+        widget.spot.usersGrades[indexOfUserRate] = userGrades;
+        await Database().updateASpot(
+            context: context,
+            spotId: widget.spot.markerId,
+            spotGrades: widget.spot.usersGrades,
+            creatorId: widget.userId);
+      }else{
+        widget.spot.usersGrades.add(userGrades);
+        indexOfUserRate = widget.spot.usersGrades.length - 1;
+        await Database().updateASpot(
+            context: context,
+            spotId: widget.spot.markerId,
+            userGrade: userGrades,
+            creatorId: widget.userId);
+      }
       spotGradeInput = null;
       spotGradeBeautyInput = null;
       spotGradeFloorInput = null;
@@ -244,7 +261,7 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
     );
   }
 
-  Widget showSpotNameWidget(String spotName) {
+  Widget showSpotNameWidget() {
     return Padding(
         padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
         child: Center(
@@ -255,16 +272,16 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
                 borderRadius: BorderRadius.all(Radius.circular(20)),
               ),
               child: Text(
-                spotName,
+                widget.spot.name,
                 style: TextStyle(color: Colors.white, fontSize: 25),
               )),
         ));
   }
 
-  Widget showSpotPhotosWidget(List<String> imagesAddress) {
+  Widget showSpotPhotosWidget() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-      child: Gallery(imagesAddress, height: 100),
+      child: Gallery(widget.spot.imagesDownloadUrls, height: 100),
     );
   }
 

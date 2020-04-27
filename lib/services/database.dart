@@ -205,12 +205,13 @@ class Database {
       String spotDescription,
       List<String> imagesDownloadUrls,
       UserGrades userGrade,
+      List<UserGrades> spotGrades,
       bool onCreate = false}) async {
     String state;
 
     if (await checkConnection(context)) {
       Map _spotData = await spotData(context, onCreate, spotId, spotLocation,
-          creatorId, spotName, spotDescription, imagesDownloadUrls, userGrade);
+          creatorId, spotName, spotDescription, imagesDownloadUrls, userGrade, spotGrades);
 
       if (onCreate) {
         await database
@@ -250,6 +251,7 @@ class Database {
     String spotDescription,
     List<String> imagesDownloadUrls,
     UserGrades userGrade,
+    List<UserGrades> spotGrades,
   ) async {
     Map data = Map<String, dynamic>.identity();
 
@@ -266,9 +268,12 @@ class Database {
     if (spotDescription != null) data['SpotDescription'] = spotDescription;
     if (imagesDownloadUrls != null)
       data['ImagesDownloadUrls'] = imagesDownloadUrls;
-    if (userGrade != null)
-      data['UsersGrades'] =
-          await createListUsersGrades(context, userGrade, spotId, creatorId);
+
+    if (userGrade != null) //if the user has not rated this spot
+      data['UsersGrades'] = FieldValue.arrayUnion([userGrade.toMap()]);
+    if (spotGrades != null){//if the user has already rated this spot
+      data['UsersGrades'] = ConvertUsersGradesToMap(spotGrades);
+    }
 
     if (creationDate != null) data['CreationDate'] = creationDate;
     data['LastUpdate'] = updateDate;

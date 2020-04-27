@@ -215,6 +215,7 @@ class _Map extends State<Map> {
           addBorder: true,
           borderColor: PrimaryColor,
           borderSize: 15);
+
       users.add(MapMarker(id: widget.userId,
           position: userLocation,
           icon: avatar,
