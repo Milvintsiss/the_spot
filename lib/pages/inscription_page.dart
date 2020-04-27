@@ -5,6 +5,7 @@ import 'package:image_cropper/image_cropper.dart';
 
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/root_page.dart';
+import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/theme.dart';
 import 'package:the_spot/services/authentication.dart';
@@ -12,11 +13,9 @@ import 'package:the_spot/services/database.dart';
 import 'package:vibrate/vibrate.dart';
 
 class InscriptionPage extends StatefulWidget {
-  const InscriptionPage({Key key, this.auth, this.userId, this.logoutCallback})
-      : super(key: key);
+  const InscriptionPage({Key key, this.auth, this.userId}) : super(key: key);
 
   final BaseAuth auth;
-  final VoidCallback logoutCallback;
   final String userId;
 
   @override
@@ -33,8 +32,6 @@ class _InscriptionPage extends State<InscriptionPage> {
   bool _Skateboard = false;
   bool _Scooter = false;
   bool _Roller = false;
-
-  String avatar;
 
   bool validateAndSave() {
     final form = _formKey.currentState;
@@ -54,9 +51,8 @@ class _InscriptionPage extends State<InscriptionPage> {
         body: Form(
           key: _formKey,
           child: ListView(
-            padding: EdgeInsets.fromLTRB(30.0, 0.0, 30.0, 0.0),
+            padding: EdgeInsets.fromLTRB(30.0, 60.0, 30.0, 0.0),
             children: <Widget>[
-              showAvatarWidget(),
               showUsernameInput(),
               showPseudoInput(),
               showPracticesButtons(),
@@ -66,86 +62,9 @@ class _InscriptionPage extends State<InscriptionPage> {
         ));
   }
 
-  Widget showAvatarWidget() {
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTap: loadAvatar,
-      child: Padding(
-          padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
-          child: CircleAvatar(
-            backgroundColor: PrimaryColor,
-            radius: 85,
-            child: CircleAvatar(
-              backgroundColor: PrimaryColorLight,
-              radius: 80,
-              foregroundColor: PrimaryColorDark,
-              child: Stack(overflow: Overflow.visible, children: <Widget>[
-                avatar == null
-                    ? Icon(
-                        Icons.person,
-                        size: 100,
-                      )
-                    : Container(
-                        height: 160,
-                        width: 160,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(200),
-                          child: Image.network(
-                            avatar,
-                            fit: BoxFit.fill,
-                          ),
-                        ),
-                      ),
-                avatar == null
-                    ? Positioned(
-                        bottom: -40,
-                        right: -40,
-                        child: Icon(
-                          Icons.add_circle,
-                          size: 60,
-                          color: SecondaryColor,
-                        ))
-                    : Positioned(
-                        bottom: -10,
-                        right: -10,
-                        child: Icon(
-                          Icons.add_circle,
-                          size: 60,
-                          color: SecondaryColor,
-                        )),
-              ]),
-            ),
-          )),
-    );
-  }
-
-  void loadAvatar() async {
-    print("add an Avatar");
-    await Storage().getPhotoFromUserStorageAndUpload(
-      storageRef: "ProfilePictures/" + widget.userId,
-      context: context,
-      cropStyle: CropStyle.circle,
-      cropAspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
-      maxHeight: 150,
-      maxWidth: 150,
-      compressQuality: 75,
-    );
-
-    loadAvatarFromDatabase();
-  }
-
-  void loadAvatarFromDatabase() async {
-    final StorageReference storageReference =
-        FirebaseStorage().ref().child("ProfilePictures/" + widget.userId);
-    avatar = await storageReference.getDownloadURL();
-    setState(() {
-      showAvatarWidget();
-    });
-  }
-
   Widget showUsernameInput() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),
+      padding: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
       child: TextFormField(
         style: TextStyle(color: Colors.white),
         maxLines: 1,
@@ -326,7 +245,8 @@ class _InscriptionPage extends State<InscriptionPage> {
                 borderRadius: BorderRadius.circular(30.0)),
             color: SecondaryColor,
             child: Row(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Text(
                   AppLocalizations.of(context).translate('Next'),
@@ -349,7 +269,8 @@ class _InscriptionPage extends State<InscriptionPage> {
                   Vibrate.feedback(FeedbackType.warning);
                   _scaffoldKey.currentState.showSnackBar(SnackBar(
                     content: Text(
-                      AppLocalizations.of(context).translate('Sorry, this username is already used.'),
+                      AppLocalizations.of(context)
+                          .translate('Sorry, this username is already used.'),
                     ),
                     duration: Duration(milliseconds: 3000),
                   ));
@@ -368,8 +289,10 @@ class _InscriptionPage extends State<InscriptionPage> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => RootPage(
+                            builder: (context) =>
+                                InscriptionPage_AddProfilePicture(
                                   auth: widget.auth,
+                                  userId: widget.userId,
                                 )));
                   } else {
                     Vibrate.feedback(FeedbackType.warning);
@@ -378,6 +301,138 @@ class _InscriptionPage extends State<InscriptionPage> {
                 }
               }
             }),
+      ),
+    );
+  }
+}
+
+class InscriptionPage_AddProfilePicture extends StatefulWidget {
+  const InscriptionPage_AddProfilePicture({Key key, this.auth, this.userId})
+      : super(key: key);
+
+  final BaseAuth auth;
+  final String userId;
+
+  @override
+  _InscriptionPage_AddProfilePicture createState() =>
+      _InscriptionPage_AddProfilePicture();
+}
+
+class _InscriptionPage_AddProfilePicture extends State<InscriptionPage_AddProfilePicture> {
+  String _profilePictureDownloadPath;
+
+  void uploadAvatar() async {
+    print("add an Avatar");
+    await Storage().getPhotoFromUserStorageAndUpload(
+      storageRef: "ProfilePictures/" + widget.userId,
+      context: context,
+      cropStyle: CropStyle.circle,
+      cropAspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
+      maxHeight: 150,
+      maxWidth: 150,
+      compressQuality: 75,
+    );
+
+    String profilePictureDownloadPath =
+        await Storage().getUrlPhoto("ProfilePictures/" + widget.userId);
+
+    await Database().updateProfile(context, widget.userId,
+        profilePictureDownloadPath: profilePictureDownloadPath);
+
+    setState(() {
+      _profilePictureDownloadPath = profilePictureDownloadPath;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: PrimaryColorDark,
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Column(
+            children: <Widget>[
+              showProfilePictureWidget(),
+              Divider(height: 40,),
+              showTextAddAPictureWidget(),
+            ],
+          ),
+          showNextButtonWidget(),
+        ],
+      ),
+    );
+  }
+
+  Widget showProfilePictureWidget() {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: uploadAvatar,
+      child: Padding(
+          padding: EdgeInsets.fromLTRB(0, 60, 0, 0),
+          child: Stack(overflow: Overflow.visible, children: <Widget>[
+            ProfilePicture(_profilePictureDownloadPath,
+                size: 250, borderColor: PrimaryColor),
+            Positioned(
+                bottom: -15,
+                right: -15,
+                child: Icon(
+                  Icons.add_circle,
+                  size: 100,
+                  color: SecondaryColor,
+                ))
+          ])),
+    );
+  }
+
+  Widget showTextAddAPictureWidget() {
+    return Center(
+      child: Text(
+        "Adding a photo makes you more recognizable!",
+        style: TextStyle(
+            fontSize: 24, color: PrimaryColorLight, fontWeight: FontWeight.bold, ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  Widget showNextButtonWidget() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 20.0),
+      child: SizedBox(
+        height: 40.0,
+        child: RaisedButton(
+            elevation: 5.0,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.0)),
+            color: SecondaryColor,
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Text(
+                  AppLocalizations.of(context).translate('Next'),
+                  style: TextStyle(fontSize: 15.0, color: Colors.white),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+                  child: Icon(
+                    Icons.arrow_forward,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                )
+              ],
+            ),
+            onPressed: () =>
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          RootPage(
+                            auth: widget.auth,
+                          )))
+            ),
       ),
     );
   }
