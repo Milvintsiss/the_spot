@@ -97,7 +97,6 @@ class _RootPageState extends State<RootPage> {
             return InscriptionPage(
               userId: _userId,
               auth: widget.auth,
-              logoutCallback: logoutCallback,
             );
           else {
             return HomePage(
