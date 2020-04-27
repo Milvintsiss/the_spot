@@ -1,15 +1,11 @@
-import 'dart:io';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
+import 'package:the_spot/services/library/library.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/services/library/UserProfile.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
-import 'package:vibrate/vibrate.dart';
-
 import 'package:the_spot/services/library/userGrade.dart';
 
 class Database {
@@ -36,20 +32,21 @@ class Database {
 
   Future<bool> updateProfile(BuildContext context, String userId,
       {bool onCreate = false,
+      String username,
       String pseudo,
       bool BMX,
       bool Roller,
       bool Scooter,
       bool Skateboard,
       String description,
+      String profilePictureDownloadPath,
       LatLng actualLocation}) async {
-    final connectionState = await checkConnection(context);
-
     String updateDate = DateTime.now().toIso8601String();
     String creationDate;
     if (onCreate) creationDate = updateDate;
 
     Map update = Map<String, dynamic>.identity();
+    if (username != null) update['Username'] = username;
     if (pseudo != null) update['Pseudo'] = pseudo;
     if (BMX != null) update['BMX'] = BMX;
     if (Roller != null) update['Roller'] = Roller;
@@ -60,6 +57,7 @@ class Database {
       update['ActualLocationLongitude'] = actualLocation.longitude;
       update['ActualLocationLatitude'] = actualLocation.latitude;
     }
+    if (profilePictureDownloadPath != null) update['ProfilePictureDownloadPath'] = profilePictureDownloadPath;
 
     if (creationDate != null) update['CreationDate'] = creationDate;
 
@@ -67,7 +65,7 @@ class Database {
 
     print(update);
 
-    if (connectionState) {
+    if (await checkConnection(context)) {
       try {
         if (onCreate) {
           await database
@@ -82,8 +80,7 @@ class Database {
           await database
               .collection("usersLocation")
               .document(userId)
-              .setData({})
-              .catchError((err) {
+              .setData({}).catchError((err) {
             print(err);
             error(err.toString(), context);
           });
@@ -109,20 +106,18 @@ class Database {
     return true;
   }
 
-  Future<UserProfile> getProfileData(String userId, BuildContext context) async {
-    final connectionState = await checkConnection(context);
+  Future<UserProfile> getProfileData(
+      String userId, BuildContext context) async {
     UserProfile userProfile;
-    if (connectionState) {
+    if (await checkConnection(context)) {
       try {
         await database
             .collection("users")
             .document(userId)
             .get()
-        .then((DocumentSnapshot document) {
+            .then((DocumentSnapshot document) {
           userProfile = ConvertMapToUserProfile(document.data);
-
-        })
-            .catchError((err) {
+        }).catchError((err) {
           print(err);
           error(err.toString(), context);
           return null;
@@ -138,9 +133,7 @@ class Database {
   }
 
   Future<bool> deleteProfileData(BuildContext context, String userId) async {
-    final bool connectionState = await checkConnection(context);
-
-    if (connectionState) {
+    if (await checkConnection(context)) {
       try {
         await database
             .collection('users')
@@ -162,19 +155,41 @@ class Database {
     return true;
   }
 
-  void updateUserLocation({@required BuildContext context, @required String userId, @required LatLng userLocation}) async {
-    final bool connectionState = await checkConnection(context);
+  Future<bool> isUsernameAlreadyInUse(
+      {@required BuildContext context, @required String username}) async {
+    bool _isUsernameAlreadyInUse;
+    if (await checkConnection(context)) {
+      try {
+        await database
+            .collection('users')
+            .where('Username', isEqualTo: username)
+            .getDocuments()
+            .then((QuerySnapshot querySnapshot) {
+          if (querySnapshot.documents.length > 0)
+            _isUsernameAlreadyInUse = true;
+          else
+            _isUsernameAlreadyInUse = false;
+        });
+      } catch (err) {
+        print(err);
+        error(err.toString(), context);
+        return null;
+      }
+    } else
+      return null;
+    return _isUsernameAlreadyInUse;
+  }
 
-    if (connectionState){
-      await database
-          .collection("usersLocation")
-          .document(userId)
-          .updateData({
-      'UserLocationLongitude': userLocation.longitude,
+  void updateUserLocation(
+      {@required BuildContext context,
+      @required String userId,
+      @required LatLng userLocation}) async {
+    if (await checkConnection(context)) {
+      await database.collection("usersLocation").document(userId).updateData({
+        'UserLocationLongitude': userLocation.longitude,
         'UserLocationLatitude': userLocation.latitude,
         'UserId': userId,
-          })
-          .catchError((err) {
+      }).catchError((err) {
         print(err);
         error(err.toString(), context);
       });
@@ -191,11 +206,9 @@ class Database {
       List<String> imagesDownloadUrls,
       UserGrades userGrade,
       bool onCreate = false}) async {
-    final bool connectionState = await checkConnection(context);
-
     String state;
 
-    if (connectionState) {
+    if (await checkConnection(context)) {
       Map _spotData = await spotData(context, onCreate, spotId, spotLocation,
           creatorId, spotName, spotDescription, imagesDownloadUrls, userGrade);
 
@@ -284,12 +297,11 @@ class Database {
     return usersGrades;
   }
 
-  Future<List> getSpots(BuildContext context, {bool getAll = false, String matchName}) async {
-    final bool connectionState = await checkConnection(context);
-
+  Future<List> getSpots(BuildContext context,
+      {bool getAll = false, String matchName}) async {
     List<MapMarker> spots = new List();
 
-    if (connectionState) {
+    if (await checkConnection(context)) {
       if (matchName == null) {
         await database
             .collection("spots")
@@ -301,14 +313,17 @@ class Database {
           error(err.toString(), context);
           return null;
         });
-      }else{
+      } else {
         await database
             .collection("spots")
-            .where('SpotName', isEqualTo: matchName, )
+            .where(
+              'SpotName',
+              isEqualTo: matchName,
+            )
             .getDocuments()
-            .then((QuerySnapshot querySnapshot){
-              spots = convertSpotsData(querySnapshot, getAll);
-        }).catchError((err){
+            .then((QuerySnapshot querySnapshot) {
+          spots = convertSpotsData(querySnapshot, getAll);
+        }).catchError((err) {
           print(err);
           error(err.toString(), context);
           return null;
@@ -320,7 +335,7 @@ class Database {
     return spots;
   }
 
-  List<MapMarker> convertSpotsData(QuerySnapshot querySnapshot, bool getAll){
+  List<MapMarker> convertSpotsData(QuerySnapshot querySnapshot, bool getAll) {
     List<MapMarker> spots = [];
     querySnapshot.documents.forEach((document) {
       Map data = document.data;
@@ -336,8 +351,7 @@ class Database {
       //convert the List of UserGradess to a List of Map
       List<UserGrades> usersGrades = [];
       if (data['UsersGrades'] != null) {
-        usersGrades =
-            ConvertMapToUsersGrades(data['UsersGrades'].cast<Map>());
+        usersGrades = ConvertMapToUsersGrades(data['UsersGrades'].cast<Map>());
         usersGrades.forEach((element) {
           print(element.userId +
               " / " +
@@ -350,56 +364,22 @@ class Database {
       }
 
       MapMarker spot = MapMarker(
-        id: document.documentID,
-        position: new LatLng(
-            data['SpotLocationLatitude'], data['SpotLocationLongitude']),
-        icon: BitmapDescriptor.defaultMarker,
-        name: data['SpotName'],
-        description: data['SpotDescription'],
-        imagesDownloadUrls: imagesDownloadUrls,
-        usersGrades: usersGrades,
-        type: Type.Spot
-      );
+          id: document.documentID,
+          position: new LatLng(
+              data['SpotLocationLatitude'], data['SpotLocationLongitude']),
+          icon: BitmapDescriptor.defaultMarker,
+          name: data['SpotName'],
+          description: data['SpotDescription'],
+          imagesDownloadUrls: imagesDownloadUrls,
+          usersGrades: usersGrades,
+          type: Type.Spot);
       if (data['SpotName'] != null || getAll) {
         //verify if spot has been updated after his creation
         spots.add(spot);
       }
-  });
+    });
     return spots;
   }
 
-  Future<bool> checkConnection(BuildContext context) async {
-    bool hasConnection;
 
-    try {
-      final result = await InternetAddress.lookup('google.com');
-      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-        hasConnection = true;
-      } else {
-        hasConnection = false;
-      }
-    } on SocketException catch (_) {
-      hasConnection = false;
-    }
-    if (!hasConnection) {
-      error(
-          AppLocalizations.of(context).translate('Please connect to internet!'),
-          context);
-    }
-    return hasConnection;
-  }
-
-  void error(String error, BuildContext context) {
-    Vibrate.feedback(FeedbackType.warning);
-
-    AlertDialog errorAlertDialog = new AlertDialog(
-        elevation: 0,
-        content: SelectableText(
-          error,
-          style: TextStyle(
-              color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold),
-        ));
-
-    showDialog(context: context, child: errorAlertDialog);
-  }
 }

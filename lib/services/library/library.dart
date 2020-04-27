@@ -4,6 +4,9 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:the_spot/app_localizations.dart';
+import 'package:the_spot/theme.dart';
+import 'package:vibrate/vibrate.dart';
 
 Future<BitmapDescriptor> convertImageFileToBitmapDescriptor(File imageFile,
     {int size = 150,
@@ -33,7 +36,8 @@ Future<BitmapDescriptor> convertImageFileToBitmapDescriptor(File imageFile,
 
   //paintImage
   final Uint8List imageUint8List = await imageFile.readAsBytes();
-  final ui.Codec codec = await ui.instantiateImageCodec(imageUint8List, targetHeight: size, targetWidth: size);
+  final ui.Codec codec = await ui.instantiateImageCodec(imageUint8List,
+      targetHeight: size, targetWidth: size);
   final ui.FrameInfo imageFI = await codec.getNextFrame();
   paintImage(
       canvas: canvas,
@@ -77,14 +81,69 @@ Future<BitmapDescriptor> convertImageFileToBitmapDescriptor(File imageFile,
   }
 
   //convert canvas as PNG bytes
-  final _image =
-      await pictureRecorder.endRecording().toImage(size, size);
+  final _image = await pictureRecorder.endRecording().toImage(size, size);
   final data = await _image.toByteData(format: ui.ImageByteFormat.png);
 
   //convert PNG bytes as BitmapDescriptor
   return BitmapDescriptor.fromBytes(data.buffer.asUint8List());
 }
 
+Widget ProfilePicture(String downloadPath, {double size = 50, Color borderColor = PrimaryColorDark}) {
+  if (downloadPath != null)
+    return Container(
+      height: size, width: size,
+      padding: EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: borderColor,
+        shape: BoxShape.circle,
+      ),
+      child: ClipOval(child: Image.network(downloadPath, fit: BoxFit.fill,)),
+    );
+  else
+    return Container(
+      height: size,
+      width: size,
+      decoration: BoxDecoration(
+          color: PrimaryColor,
+          shape: BoxShape.circle),
+      child: Icon(Icons.person, size: size / 2,),
+    );
+}
+
 Color transparentColor(Color color, int alpha) {
   return Color.fromARGB(alpha, color.red, color.green, color.blue);
+}
+
+Future<bool> checkConnection(BuildContext context) async {
+  bool hasConnection;
+
+  try {
+    final result = await InternetAddress.lookup('google.com');
+    if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+      hasConnection = true;
+    } else {
+      hasConnection = false;
+    }
+  } on SocketException catch (_) {
+    hasConnection = false;
+  }
+  if (!hasConnection) {
+    error(AppLocalizations.of(context).translate('Please connect to internet!'),
+        context);
+  }
+  return hasConnection;
+}
+
+void error(String error, BuildContext context) {
+  Vibrate.feedback(FeedbackType.warning);
+
+  AlertDialog errorAlertDialog = new AlertDialog(
+      elevation: 0,
+      content: SelectableText(
+        error,
+        style: TextStyle(
+            color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold),
+      ));
+
+  showDialog(context: context, child: errorAlertDialog);
 }

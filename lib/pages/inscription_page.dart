@@ -24,8 +24,10 @@ class InscriptionPage extends StatefulWidget {
 }
 
 class _InscriptionPage extends State<InscriptionPage> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
 
+  String _username;
   String _pseudo;
   bool _BMX = false;
   bool _Skateboard = false;
@@ -47,15 +49,20 @@ class _InscriptionPage extends State<InscriptionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        key: _scaffoldKey,
         backgroundColor: PrimaryColorDark,
-        body: ListView(
-          padding: EdgeInsets.fromLTRB(30.0, 0.0, 30.0, 0.0),
-          children: <Widget>[
-            showAvatarWidget(),
-            showPseudoInput(),
-            showPracticesButtons(),
-            showNextButton(),
-          ],
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(30.0, 0.0, 30.0, 0.0),
+            children: <Widget>[
+              showAvatarWidget(),
+              showUsernameInput(),
+              showPseudoInput(),
+              showPracticesButtons(),
+              showNextButton(),
+            ],
+          ),
         ));
   }
 
@@ -91,21 +98,21 @@ class _InscriptionPage extends State<InscriptionPage> {
                       ),
                 avatar == null
                     ? Positioned(
-                    bottom: -40,
-                    right: -40,
-                    child: Icon(
-                      Icons.add_circle,
-                      size: 60,
-                      color: SecondaryColor,
-                    ))
+                        bottom: -40,
+                        right: -40,
+                        child: Icon(
+                          Icons.add_circle,
+                          size: 60,
+                          color: SecondaryColor,
+                        ))
                     : Positioned(
-                    bottom: -10,
-                    right: -10,
-                    child: Icon(
-                      Icons.add_circle,
-                      size: 60,
-                      color: SecondaryColor,
-                    )),
+                        bottom: -10,
+                        right: -10,
+                        child: Icon(
+                          Icons.add_circle,
+                          size: 60,
+                          color: SecondaryColor,
+                        )),
               ]),
             ),
           )),
@@ -129,47 +136,79 @@ class _InscriptionPage extends State<InscriptionPage> {
 
   void loadAvatarFromDatabase() async {
     final StorageReference storageReference =
-    FirebaseStorage().ref().child("ProfilePictures/" + widget.userId);
+        FirebaseStorage().ref().child("ProfilePictures/" + widget.userId);
     avatar = await storageReference.getDownloadURL();
     setState(() {
       showAvatarWidget();
     });
   }
 
+  Widget showUsernameInput() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),
+      child: TextFormField(
+        style: TextStyle(color: Colors.white),
+        maxLines: 1,
+        autofocus: false,
+        decoration: InputDecoration(
+          hintText: AppLocalizations.of(context).translate('Username'),
+          hintStyle: TextStyle(color: Colors.blueGrey[100]),
+          fillColor: PrimaryColorLight,
+          filled: true,
+          contentPadding: EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+        ),
+        validator: (String str) {
+          if (str.isEmpty) {
+            return AppLocalizations.of(context)
+                .translate('Username can t be empty');
+          } else if (str.length > 20) {
+            return AppLocalizations.of(context)
+                .translate('Your username must not exceed 20 characters!');
+          } else {
+            return null;
+          }
+        },
+        onSaved: (String str) {
+          _username = str.trim();
+        },
+      ),
+    );
+  }
+
   Widget showPseudoInput() {
     return Padding(
       padding: EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),
-      child: Form(
-        key: _formKey,
-        child: TextFormField(
-          style: TextStyle(color: Colors.white),
-          maxLines: 1,
-          autofocus: false,
-          decoration: InputDecoration(
-            hintText: AppLocalizations.of(context).translate('Username'),
-            hintStyle: TextStyle(color: Colors.blueGrey[100]),
-            fillColor: PrimaryColorLight,
-            filled: true,
-            contentPadding: EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.0),
-            ),
+      child: TextFormField(
+        style: TextStyle(color: Colors.white),
+        maxLines: 1,
+        autofocus: false,
+        decoration: InputDecoration(
+          hintText: AppLocalizations.of(context).translate('Pseudo'),
+          hintStyle: TextStyle(color: Colors.blueGrey[100]),
+          fillColor: PrimaryColorLight,
+          filled: true,
+          contentPadding: EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.0),
           ),
-          validator: (String str) {
-            if (str.isEmpty) {
-              return AppLocalizations.of(context)
-                  .translate('Pseudo can t be empty');
-            } else if (str.length > 20) {
-              return AppLocalizations.of(context)
-                  .translate('Your Pseudo must not exceed 20 characters!');
-            } else{
-              return null;
-            }
-          },
-          onSaved: (String str) {
-            _pseudo = str.trim();
-          },
         ),
+        validator: (String str) {
+          if (str.isEmpty) {
+            return AppLocalizations.of(context)
+                .translate('Pseudo can t be empty');
+          } else if (str.length > 20) {
+            return AppLocalizations.of(context)
+                .translate('Your Pseudo must not exceed 20 characters!');
+          } else {
+            return null;
+          }
+        },
+        onSaved: (String str) {
+          _pseudo = str.trim();
+        },
       ),
     );
   }
@@ -282,48 +321,63 @@ class _InscriptionPage extends State<InscriptionPage> {
       child: SizedBox(
         height: 40.0,
         child: RaisedButton(
-          elevation: 5.0,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30.0)),
-          color: SecondaryColor,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Text(
-                AppLocalizations.of(context).translate('Next'),
-                style: TextStyle(fontSize: 15.0, color: Colors.white),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-                child: Icon(
-                  Icons.arrow_forward,
-                  color: Colors.white,
-                  size: 20,
+            elevation: 5.0,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.0)),
+            color: SecondaryColor,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  AppLocalizations.of(context).translate('Next'),
+                  style: TextStyle(fontSize: 15.0, color: Colors.white),
                 ),
-              )
-            ],
-          ),
-          onPressed: () {
-            if (validateAndSave()) {
-              final _future = Database().updateProfile(context, widget.userId, pseudo: _pseudo,
-                 BMX: _BMX, Roller: _Roller, Scooter: _Scooter, Skateboard: _Skateboard, onCreate: true);
-              _future.then((databaseUpdated) {
-                if (databaseUpdated) {
-                  print("Profile updated with success");
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => RootPage(
-                                auth: widget.auth,
-                              )));
-                } else {
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+                  child: Icon(
+                    Icons.arrow_forward,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                )
+              ],
+            ),
+            onPressed: () async {
+              if (validateAndSave()) {
+                if (await Database().isUsernameAlreadyInUse(
+                    context: context, username: _username)) {
                   Vibrate.feedback(FeedbackType.warning);
-                  print("Error when updating the Profile...");
+                  _scaffoldKey.currentState.showSnackBar(SnackBar(
+                    content: Text(
+                      AppLocalizations.of(context).translate('Sorry, this username is already used.'),
+                    ),
+                    duration: Duration(milliseconds: 3000),
+                  ));
+                } else {
+                  bool databaseUpdated = await Database().updateProfile(
+                      context, widget.userId,
+                      username: _username,
+                      pseudo: _pseudo,
+                      BMX: _BMX,
+                      Roller: _Roller,
+                      Scooter: _Scooter,
+                      Skateboard: _Skateboard,
+                      onCreate: true);
+                  if (databaseUpdated) {
+                    print("Profile updated with success");
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => RootPage(
+                                  auth: widget.auth,
+                                )));
+                  } else {
+                    Vibrate.feedback(FeedbackType.warning);
+                    print("Error when updating the Profile...");
+                  }
                 }
-              });
-            }
-          },
-        ),
+              }
+            }),
       ),
     );
   }
