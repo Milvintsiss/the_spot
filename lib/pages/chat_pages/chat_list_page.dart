@@ -1,11 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:the_spot/pages/home_page/profile.dart';
+import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/UserProfile.dart';
+import 'package:the_spot/services/library/configuration.dart';
 import 'package:the_spot/services/library/search_engine.dart';
 import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/theme.dart';
 
 class ChatListPage extends StatefulWidget {
+  ChatListPage({this.configuration});
+
+  final Configuration configuration;
   @override
   _ChatListPageState createState() => _ChatListPageState();
 }
@@ -17,6 +23,8 @@ class _ChatListPageState extends State<ChatListPage> {
   String query;
 
   List<UserProfile> queryResult = [];
+
+  bool waitForFollowing = false;
 
   @override
   Widget build(BuildContext context) {
@@ -104,58 +112,86 @@ class _ChatListPageState extends State<ChatListPage> {
   }
 
   Widget showResultWidget(UserProfile userProfile) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
-      child: Container(
-        padding: EdgeInsets.all(8),
-        height: 70,
-        decoration: BoxDecoration(
-          color: PrimaryColorLight,
-          borderRadius: BorderRadius.circular(70),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            ProfilePicture(userProfile.profilePictureDownloadPath, size: 50),
-            Divider(
-              indent: 10,
-            ),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(userProfile.pseudo),
-                  Text(
-                    "@" + userProfile.username,
-                    style: TextStyle(
-                        fontStyle: FontStyle.italic, color: Colors.white70),
-                  ),
-                ],
+
+    bool waitForSendingFriendRequest = false;
+    return GestureDetector(
+      onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => Profile(
+                configuration: widget.configuration,
+                userProfile: userProfile,
+              ))),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
+        child: Container(
+          padding: EdgeInsets.all(8),
+          height: 70,
+          decoration: BoxDecoration(
+            color: PrimaryColorLight,
+            borderRadius: BorderRadius.circular(70),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Hero(
+                  tag: userProfile.userId,
+                  child: ProfilePicture(userProfile.profilePictureDownloadPath, size: 50)),
+              Divider(
+                indent: 10,
               ),
-            ),
-            ButtonTheme(
-              minWidth: 40,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15)
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(userProfile.pseudo),
+                    Text(
+                      "@" + userProfile.username,
+                      style: TextStyle(
+                          fontStyle: FontStyle.italic, color: Colors.white70),
+                    ),
+                  ],
+                ),
               ),
-              buttonColor: SecondaryColor,
-              disabledColor: SecondaryColorDark,
-              child: Row(
-                children: <Widget>[
-                  RaisedButton(
-                    child: Text("Follow"),
-                    onPressed: (){},
-                  ),
-                  Divider(indent: 5,),
-                  RaisedButton(
-                    child: Text("Add+"),
-                    onPressed: (){},
-                  ),
-                ],
-              ),
-            )
-          ],
+              ButtonTheme(
+                minWidth: 40,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)
+                ),
+                buttonColor: PrimaryColor,
+                disabledColor: PrimaryColorLight,
+                child: Row(
+                  children: <Widget>[
+                    RaisedButton(
+                      child: waitForFollowing ? SizedBox(
+                        height: 10,
+                        width: 10,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(PrimaryColorDark),
+                        ),
+                      )
+                  : Text('Follow'),
+                      onPressed: () async {
+                        setState(() {
+                          waitForFollowing = true;
+                        });
+                        await Database().followUser(context, widget.configuration, userProfile);
+                        setState(() {
+                          waitForFollowing = false;
+                        });
+                      },
+                    ),
+                    Divider(indent: 5,),
+                    RaisedButton(
+                      child: Text("Add+"),
+                      onPressed: (){},
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );

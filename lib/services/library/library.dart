@@ -34,16 +34,30 @@ Future<BitmapDescriptor> convertImageFileToBitmapDescriptor(File imageFile,
       Radius.circular(100)));
   canvas.clipPath(clipPath);
 
-  //paintImage
-  final Uint8List imageUint8List = await imageFile.readAsBytes();
-  final ui.Codec codec = await ui.instantiateImageCodec(imageUint8List,
-      targetHeight: size, targetWidth: size);
-  final ui.FrameInfo imageFI = await codec.getNextFrame();
-  paintImage(
-      canvas: canvas,
-      rect: Rect.fromLTWH(0, 0, size.toDouble(), size.toDouble()),
-      image: imageFI.image);
 
+  if(imageFile == null) {
+    //paint Icon background
+    paint..color = PrimaryColorLight;
+    canvas.drawCircle(Offset(radius, radius), radius, paint);
+
+    //paint Person Icon
+    final icon = Icons.person;
+    TextPainter textPainter = TextPainter(textDirection: TextDirection.rtl);
+    textPainter.text = TextSpan(text: String.fromCharCode(icon.codePoint),
+        style: TextStyle(fontSize: size * 4/5,fontFamily: icon.fontFamily, color: PrimaryColorDark));
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(size * 1/10, size * 1/10));
+  }else {
+    //paint Profile Picture
+    final Uint8List imageUint8List = await imageFile.readAsBytes();
+    final ui.Codec codec = await ui.instantiateImageCodec(imageUint8List,
+        targetHeight: size, targetWidth: size);
+    final ui.FrameInfo imageFI = await codec.getNextFrame();
+    paintImage(
+        canvas: canvas,
+        rect: Rect.fromLTWH(0, 0, size.toDouble(), size.toDouble()),
+        image: imageFI.image);
+  }
   if (addBorder) {
     //draw Border
     paint..color = borderColor;
@@ -134,16 +148,20 @@ Future<bool> checkConnection(BuildContext context) async {
   return hasConnection;
 }
 
-void error(String error, BuildContext context) {
+void error(String error, BuildContext context, {Color backgroundColor = Colors.white, TextAlign textAlign = TextAlign.start, double fontSize = 20, FontWeight fontWeight = FontWeight.bold, Color textColor = Colors.red}) {
   Vibrate.feedback(FeedbackType.warning);
 
   AlertDialog errorAlertDialog = new AlertDialog(
       elevation: 0,
+      backgroundColor: backgroundColor,
       content: SelectableText(
         error,
+        textAlign: textAlign,
         style: TextStyle(
-            color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold),
+            color: textColor, fontSize: fontSize, fontWeight: fontWeight),
       ));
 
   showDialog(context: context, child: errorAlertDialog);
 }
+
+

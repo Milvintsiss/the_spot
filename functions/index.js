@@ -12,7 +12,7 @@ admin.initializeApp(functions.config().firebase);
 
 
 exports.onUserDataCreation = functions.firestore.document('users/{userId}')
-    .onCreate(snapshot => {
+.onCreate(snapshot => {
         //algolia
         const data = snapshot.data();
         const objectID = snapshot.id;
@@ -23,7 +23,7 @@ exports.onUserDataCreation = functions.firestore.document('users/{userId}')
     });
 
 exports.onUserDataUpdate = functions.firestore.document('users/{userId}')
-    .onUpdate((change) => {
+.onUpdate((change) => {
         //algolia
         const newData = change.after.data();
         const objectID = change.after.id;
@@ -34,13 +34,13 @@ exports.onUserDataUpdate = functions.firestore.document('users/{userId}')
     });
 
 exports.onUserDataDelete = functions.firestore.document('users/{userId}')
-    .onDelete(snapshot => {
+.onDelete(snapshot => {
         //algolia
         return usersIndex.deleteObject(snapshot.id);
     });
 
 exports.addAllUsersDataToAlgolia = functions.https.onRequest((req, res) => {
-    admin.firestore().collection("users").get().then((docs) => {
+    return admin.firestore().collection("users").get().then((docs) => {
         var arr = [];
         docs.forEach((doc) => {
             let user = {'Pseudo': doc.data()['Pseudo'], 'Username': doc.data()['Username']};
@@ -51,14 +51,64 @@ exports.addAllUsersDataToAlgolia = functions.https.onRequest((req, res) => {
 
         return usersIndex.saveObjects(arr, function (err, content) {
             if (err) {
-               console.log(err.stack);
-            }
-            res.status(200).send(content);
-        });
+             console.log(err.stack);
+         }
+         res.status(200).send(content);
+     });
     }).catch((err) => {
         return console.error(err);
     });
 });
+
+exports.repairDatabase = functions.pubsub.schedule('every 24 hours').onRun((context) => {
+
+//get all spots collection, if spots are not initialized (missing SpotName value), erase them.
+  return admin.firestore().collection("spots").get().then((docs) => {
+    return docs.forEach((doc) => {
+        if (!("SpotName" in doc.data())){
+            admin.firestore().collection("spots").doc(doc.id).delete()
+            .then(function() {
+                return console.log("Document deleted:", doc.id);
+            })
+            .catch((err) => {
+                return console.error(err);
+            });
+        }
+    });
+        }).catch((err) => {
+            return console.error(err);
+        });
+
+//get all users followers and following and update numbers of following and followers
+});
+
+exports.changeUserStringISODates_toTimestamp = functions.https.onRequest((req, res) => {
+    return admin.firestore().collection("users").get().then((docs) => {
+        return docs.forEach((doc) => {
+            var creationDate = doc.data()['CreationDate'];
+            var updateDate = doc.data()['LastUpdate'];
+            var _creationDate = parseISOString(creationDate);
+            var _updateDate = parseISOString(updateDate);
+            admin.firestore().collection("users").doc(doc.id)
+                .update({'CreationDate' : _creationDate, 'LastUpdate' : _updateDate})
+                .then(function() {
+                    return console.log("Success:", doc.id);
+                })
+                .catch((err) => {
+                    return console.error(err);
+                });
+        });
+    }).catch((err) => {
+            return console.error(err);
+        });
+});
+
+    function parseISOString(date) {
+          var b = date.split(/\D+/);
+          return new Date(Date.UTC(b[0], --b[1], b[2], b[3], b[4], b[5], b[6]));
+      }
+
+
 
 // // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions

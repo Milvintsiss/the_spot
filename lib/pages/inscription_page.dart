@@ -1,4 +1,3 @@
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -235,72 +234,75 @@ class _InscriptionPage extends State<InscriptionPage> {
   }
 
   Widget showNextButton() {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 20.0),
-      child: SizedBox(
-        height: 40.0,
-        child: RaisedButton(
-            elevation: 5.0,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.0)),
-            color: SecondaryColor,
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  AppLocalizations.of(context).translate('Next'),
-                  style: TextStyle(fontSize: 15.0, color: Colors.white),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-                  child: Icon(
-                    Icons.arrow_forward,
-                    color: Colors.white,
-                    size: 20,
+    return Hero(
+      tag: 'nextButton',
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 20.0),
+        child: SizedBox(
+          height: 40.0,
+          child: RaisedButton(
+              elevation: 5.0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.0)),
+              color: SecondaryColor,
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    AppLocalizations.of(context).translate('Next'),
+                    style: TextStyle(fontSize: 15.0, color: Colors.white),
                   ),
-                )
-              ],
-            ),
-            onPressed: () async {
-              if (validateAndSave()) {
-                if (await Database().isUsernameAlreadyInUse(
-                    context: context, username: _username)) {
-                  Vibrate.feedback(FeedbackType.warning);
-                  _scaffoldKey.currentState.showSnackBar(SnackBar(
-                    content: Text(
-                      AppLocalizations.of(context)
-                          .translate('Sorry, this username is already used.'),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+                    child: Icon(
+                      Icons.arrow_forward,
+                      color: Colors.white,
+                      size: 20,
                     ),
-                    duration: Duration(milliseconds: 3000),
-                  ));
-                } else {
-                  bool databaseUpdated = await Database().updateProfile(
-                      context, widget.userId,
-                      username: _username,
-                      pseudo: _pseudo,
-                      BMX: _BMX,
-                      Roller: _Roller,
-                      Scooter: _Scooter,
-                      Skateboard: _Skateboard,
-                      onCreate: true);
-                  if (databaseUpdated) {
-                    print("Profile updated with success");
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                InscriptionPage_AddProfilePicture(
-                                  auth: widget.auth,
-                                  userId: widget.userId,
-                                )));
-                  } else {
+                  )
+                ],
+              ),
+              onPressed: () async {
+                if (validateAndSave()) {
+                  if (await Database().isUsernameAlreadyInUse(
+                      context: context, username: _username)) {
                     Vibrate.feedback(FeedbackType.warning);
-                    print("Error when updating the Profile...");
+                    _scaffoldKey.currentState.showSnackBar(SnackBar(
+                      content: Text(
+                        AppLocalizations.of(context)
+                            .translate('Sorry, this username is already used.'),
+                      ),
+                      duration: Duration(milliseconds: 3000),
+                    ));
+                  } else {
+                    bool databaseUpdated = await Database().updateProfile(
+                        context, widget.userId,
+                        username: _username,
+                        pseudo: _pseudo,
+                        BMX: _BMX,
+                        Roller: _Roller,
+                        Scooter: _Scooter,
+                        Skateboard: _Skateboard,
+                        onCreate: true);
+                    if (databaseUpdated) {
+                      print("Profile updated with success");
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  InscriptionPage_AddProfilePicture(
+                                    auth: widget.auth,
+                                    userId: widget.userId,
+                                  )));
+                    } else {
+                      Vibrate.feedback(FeedbackType.warning);
+                      print("Error when updating the Profile...");
+                    }
                   }
                 }
-              }
-            }),
+              }),
+        ),
       ),
     );
   }
@@ -397,42 +399,45 @@ class _InscriptionPage_AddProfilePicture extends State<InscriptionPage_AddProfil
   }
 
   Widget showNextButtonWidget() {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 20.0),
-      child: SizedBox(
-        height: 40.0,
-        child: RaisedButton(
-            elevation: 5.0,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.0)),
-            color: SecondaryColor,
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  AppLocalizations.of(context).translate('Next'),
-                  style: TextStyle(fontSize: 15.0, color: Colors.white),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-                  child: Icon(
-                    Icons.arrow_forward,
-                    color: Colors.white,
-                    size: 20,
+    return Hero(
+      tag: 'nextButton',
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 20.0),
+        child: SizedBox(
+          height: 40.0,
+          child: RaisedButton(
+              elevation: 5.0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.0)),
+              color: SecondaryColor,
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    AppLocalizations.of(context).translate('Next'),
+                    style: TextStyle(fontSize: 15.0, color: Colors.white),
                   ),
-                )
-              ],
-            ),
-            onPressed: () =>
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          RootPage(
-                            auth: widget.auth,
-                          )))
-            ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+                    child: Icon(
+                      Icons.arrow_forward,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  )
+                ],
+              ),
+              onPressed: () =>
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            RootPage(
+                              auth: widget.auth,
+                            )))
+              ),
+        ),
       ),
     );
   }

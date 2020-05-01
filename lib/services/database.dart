@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_spot/services/library/configuration.dart';
 
 import 'package:the_spot/services/library/library.dart';
 
@@ -41,8 +42,8 @@ class Database {
       String description,
       String profilePictureDownloadPath,
       LatLng actualLocation}) async {
-    String updateDate = DateTime.now().toIso8601String();
-    String creationDate;
+    DateTime updateDate = DateTime.now();
+    DateTime creationDate;
     if (onCreate) creationDate = updateDate;
 
     Map update = Map<String, dynamic>.identity();
@@ -116,7 +117,9 @@ class Database {
             .document(userId)
             .get()
             .then((DocumentSnapshot document) {
-          userProfile = ConvertMapToUserProfile(document.data);
+              if(document.exists) {
+                userProfile = ConvertMapToUserProfile(document.data);
+              }
         }).catchError((err) {
           print(err);
           error(err.toString(), context);
@@ -145,7 +148,7 @@ class Database {
           return false;
         });
       } catch (err) {
-        print(err);
+        print(err.toString());
         error(err.toString(), context);
         return false;
       }
@@ -153,6 +156,52 @@ class Database {
       return false;
     }
     return true;
+  }
+
+  Future<bool> followUser(BuildContext context, Configuration configuration, UserProfile userToFollow) async {
+    bool succeed;
+    DateTime date = DateTime.now();
+    if (await checkConnection(context)){
+      try {
+        await database.collection('users').document(configuration.userData.userId).collection('Following').document(userToFollow.userId)
+            .setData({'Date' : date})
+            .then((value) => succeed = true)
+            .catchError((err){
+          print(err.toString());
+          error(err.toString(), context);
+          succeed = false;
+        });
+        await database.collection('users').document(configuration.userData.userId)
+            .updateData({'NumberOfFollowing': FieldValue.increment(1)})
+            .then((value) => succeed = true)
+            .catchError((err){
+          print(err.toString());
+          error(err.toString(), context);
+          succeed = false;
+        });
+        await database.collection('users').document(userToFollow.userId).collection('Followers').document(configuration.userData.userId)
+            .setData({'Date' : date})
+            .then((value) => succeed = true)
+            .catchError((err){
+          print(err.toString());
+          error(err.toString(), context);
+          succeed = false;
+        });
+        await database.collection('users').document(userToFollow.userId)
+            .updateData({'NumberOfFollowers': FieldValue.increment(1)})
+            .then((value) => succeed = true)
+            .catchError((err){
+          print(err.toString());
+          error(err.toString(), context);
+          succeed = false;
+        });
+      }catch (err){
+        print(err.toString());
+        error(err.toString(), context);
+        succeed = false;
+      }
+    }
+    return succeed;
   }
 
   Future<bool> isUsernameAlreadyInUse(
@@ -255,8 +304,8 @@ class Database {
   ) async {
     Map data = Map<String, dynamic>.identity();
 
-    String updateDate = DateTime.now().toIso8601String();
-    String creationDate;
+    DateTime updateDate = DateTime.now();
+    DateTime creationDate;
     if (onCreate) creationDate = updateDate;
 
     if (spotLocation != null) {
@@ -279,27 +328,6 @@ class Database {
     data['LastUpdate'] = updateDate;
 
     return data;
-  }
-
-  Future<List> createListUsersGrades(BuildContext context, UserGrades userGrade,
-      String spotId, String userId) async {
-    List<MapMarker> spots = await getSpots(context, getAll: true);
-    MapMarker spot = spots.firstWhere((element) => element.markerId == spotId);
-
-    //verify if the user don't have already rated this spot, if yes update his grade
-    int index =
-        spot.usersGrades.indexWhere((element) => element.userId == userId);
-
-    if (index == -1) {
-      spot.usersGrades.add(userGrade);
-    } else {
-      print("update");
-      spot.usersGrades[index] = userGrade;
-    }
-
-    List<Map> usersGrades = ConvertUsersGradesToMap(spot.usersGrades);
-
-    return usersGrades;
   }
 
   Future<List> getSpots(BuildContext context,
@@ -385,6 +413,4 @@ class Database {
     });
     return spots;
   }
-
-
 }

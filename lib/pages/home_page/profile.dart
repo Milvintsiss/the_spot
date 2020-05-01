@@ -1,28 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/deleteUser.dart';
 import 'package:the_spot/services/library/UserProfile.dart';
+import 'package:the_spot/services/library/configuration.dart';
 import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/services/library/library.dart';
 
 import '../../theme.dart';
 
 class Profile extends StatefulWidget {
-  Profile({Key key, this.auth, this.userId, this.logoutCallback})
+  const Profile(
+      {Key key,
+      this.auth,
+      this.userProfile,
+      this.configuration,
+      this.logoutCallback})
       : super(key: key);
 
   final BaseAuth auth;
+  final UserProfile userProfile;
+  final Configuration configuration;
   final VoidCallback logoutCallback;
-  final String userId;
 
   @override
   _Profile createState() => _Profile();
 }
 
 class _Profile extends State<Profile> {
-  UserProfile userProfile = UserProfile();
+  bool isUser;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.userProfile.userId == widget.configuration.userData.userId)
+      isUser = true;
+    else
+      isUser = false;
+  }
 
   void signOut() async {
     try {
@@ -33,23 +52,12 @@ class _Profile extends State<Profile> {
     }
   }
 
-  void loadProfileDataFromDatabase() async {
-    userProfile = await Database().getProfileData(widget.userId, context);
-
-    setState(() {});
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    loadProfileDataFromDatabase();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: PrimaryColorDark,
+      appBar: showAppBar(),
+      endDrawer: showDrawer(),
       body: ListView(
         children: <Widget>[
           Padding(
@@ -62,8 +70,6 @@ class _Profile extends State<Profile> {
                     showProfileWidget(),
                   ],
                 ),
-                showLogoutButton(),
-                showDeleteMyDataButton(),
               ],
             ),
           )
@@ -72,43 +78,174 @@ class _Profile extends State<Profile> {
     );
   }
 
+  AppBar showAppBar() {
+    if (isUser)
+      return AppBar(actions: <Widget>[
+        Builder(builder: (BuildContext context) {
+          return IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () => Scaffold.of(context).openEndDrawer(),
+            tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+          );
+        }),
+      ]);
+    else
+      return AppBar(
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.black,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+      );
+  }
+
+  Drawer showDrawer() {
+    if (isUser)
+      return Drawer(
+        child: Container(
+          color: PrimaryColorDark,
+          child: ListView(
+            children: <Widget>[
+              showTopDrawer(),
+              showListTileButton("Edit my Profile", Icons.edit),
+              showListTileButton('Clear cache', Icons.phonelink_erase),
+              showListTileButton('SignOut', Icons.power_settings_new),
+              showListTileButton('Delete my account', Icons.delete_forever),
+              showListTileButton('App info', Icons.info_outline),
+            ],
+          ),
+        ),
+      );
+    else
+      return null;
+  }
+
+  Widget showTopDrawer() {
+    return Container(
+      color: PrimaryColor,
+      height: 55,
+      child: ListTile(
+        title: Text(
+          'Settings',
+          style: TextStyle(fontSize: 28, color: SecondaryColorDark),
+        ),
+        leading: Icon(
+          Icons.settings,
+          size: 40,
+        ),
+      ),
+    );
+  }
+
+  Widget showListTileButton(String text, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
+      child: Container(
+        decoration: BoxDecoration(
+            border: Border.all(
+                color: PrimaryColor, width: 2, style: BorderStyle.solid),
+            borderRadius: BorderRadius.all(Radius.circular(30))),
+        child: ListTile(
+          title: Text(
+            text,
+            style: TextStyle(color: PrimaryColorLight),
+          ),
+          leading: Icon(
+            icon,
+            color: PrimaryColorLight,
+          ),
+          onTap: () async {
+            switch (text) {
+              case 'Edit my Profile':
+                {
+                  widget.userProfile.pseudo = 'new';
+                  Navigator.pop(context);
+                }
+                break;
+              case 'Clear cache':
+                {
+                  await DefaultCacheManager().emptyCache();
+                  Navigator.pop(context);
+                }
+                break;
+              case 'SignOut':
+                signOut();
+                break;
+              case 'Delete my account':
+                DeleteUser(widget.auth, widget.userProfile.userId,
+                        widget.logoutCallback, context)
+                    .showDeleteUserDataConfirmDialog();
+                break;
+              case 'App info':
+                Navigator.pop(context);
+            }
+          },
+        ),
+      ),
+    );
+  }
+
   Widget showAvatarWidget() {
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTap: uploadAvatar,
-      child: Padding(
-          padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
-          child: Stack(overflow: Overflow.visible, children: <Widget>[
-            ProfilePicture(userProfile.profilePictureDownloadPath, size: 180, borderColor: PrimaryColor),
-            Positioned(
-                bottom: -7.5,
-                right: -7.5,
-                child: Icon(
-                  Icons.add_circle,
-                  size: 60,
-                  color: SecondaryColor,
-                ))
-          ])),
+    return Hero(
+      tag: widget.userProfile.userId,
+      child: GestureDetector(
+        onTap: isUser ? uploadAvatar : null,
+        child: Padding(
+            padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
+            child: Stack(overflow: Overflow.visible, children: <Widget>[
+              ProfilePicture(widget.userProfile.profilePictureDownloadPath,
+                  size: 180, borderColor: PrimaryColor),
+              isUser
+                  ? Positioned(
+                      bottom: -7.5,
+                      right: -7.5,
+                      child: Icon(
+                        Icons.add_circle,
+                        size: 60,
+                        color: SecondaryColor,
+                      ))
+                  : Container(),
+            ])),
+      ),
     );
   }
 
   Widget showProfileWidget() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
+      padding: const EdgeInsets.fromLTRB(15, 0, 0, 0),
       child: Container(
-        padding: EdgeInsets.all(15),
+        padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
             color: PrimaryColorLight,
             borderRadius: BorderRadius.all(Radius.circular(20)),
             border: Border.fromBorderSide(
                 BorderSide(color: PrimaryColor, width: 3))),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            showUsernameWidget(),
             showPseudoWidget(),
+            showUsernameWidget(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget showPseudoWidget() {
+    return RichText(
+      text: TextSpan(
+          style:
+              TextStyle(color: PrimaryColorDark, fontWeight: FontWeight.bold),
+          children: <TextSpan>[
+            TextSpan(
+              text: 'Pseudo: ',
+            ),
+            TextSpan(
+                text: widget.userProfile.pseudo,
+                style: TextStyle(color: SecondaryColor))
+          ]),
     );
   }
 
@@ -119,85 +256,20 @@ class _Profile extends State<Profile> {
           children: <TextSpan>[
             TextSpan(
                 text: 'Username: ',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                )),
             TextSpan(
-                text: userProfile.username != null
-                    ? userProfile.username
-                    : "loading...")
+                text: "@" + widget.userProfile.username,
+                style: TextStyle(fontStyle: FontStyle.italic))
           ]),
-    );
-  }
-
-  Widget showPseudoWidget() {
-    return RichText(
-      text: TextSpan(
-          style: TextStyle(color: PrimaryColorDark),
-          children: <TextSpan>[
-            TextSpan(
-                text: 'Pseudo: ',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            TextSpan(
-                text: userProfile.pseudo != null
-                    ? userProfile.pseudo
-                    : "loading...")
-          ]),
-    );
-  }
-
-  Widget showLogoutButton() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-      child: Container(
-        padding: EdgeInsets.all(0),
-        decoration: BoxDecoration(
-            border: Border.all(
-                color: PrimaryColor, width: 2, style: BorderStyle.solid),
-            borderRadius: BorderRadius.all(Radius.circular(30))),
-        child: ListTile(
-          title: Text(
-            "SignOut",
-            style: TextStyle(color: PrimaryColorLight),
-          ),
-          leading: Icon(
-            Icons.power_settings_new,
-            color: PrimaryColorLight,
-          ),
-          onTap: signOut,
-        ),
-      ),
-    );
-  }
-
-  Widget showDeleteMyDataButton() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-      child: Container(
-        padding: EdgeInsets.all(0),
-        decoration: BoxDecoration(
-            border: Border.all(
-                color: PrimaryColor, width: 2, style: BorderStyle.solid),
-            borderRadius: BorderRadius.all(Radius.circular(30))),
-        child: ListTile(
-          title: Text(
-            "Delete my account",
-            style: TextStyle(color: PrimaryColorLight),
-          ),
-          leading: Icon(
-            Icons.delete_forever,
-            color: PrimaryColorLight,
-          ),
-          onTap: () => DeleteUser(
-                  widget.auth, widget.userId, widget.logoutCallback, context)
-              .showDeleteUserDataConfirmDialog(),
-        ),
-      ),
     );
   }
 
   void uploadAvatar() async {
     print("add an Avatar");
     await Storage().getPhotoFromUserStorageAndUpload(
-      storageRef: "ProfilePictures/" + widget.userId,
+      storageRef: "ProfilePictures/" + widget.userProfile.userId,
       context: context,
       cropStyle: CropStyle.circle,
       cropAspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
@@ -206,14 +278,15 @@ class _Profile extends State<Profile> {
       compressQuality: 75,
     );
 
-    String profilePictureDownloadPath =
-        await Storage().getUrlPhoto("ProfilePictures/" + widget.userId);
+    String profilePictureDownloadPath = await Storage()
+        .getUrlPhoto("ProfilePictures/" + widget.userProfile.userId);
 
-    await Database().updateProfile(context, widget.userId,
+    await Database().updateProfile(context, widget.userProfile.userId,
         profilePictureDownloadPath: profilePictureDownloadPath);
 
     setState(() {
-      userProfile.profilePictureDownloadPath = profilePictureDownloadPath;
+      widget.userProfile.profilePictureDownloadPath =
+          profilePictureDownloadPath;
     });
   }
 }

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class UserProfile {
@@ -5,6 +6,9 @@ class UserProfile {
     this.username,
     this.userId,
     this.pseudo,
+    this.numberOfFollowers,
+    this.numberOfFollowing,
+    this.numberOfFriends,
     this.description,
     this.actualLocation,
     this.BMX,
@@ -19,6 +23,9 @@ class UserProfile {
   String username;
   String userId;
   String pseudo;
+  int numberOfFollowers;
+  int numberOfFollowing;
+  int numberOfFriends;
   bool BMX;
   bool Roller;
   bool Scooter;
@@ -26,13 +33,16 @@ class UserProfile {
   String description;
   LatLng actualLocation;
   String profilePictureDownloadPath;
-  final String lastUpdate;
-  final String creationDate;
+  final Timestamp lastUpdate;
+  final Timestamp creationDate;
 
   Map<String, dynamic> toMap() {
     return {
       'Username': username,
       'Pseudo': pseudo,
+      'NumberOfFollowers': numberOfFollowers,
+      'NumberOfFollowing': numberOfFollowing,
+      'NumberOfFriends': numberOfFriends,
       'BMX': BMX,
       'Roller': Roller,
       'Scooter': Scooter,
@@ -52,6 +62,9 @@ UserProfile ConvertMapToUserProfile(Map userProfile) {
     username: userProfile['Username'],
     pseudo: userProfile['Pseudo'],
     description: userProfile['Description'],
+    numberOfFollowers: userProfile['NumberOfFollowers'] ?? 0,
+    numberOfFollowing: userProfile['NumberOfFollowing'] ?? 0,
+    numberOfFriends: userProfile['NumberOfFriends'] ?? 0,
     BMX: userProfile['BMX'],
     Roller: userProfile['Roller'],
     Scooter: userProfile['Scooter'],
