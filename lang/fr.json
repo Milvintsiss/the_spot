@@ -1,6 +1,7 @@
 {
   "Username": "Nom d'utilisateur",
   "Pseudo": "Pseudo",
+  "Update": "Mettre à jour",
   "Next": "Suivant",
   "Pseudo can t be empty": "Avec  un Pseudo c'est mieux!",
   "Your Pseudo must not exceed 20 characters!": "Votre pseudo ne doit pas faire plus de 20 caractères",

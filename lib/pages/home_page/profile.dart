@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:the_spot/pages/inscription_page.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/deleteUser.dart';
@@ -160,8 +161,13 @@ class _Profile extends State<Profile> {
             switch (text) {
               case 'Edit my Profile':
                 {
-                  widget.userProfile.pseudo = 'new';
                   Navigator.pop(context);
+                  await Navigator.push(context, MaterialPageRoute(
+                    builder: (context) => InscriptionPage(
+                      configuration: widget.configuration,
+                    )
+                  ));
+                  setState(() {});
                 }
                 break;
               case 'Clear cache':

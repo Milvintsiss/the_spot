@@ -22,22 +22,30 @@ exports.onUserDataCreation = functions.firestore.document('users/{userId}')
         return usersIndex.saveObject({...algoliaData, objectID});
     });
 
-exports.onUserDataUpdate = functions.firestore.document('users/{userId}')
-.onUpdate((change) => {
-        //algolia
-        const newData = change.after.data();
-        const objectID = change.after.id;
-
-        const algoliaData = {'Pseudo': data['Pseudo'], 'Username': data['Username']};
-
-        return usersIndex.saveObject({...algoliaData, objectID});
-    });
+//exports.onUserDataUpdate = functions.firestore.document('users/{userId}')
+//.onUpdate((change) => {
+//        //algolia
+//        const newData = change.after.data();
+//        const objectID = change.after.id;
+//
+//        const algoliaData = {'Pseudo': newData['Pseudo'], 'Username': newData['Username']};
+//
+//        return usersIndex.saveObject({...algoliaData, objectID});
+//    });
 
 exports.onUserDataDelete = functions.firestore.document('users/{userId}')
 .onDelete(snapshot => {
         //algolia
         return usersIndex.deleteObject(snapshot.id);
     });
+
+exports.updateUserPseudoAndUsernameInAlgolia = functions.https.onCall((data, context) => {
+    console.log(data);
+    console.log(context.auth.uid);
+    const algoliaData = data;
+    const objectID = context.auth.uid;
+    return usersIndex.saveObject({...algoliaData, objectID});
+});
 
 exports.addAllUsersDataToAlgolia = functions.https.onRequest((req, res) => {
     return admin.firestore().collection("users").get().then((docs) => {

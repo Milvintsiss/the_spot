@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:the_spot/services/library/configuration.dart';
 
@@ -11,6 +12,10 @@ import 'package:the_spot/services/library/userGrade.dart';
 
 class Database {
   final database = Firestore.instance;
+
+  final HttpsCallable updateUserPseudoAndUsernameInAlgolia = CloudFunctions
+      .instance
+      .getHttpsCallable(functionName: 'updateUserPseudoAndUsernameInAlgolia');
 
   void createRecord() async {
     await database.collection("books").document("1").setData({
@@ -46,9 +51,17 @@ class Database {
     DateTime creationDate;
     if (onCreate) creationDate = updateDate;
 
+    bool usernameOrPseudoChange = false;
+
     Map update = Map<String, dynamic>.identity();
-    if (username != null) update['Username'] = username;
-    if (pseudo != null) update['Pseudo'] = pseudo;
+    if (username != null) {
+      update['Username'] = username;
+      usernameOrPseudoChange = true;
+    }
+    if (pseudo != null) {
+      update['Pseudo'] = pseudo;
+      usernameOrPseudoChange = true;
+    }
     if (BMX != null) update['BMX'] = BMX;
     if (Roller != null) update['Roller'] = Roller;
     if (Scooter != null) update['Scooter'] = Scooter;
@@ -58,7 +71,8 @@ class Database {
       update['ActualLocationLongitude'] = actualLocation.longitude;
       update['ActualLocationLatitude'] = actualLocation.latitude;
     }
-    if (profilePictureDownloadPath != null) update['ProfilePictureDownloadPath'] = profilePictureDownloadPath;
+    if (profilePictureDownloadPath != null)
+      update['ProfilePictureDownloadPath'] = profilePictureDownloadPath;
 
     if (creationDate != null) update['CreationDate'] = creationDate;
 
@@ -95,6 +109,9 @@ class Database {
             print(error);
             return false;
           });
+          if (usernameOrPseudoChange)
+            await updateUserPseudoAndUsernameInAlgolia.call(
+                <String, dynamic>{'Pseudo': pseudo, 'Username': username});
         }
       } catch (e) {
         print(e);
@@ -117,9 +134,9 @@ class Database {
             .document(userId)
             .get()
             .then((DocumentSnapshot document) {
-              if(document.exists) {
-                userProfile = ConvertMapToUserProfile(document.data);
-              }
+          if (document.exists) {
+            userProfile = ConvertMapToUserProfile(document.data);
+          }
         }).catchError((err) {
           print(err);
           error(err.toString(), context);
@@ -158,44 +175,57 @@ class Database {
     return true;
   }
 
-  Future<bool> followUser(BuildContext context, Configuration configuration, UserProfile userToFollow) async {
+  Future<bool> followUser(BuildContext context, Configuration configuration,
+      UserProfile userToFollow) async {
     bool succeed;
     DateTime date = DateTime.now();
-    if (await checkConnection(context)){
+    if (await checkConnection(context)) {
       try {
-        await database.collection('users').document(configuration.userData.userId).collection('Following').document(userToFollow.userId)
-            .setData({'Date' : date})
+        await database
+            .collection('users')
+            .document(configuration.userData.userId)
+            .collection('Following')
+            .document(userToFollow.userId)
+            .setData({'Date': date})
             .then((value) => succeed = true)
-            .catchError((err){
-          print(err.toString());
-          error(err.toString(), context);
-          succeed = false;
-        });
-        await database.collection('users').document(configuration.userData.userId)
+            .catchError((err) {
+              print(err.toString());
+              error(err.toString(), context);
+              succeed = false;
+            });
+        await database
+            .collection('users')
+            .document(configuration.userData.userId)
             .updateData({'NumberOfFollowing': FieldValue.increment(1)})
             .then((value) => succeed = true)
-            .catchError((err){
-          print(err.toString());
-          error(err.toString(), context);
-          succeed = false;
-        });
-        await database.collection('users').document(userToFollow.userId).collection('Followers').document(configuration.userData.userId)
-            .setData({'Date' : date})
+            .catchError((err) {
+              print(err.toString());
+              error(err.toString(), context);
+              succeed = false;
+            });
+        await database
+            .collection('users')
+            .document(userToFollow.userId)
+            .collection('Followers')
+            .document(configuration.userData.userId)
+            .setData({'Date': date})
             .then((value) => succeed = true)
-            .catchError((err){
-          print(err.toString());
-          error(err.toString(), context);
-          succeed = false;
-        });
-        await database.collection('users').document(userToFollow.userId)
+            .catchError((err) {
+              print(err.toString());
+              error(err.toString(), context);
+              succeed = false;
+            });
+        await database
+            .collection('users')
+            .document(userToFollow.userId)
             .updateData({'NumberOfFollowers': FieldValue.increment(1)})
             .then((value) => succeed = true)
-            .catchError((err){
-          print(err.toString());
-          error(err.toString(), context);
-          succeed = false;
-        });
-      }catch (err){
+            .catchError((err) {
+              print(err.toString());
+              error(err.toString(), context);
+              succeed = false;
+            });
+      } catch (err) {
         print(err.toString());
         error(err.toString(), context);
         succeed = false;
@@ -259,8 +289,17 @@ class Database {
     String state;
 
     if (await checkConnection(context)) {
-      Map _spotData = await spotData(context, onCreate, spotId, spotLocation,
-          creatorId, spotName, spotDescription, imagesDownloadUrls, userGrade, spotGrades);
+      Map _spotData = await spotData(
+          context,
+          onCreate,
+          spotId,
+          spotLocation,
+          creatorId,
+          spotName,
+          spotDescription,
+          imagesDownloadUrls,
+          userGrade,
+          spotGrades);
 
       if (onCreate) {
         await database
@@ -320,7 +359,8 @@ class Database {
 
     if (userGrade != null) //if the user has not rated this spot
       data['UsersGrades'] = FieldValue.arrayUnion([userGrade.toMap()]);
-    if (spotGrades != null){//if the user has already rated this spot
+    if (spotGrades != null) {
+      //if the user has already rated this spot
       data['UsersGrades'] = ConvertUsersGradesToMap(spotGrades);
     }
 
