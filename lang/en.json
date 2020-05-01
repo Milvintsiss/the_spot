@@ -1,6 +1,7 @@
 {
   "Username": "Username",
   "Pseudo": "Pseudo",
+  "Update": "Update",
   "Next": "Next",
   "Pseudo can t be empty": "With pseudo it's better!",
   "Your Pseudo must not exceed 20 characters!": "Your Pseudo must not exceed 20 characters!",

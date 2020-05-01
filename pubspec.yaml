@@ -39,6 +39,7 @@ dependencies:
   #database
   firebase_auth: ^0.15.3
   cloud_firestore: ^0.13.0+1
+  cloud_functions: ^0.4.2+3
   firebase_storage: ^3.1.1
 
   algolia: ^0.1.7

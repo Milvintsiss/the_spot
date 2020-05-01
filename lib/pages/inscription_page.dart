@@ -4,6 +4,7 @@ import 'package:image_cropper/image_cropper.dart';
 
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/root_page.dart';
+import 'package:the_spot/services/library/configuration.dart';
 import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/theme.dart';
@@ -12,10 +13,13 @@ import 'package:the_spot/services/database.dart';
 import 'package:vibrate/vibrate.dart';
 
 class InscriptionPage extends StatefulWidget {
-  const InscriptionPage({Key key, this.auth, this.userId}) : super(key: key);
+  const InscriptionPage({Key key, this.auth, this.userId, this.configuration})
+      : super(key: key);
 
   final BaseAuth auth;
   final String userId;
+
+  final Configuration configuration;
 
   @override
   _InscriptionPage createState() => _InscriptionPage();
@@ -32,6 +36,23 @@ class _InscriptionPage extends State<InscriptionPage> {
   bool _Scooter = false;
   bool _Roller = false;
 
+  bool updateProfile;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.configuration != null) {
+      updateProfile = true;
+      _username = widget.configuration.userData.username;
+      _pseudo = widget.configuration.userData.pseudo;
+      _BMX = widget.configuration.userData.BMX;
+      _Skateboard = widget.configuration.userData.Skateboard;
+      _Scooter = widget.configuration.userData.Scooter;
+      _Roller = widget.configuration.userData.Roller;
+    } else
+      updateProfile = false;
+  }
+
   bool validateAndSave() {
     final form = _formKey.currentState;
     if (form.validate()) {
@@ -46,6 +67,7 @@ class _InscriptionPage extends State<InscriptionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         key: _scaffoldKey,
+        appBar:  showAppBar(),
         backgroundColor: PrimaryColorDark,
         body: Form(
           key: _formKey,
@@ -61,6 +83,21 @@ class _InscriptionPage extends State<InscriptionPage> {
         ));
   }
 
+  AppBar showAppBar() {
+    if (updateProfile)
+      return AppBar(
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.black,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+      );
+    else
+      return null;
+  }
+
   Widget showUsernameInput() {
     return Padding(
       padding: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
@@ -68,6 +105,8 @@ class _InscriptionPage extends State<InscriptionPage> {
         style: TextStyle(color: Colors.white),
         maxLines: 1,
         autofocus: false,
+        initialValue:
+            updateProfile ? widget.configuration.userData.username : null,
         decoration: InputDecoration(
           hintText: AppLocalizations.of(context).translate('Username'),
           hintStyle: TextStyle(color: Colors.blueGrey[100]),
@@ -103,6 +142,8 @@ class _InscriptionPage extends State<InscriptionPage> {
         style: TextStyle(color: Colors.white),
         maxLines: 1,
         autofocus: false,
+        initialValue:
+            updateProfile ? widget.configuration.userData.pseudo : null,
         decoration: InputDecoration(
           hintText: AppLocalizations.of(context).translate('Pseudo'),
           hintStyle: TextStyle(color: Colors.blueGrey[100]),
@@ -250,7 +291,9 @@ class _InscriptionPage extends State<InscriptionPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   Text(
-                    AppLocalizations.of(context).translate('Next'),
+                    updateProfile
+                        ? AppLocalizations.of(context).translate('Update')
+                        : AppLocalizations.of(context).translate('Next'),
                     style: TextStyle(fontSize: 15.0, color: Colors.white),
                   ),
                   Padding(
@@ -266,7 +309,8 @@ class _InscriptionPage extends State<InscriptionPage> {
               onPressed: () async {
                 if (validateAndSave()) {
                   if (await Database().isUsernameAlreadyInUse(
-                      context: context, username: _username)) {
+                          context: context, username: _username) &&
+                      _username != widget.configuration.userData.username) {
                     Vibrate.feedback(FeedbackType.warning);
                     _scaffoldKey.currentState.showSnackBar(SnackBar(
                       content: Text(
@@ -277,24 +321,37 @@ class _InscriptionPage extends State<InscriptionPage> {
                     ));
                   } else {
                     bool databaseUpdated = await Database().updateProfile(
-                        context, widget.userId,
+                        context,
+                        updateProfile
+                            ? widget.configuration.userData.userId
+                            : widget.userId,
                         username: _username,
                         pseudo: _pseudo,
                         BMX: _BMX,
                         Roller: _Roller,
                         Scooter: _Scooter,
                         Skateboard: _Skateboard,
-                        onCreate: true);
+                        onCreate: !updateProfile);
                     if (databaseUpdated) {
                       print("Profile updated with success");
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  InscriptionPage_AddProfilePicture(
-                                    auth: widget.auth,
-                                    userId: widget.userId,
-                                  )));
+                      if (updateProfile) {
+                        widget.configuration.userData.username = _username;
+                        widget.configuration.userData.pseudo = _pseudo;
+                        widget.configuration.userData.BMX = _BMX;
+                        widget.configuration.userData.Skateboard = _Skateboard;
+                        widget.configuration.userData.Scooter = _Scooter;
+                        widget.configuration.userData.Roller = _Roller;
+                        Navigator.pop(context);
+                      }
+                      else
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    InscriptionPage_AddProfilePicture(
+                                      auth: widget.auth,
+                                      userId: widget.userId,
+                                    )));
                     } else {
                       Vibrate.feedback(FeedbackType.warning);
                       print("Error when updating the Profile...");
@@ -320,7 +377,8 @@ class InscriptionPage_AddProfilePicture extends StatefulWidget {
       _InscriptionPage_AddProfilePicture();
 }
 
-class _InscriptionPage_AddProfilePicture extends State<InscriptionPage_AddProfilePicture> {
+class _InscriptionPage_AddProfilePicture
+    extends State<InscriptionPage_AddProfilePicture> {
   String _profilePictureDownloadPath;
 
   void uploadAvatar() async {
@@ -356,7 +414,9 @@ class _InscriptionPage_AddProfilePicture extends State<InscriptionPage_AddProfil
           Column(
             children: <Widget>[
               showProfilePictureWidget(),
-              Divider(height: 40,),
+              Divider(
+                height: 40,
+              ),
               showTextAddAPictureWidget(),
             ],
           ),
@@ -392,7 +452,10 @@ class _InscriptionPage_AddProfilePicture extends State<InscriptionPage_AddProfil
       child: Text(
         "Adding a photo makes you more recognizable!",
         style: TextStyle(
-            fontSize: 24, color: PrimaryColorLight, fontWeight: FontWeight.bold, ),
+          fontSize: 24,
+          color: PrimaryColorLight,
+          fontWeight: FontWeight.bold,
+        ),
         textAlign: TextAlign.center,
       ),
     );
@@ -428,15 +491,12 @@ class _InscriptionPage_AddProfilePicture extends State<InscriptionPage_AddProfil
                   )
                 ],
               ),
-              onPressed: () =>
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            RootPage(
-                              auth: widget.auth,
-                            )))
-              ),
+              onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => RootPage(
+                            auth: widget.auth,
+                          )))),
         ),
       ),
     );
