@@ -4,16 +4,17 @@ import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/pages/home_page/Map/map.dart';
 import 'package:the_spot/pages/home_page/profile.dart';
 import 'package:the_spot/pages/chat_pages/chat_list_page.dart';
+import 'package:the_spot/services/library/configuration.dart';
 
 import '../theme.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({Key key, this.auth, this.userId, this.logoutCallback})
+  HomePage({Key key, this.auth, this.configuration, this.logoutCallback})
       : super(key: key);
 
   final BaseAuth auth;
   final VoidCallback logoutCallback;
-  final String userId;
+  final Configuration configuration;
 
   @override
   State<StatefulWidget> createState() => _HomePageState();
@@ -27,11 +28,11 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _children = [
-      ChatListPage(),
+      ChatListPage(configuration: widget.configuration,),
       FeatureNotAvailable(),
       FeatureNotAvailable(),
-      Map(userId: widget.userId, context: context,),
-      Profile(auth: widget.auth, userId: widget.userId, logoutCallback: widget.logoutCallback,)
+      Map(configuration: widget.configuration, context: context,),
+      Profile(auth: widget.auth, userProfile: widget.configuration.userData, configuration: widget.configuration, logoutCallback: widget.logoutCallback,)
     ];
   }
 
@@ -50,49 +51,9 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Widget showListTile(String title, IconData icon, String function) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Container(
-        padding: EdgeInsets.all(0),
-        decoration: BoxDecoration(
-            border: Border.all(
-                color: PrimaryColor, width: 2, style: BorderStyle.solid),
-            borderRadius: BorderRadius.all(Radius.circular(30))),
-        child: ListTile(
-          title: Text(title),
-          leading: Icon(
-            icon,
-            color: PrimaryColorLight,
-          ),
-          onTap: () {
-            switch (function) {
-              case "logout":
-                signOut();
-                break;
-              case "updateCotes":
-                break;
-            }
-          },
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: Drawer(
-        child: Container(
-          color: PrimaryColorDark,
-          padding: EdgeInsets.fromLTRB(0, 10, 0, 0),
-          child: ListView(
-            children: <Widget>[
-              showListTile("Deconnexion", Icons.power_settings_new, "logout"),
-            ],
-          ),
-        ),
-      ),
       bottomNavigationBar: BottomNavigationBar(
           onTap: onTabTapped,
           currentIndex: _currentIndex,

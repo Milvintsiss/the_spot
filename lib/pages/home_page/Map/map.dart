@@ -10,18 +10,18 @@ import 'package:location/location.dart';
 import 'package:the_spot/pages/home_page/Map/createUpdateSpot_page.dart';
 import 'package:the_spot/pages/home_page/Map/spotInfo.dart';
 import 'package:the_spot/services/database.dart';
+import 'package:the_spot/services/library/configuration.dart';
 import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/services/library/map_helper.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
 import 'package:the_spot/services/library/search_engine.dart';
-import 'package:the_spot/services/storage.dart';
 
 import '../../../theme.dart';
 
 class Map extends StatefulWidget {
-  const Map({Key key, this.userId, this.context}) : super(key: key);
+  const Map({Key key, this.configuration, this.context}) : super(key: key);
 
-  final String userId;
+  final Configuration configuration;
   final BuildContext context;
 
   @override
@@ -104,8 +104,8 @@ class _Map extends State<Map> {
     _initUsersCluster();
     _initSpotsCluster();
   }
-  
-  void _initUsersCluster() async{
+
+  void _initUsersCluster() async {
     usersMarkers.clear();
 
     if (users != null) {
@@ -122,7 +122,7 @@ class _Map extends State<Map> {
     await _updateMarkers();
   }
 
-  void _initSpotsCluster() async{
+  void _initSpotsCluster() async {
     spotsMarkers.clear();
 
     if (spots != null) {
@@ -154,7 +154,7 @@ class _Map extends State<Map> {
 
     _markers.clear();
 
-    if(_spotsClusterManager != null) {
+    if (_spotsClusterManager != null) {
       final spotsUpdatedMarkers = await MapHelper.getClusterMarkers(
         _spotsClusterManager,
         _currentZoom,
@@ -171,7 +171,7 @@ class _Map extends State<Map> {
       });
     }
 
-    if(_usersClusterManager != null) {
+    if (_usersClusterManager != null) {
       final usersUpdatedMarkers = await MapHelper.getClusterMarkers(
         _usersClusterManager,
         _currentZoom,
@@ -194,7 +194,8 @@ class _Map extends State<Map> {
     });
   }
 
-  Future getUserLocationAndUpdate({bool animateCameraToLocation = false}) async {
+  Future getUserLocationAndUpdate(
+      {bool animateCameraToLocation = false}) async {
     _locationData = await location.getLocation();
     userLocation = LatLng(_locationData.latitude, _locationData.longitude);
     if (animateCameraToLocation == true) {
@@ -202,32 +203,43 @@ class _Map extends State<Map> {
           .animateCamera(CameraUpdate.newLatLngZoom(userLocation, 18));
     }
 
-    if(users.where((element) => element.markerId == widget.userId).isEmpty) {
+    if (users
+        .where((element) =>
+            element.markerId == widget.configuration.userData.userId)
+        .isEmpty) {
       //get user avatar and convert it to marker
       final File avatarFile =
-      await DefaultCacheManager().getSingleFile(
-          await Storage().getUrlPhoto("ProfilePictures/" + widget.userId));
+          widget.configuration.userData.profilePictureDownloadPath != null
+              ? await DefaultCacheManager().getSingleFile(
+                  widget.configuration.userData.profilePictureDownloadPath)
+              : null;
       BitmapDescriptor avatar = await convertImageFileToBitmapDescriptor(
-          avatarFile, size: 150,
-          title: "Paulo1026",
+          avatarFile,
+          size: 150,
+          title: widget.configuration.userData.pseudo,
           titleColor: PrimaryColorLight,
           titleBackgroundColor: PrimaryColorDark,
           addBorder: true,
           borderColor: PrimaryColor,
           borderSize: 15);
 
-      users.add(MapMarker(id: widget.userId,
+      users.add(MapMarker(
+          id: widget.configuration.userData.userId,
           position: userLocation,
           icon: avatar,
           type: Type.User));
       _initUsersCluster();
-    }else{
-      users.firstWhere((element) => element.markerId == widget.userId).position = userLocation;
-
+    } else {
+      users
+          .firstWhere((element) =>
+              element.markerId == widget.configuration.userData.userId)
+          .position = userLocation;
     }
 
     Database().updateUserLocation(
-        context: context, userId: widget.userId, userLocation: userLocation);
+        context: context,
+        userId: widget.configuration.userData.userId,
+        userLocation: userLocation);
   }
 
   @override
@@ -352,7 +364,8 @@ class _Map extends State<Map> {
                       size: 30,
                       color: PrimaryColorDark,
                     ),
-                    onPressed: () => getUserLocationAndUpdate(animateCameraToLocation: true),
+                    onPressed: () =>
+                        getUserLocationAndUpdate(animateCameraToLocation: true),
                   ),
                 ],
               ),
@@ -413,7 +426,7 @@ class _Map extends State<Map> {
               builder: (BuildContext context, StateSetter setStateBottomSheet) {
             return SpotInfoWidget(
               setStateBottomSheet: setStateBottomSheet,
-              userId: widget.userId,
+              userId: widget.configuration.userData.userId,
               screenHeight: screenHeight,
               screenWidth: screenWidth,
               spot: spot,
@@ -492,18 +505,19 @@ class _Map extends State<Map> {
   }
 
   void createSpot(LatLng tapPosition) async {
+    print('create spot');
     String spotId = await Database().updateASpot(
         context: context,
         spotId: null,
         spotLocation: tapPosition,
-        creatorId: widget.userId,
+        creatorId: widget.configuration.userData.userId,
         onCreate: true);
 
     Navigator.push(
         widget.context,
         MaterialPageRoute(
             builder: (context) => CreateUpdateSpotPage(
-                  userId: widget.userId,
+                  configuration: widget.configuration,
                   spotId: spotId,
                   stateCallback: createSpotCallBack,
                 )));

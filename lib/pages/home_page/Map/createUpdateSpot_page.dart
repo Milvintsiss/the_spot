@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:the_spot/services/database.dart';
+import 'package:the_spot/services/library/configuration.dart';
 import 'package:the_spot/services/library/gallery.dart';
 import 'package:the_spot/services/library/userGrade.dart';
 import 'package:the_spot/services/storage.dart';
@@ -9,10 +10,10 @@ import 'package:the_spot/theme.dart';
 import 'package:vibrate/vibrate.dart';
 
 class CreateUpdateSpotPage extends StatefulWidget {
-  CreateUpdateSpotPage({Key key, this.userId, this.spotId, this.stateCallback})
+  CreateUpdateSpotPage({Key key, this.configuration, this.spotId, this.stateCallback})
       : super(key: key);
 
-  final String userId;
+  final Configuration configuration;
   final String spotId;
   final VoidCallback stateCallback;
 
@@ -266,14 +267,14 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
         print("Spot name: " + spotName);
         print("Spot description: " + spotDescription);
         UserGrades userGrades = UserGrades(
-            userId: widget.userId,
+            userId: widget.configuration.userData.userId,
             spotGrade: spotGradeInput,
             spotGradeFloor: spotGradeFloorInput,
             spotGradeBeauty: spotGradeBeautyInput);
 
         Database().updateASpot(
             context: context,
-            creatorId: widget.userId,
+            creatorId: widget.configuration.userData.userId,
             spotId: widget.spotId,
             spotName: spotName,
             spotDescription: spotDescription,

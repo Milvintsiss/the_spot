@@ -5,9 +5,13 @@ import 'package:the_spot/pages/inscription_page.dart';
 import 'package:the_spot/pages/login_signup_page.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/pages/home_page.dart';
-import 'package:the_spot/services/database.dart';
+import 'package:the_spot/services/library/configuration.dart';
+import 'package:the_spot/services/library/library.dart';
+import 'package:the_spot/theme.dart';
 
-enum AuthStatus {
+enum Status {
+  UPDATE_AVAILABLE,
+  APP_NOT_OPERATIONAL,
   NOT_DETERMINED,
   NOT_LOGGED_IN,
   LOGGED_IN,
@@ -18,40 +22,50 @@ class RootPage extends StatefulWidget {
 
   final BaseAuth auth;
 
-
-
   @override
   State<StatefulWidget> createState() => _RootPageState();
 }
 
 class _RootPageState extends State<RootPage> {
-  AuthStatus authStatus = AuthStatus.NOT_DETERMINED;
+  Status status = Status.NOT_DETERMINED;
   String _userId = "";
 
   final databaseReference = Firestore.instance;
 
+  Configuration configuration = Configuration();
 
   bool _inscriptionState = true; // true if inscription no-complete
 
   @override
   void initState() {
     super.initState();
-     verifyIfConnectedAndInscriptionFinished();
+    getConfiguration();
   }
 
-  void verifyIfConnectedAndInscriptionFinished () async {
+  void getConfiguration() async {
     FirebaseUser user = await widget.auth.getCurrentUser();
-
     if (user != null) {
       _userId = user.uid;
-      var data = await databaseReference.document("users/" + _userId).get();
-      if (data.exists) {
+      configuration = await Configuration().getConfiguration(context, _userId);
+      if (configuration.userData != null) {
         _inscriptionState = false;
-      }else {_inscriptionState = true;}
+        configuration.userData.userId = _userId;
+      } else
+        _inscriptionState = true;
     }
 
-    setState(() {authStatus =
-    user == null ? AuthStatus.NOT_LOGGED_IN : AuthStatus.LOGGED_IN;});
+    if (configuration.updateIsAvailable)
+      status = Status.UPDATE_AVAILABLE;
+    else if (!configuration.isApplicationOperational)
+      status = Status.APP_NOT_OPERATIONAL;
+    else {
+      status = user == null ? Status.NOT_LOGGED_IN : Status.LOGGED_IN;
+    }
+    if (configuration.alertMessage != null && configuration.alertMessage.length > 0) {
+      error(configuration.alertMessage, context, backgroundColor: PrimaryColorDark, textColor: Colors.white, textAlign: TextAlign.center);
+    }
+
+    setState(() {});
   }
 
   void loginCallback() {
@@ -60,12 +74,12 @@ class _RootPageState extends State<RootPage> {
         _userId = user.uid.toString();
       });
     });
-    verifyIfConnectedAndInscriptionFinished();
+    getConfiguration();
   }
 
   void logoutCallback() {
     setState(() {
-      authStatus = AuthStatus.NOT_LOGGED_IN;
+      status = Status.NOT_LOGGED_IN;
       _userId = null;
     });
   }
@@ -79,19 +93,47 @@ class _RootPageState extends State<RootPage> {
     );
   }
 
+  Widget buildUpdateAvailableScreen() {
+    return Scaffold(
+      body: Center(
+          child: Text(
+            "A new version of the spot is now available! Please update to keep using TheSpot! ",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          )),
+    );
+  }
+
+  Widget buildAppNotOperationalScreen() {
+    return Scaffold(
+      body: Center(
+          child: Text(
+        "TheSpot is not operational for the moment, we are working on it. Please retry later.",
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      )),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    switch (authStatus) {
-      case AuthStatus.NOT_DETERMINED:
+    switch (status) {
+      case Status.UPDATE_AVAILABLE:
+        return buildUpdateAvailableScreen();
+        break;
+      case Status.APP_NOT_OPERATIONAL:
+        return buildAppNotOperationalScreen();
+        break;
+      case Status.NOT_DETERMINED:
         return buildWaitingScreen();
         break;
-      case AuthStatus.NOT_LOGGED_IN:
+      case Status.NOT_LOGGED_IN:
         return LoginSignupPage(
           auth: widget.auth,
           loginCallBack: loginCallback,
         );
         break;
-      case AuthStatus.LOGGED_IN:
+      case Status.LOGGED_IN:
         if (_userId.length > 0 && _userId != null) {
           if (_inscriptionState) //if inscription complete go to HomePage
             return InscriptionPage(
@@ -100,7 +142,7 @@ class _RootPageState extends State<RootPage> {
             );
           else {
             return HomePage(
-              userId: _userId,
+              configuration: configuration,
               auth: widget.auth,
               logoutCallback: logoutCallback,
             );
