@@ -16,6 +16,7 @@ class UserProfile {
     this.Scooter,
     this.Skateboard,
     this.profilePictureDownloadPath,
+    this.friend,
     this.lastUpdate,
     this.creationDate,
   });
@@ -33,6 +34,8 @@ class UserProfile {
   String description;
   LatLng actualLocation;
   String profilePictureDownloadPath;
+  bool followed;
+  bool friend;
   final Timestamp lastUpdate;
   final Timestamp creationDate;
 

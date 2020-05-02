@@ -181,50 +181,36 @@ class Database {
     DateTime date = DateTime.now();
     if (await checkConnection(context)) {
       try {
-        await database
-            .collection('users')
-            .document(configuration.userData.userId)
-            .collection('Following')
-            .document(userToFollow.userId)
-            .setData({'Date': date})
-            .then((value) => succeed = true)
-            .catchError((err) {
-              print(err.toString());
-              error(err.toString(), context);
-              succeed = false;
-            });
-        await database
-            .collection('users')
-            .document(configuration.userData.userId)
-            .updateData({'NumberOfFollowing': FieldValue.increment(1)})
-            .then((value) => succeed = true)
-            .catchError((err) {
-              print(err.toString());
-              error(err.toString(), context);
-              succeed = false;
-            });
-        await database
-            .collection('users')
-            .document(userToFollow.userId)
-            .collection('Followers')
-            .document(configuration.userData.userId)
-            .setData({'Date': date})
-            .then((value) => succeed = true)
-            .catchError((err) {
-              print(err.toString());
-              error(err.toString(), context);
-              succeed = false;
-            });
-        await database
-            .collection('users')
-            .document(userToFollow.userId)
-            .updateData({'NumberOfFollowers': FieldValue.increment(1)})
-            .then((value) => succeed = true)
-            .catchError((err) {
-              print(err.toString());
-              error(err.toString(), context);
-              succeed = false;
-            });
+        WriteBatch batch = database.batch();
+        batch.setData(
+            database
+                .collection('users')
+                .document(configuration.userData.userId)
+                .collection('Following')
+                .document(userToFollow.userId),
+            {'Date': date});
+        batch.updateData(
+            database
+                .collection('users')
+                .document(configuration.userData.userId),
+            {'NumberOfFollowing': FieldValue.increment(1)});
+
+        batch.setData(
+            database
+                .collection('users')
+                .document(userToFollow.userId)
+                .collection('Followers')
+                .document(configuration.userData.userId),
+            {'Date': date});
+        batch.updateData(
+            database.collection('users').document(userToFollow.userId),
+            {'NumberOfFollowers': FieldValue.increment(1)});
+
+        await batch.commit().then((value) => succeed = true).catchError((err) {
+          print(err.toString());
+          error(err.toString(), context);
+          succeed = false;
+        });
       } catch (err) {
         print(err.toString());
         error(err.toString(), context);
@@ -232,6 +218,81 @@ class Database {
       }
     }
     return succeed;
+  }
+
+  Future<bool> unFollowUser(BuildContext context, Configuration configuration,
+      UserProfile userToFollow) async {
+    bool succeed;
+    if (await checkConnection(context)) {
+      try {
+        WriteBatch batch = database.batch();
+        batch.delete(database
+            .collection('users')
+            .document(configuration.userData.userId)
+            .collection('Following')
+            .document(userToFollow.userId));
+        batch.updateData(
+            database
+                .collection('users')
+                .document(configuration.userData.userId),
+            {'NumberOfFollowing': FieldValue.increment(-1)});
+
+        batch.delete(database
+            .collection('users')
+            .document(userToFollow.userId)
+            .collection('Followers')
+            .document(configuration.userData.userId));
+        batch.updateData(
+            database.collection('users').document(userToFollow.userId),
+            {'NumberOfFollowers': FieldValue.increment(-1)});
+
+        await batch.commit().then((value) => succeed = true).catchError((err) {
+          print(err.toString());
+          error(err.toString(), context);
+          succeed = false;
+        });
+      } catch (err) {
+        print(err.toString());
+        error(err.toString(), context);
+        succeed = false;
+      }
+    }
+    return succeed;
+  }
+
+  Future<List<UserProfile>> isUsersFriendOrFollowed(BuildContext context,
+      List<UserProfile> users, Configuration configuration) async {
+    if (await checkConnection(context)) {
+      try {
+        List<String> usersId = [];
+        users.forEach((user) {
+          usersId.add(user.userId);
+        });
+        await database
+            .collection('users')
+            .document(configuration.userData.userId)
+            .collection('Following')
+            .where(FieldPath.documentId, whereIn: usersId)
+            .getDocuments()
+            .then((QuerySnapshot snapshots) {
+              usersId.forEach((id) {
+                int index = snapshots.documents.indexWhere((element) => element.documentID == id);
+                if (index != -1) {
+                  users[usersId.indexOf(id)].followed = true;
+                } else
+                  users[usersId.indexOf(id)].followed = false;
+        });
+        })
+            .catchError((err) {
+          print(err.toString());
+          error(err.toString(), context);
+        });
+      } catch (err) {
+        print(err.toString());
+        error(err.toString(), context);
+      }
+    }
+    return users;
   }
 
   Future<bool> isUsernameAlreadyInUse(

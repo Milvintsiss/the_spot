@@ -12,6 +12,7 @@ class ChatListPage extends StatefulWidget {
   ChatListPage({this.configuration});
 
   final Configuration configuration;
+
   @override
   _ChatListPageState createState() => _ChatListPageState();
 }
@@ -104,24 +105,23 @@ class _ChatListPageState extends State<ChatListPage> {
           padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
           itemCount: queryResult.length,
           itemBuilder: (BuildContext context, int itemIndex) {
-            return showResultWidget(queryResult[itemIndex]);
+            return showResultWidget(itemIndex);
           },
           shrinkWrap: true,
         ),
       );
   }
 
-  Widget showResultWidget(UserProfile userProfile) {
-
+  Widget showResultWidget(int index) {
     bool waitForSendingFriendRequest = false;
     return GestureDetector(
       onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
               builder: (context) => Profile(
-                configuration: widget.configuration,
-                userProfile: userProfile,
-              ))),
+                    configuration: widget.configuration,
+                    userProfile: queryResult[index],
+                  ))),
       child: Padding(
         padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
         child: Container(
@@ -135,8 +135,10 @@ class _ChatListPageState extends State<ChatListPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Hero(
-                  tag: userProfile.userId,
-                  child: ProfilePicture(userProfile.profilePictureDownloadPath, size: 50)),
+                  tag: queryResult[index].userId,
+                  child: ProfilePicture(
+                      queryResult[index].profilePictureDownloadPath,
+                      size: 50)),
               Divider(
                 indent: 10,
               ),
@@ -145,9 +147,9 @@ class _ChatListPageState extends State<ChatListPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(userProfile.pseudo),
+                    Text(queryResult[index].pseudo),
                     Text(
-                      "@" + userProfile.username,
+                      "@" + queryResult[index].username,
                       style: TextStyle(
                           fontStyle: FontStyle.italic, color: Colors.white70),
                     ),
@@ -157,35 +159,18 @@ class _ChatListPageState extends State<ChatListPage> {
               ButtonTheme(
                 minWidth: 40,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)
-                ),
+                    borderRadius: BorderRadius.circular(15)),
                 buttonColor: PrimaryColor,
-                disabledColor: PrimaryColorLight,
+                disabledColor: PrimaryColor,
                 child: Row(
                   children: <Widget>[
-                    RaisedButton(
-                      child: waitForFollowing ? SizedBox(
-                        height: 10,
-                        width: 10,
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(PrimaryColorDark),
-                        ),
-                      )
-                  : Text('Follow'),
-                      onPressed: () async {
-                        setState(() {
-                          waitForFollowing = true;
-                        });
-                        await Database().followUser(context, widget.configuration, userProfile);
-                        setState(() {
-                          waitForFollowing = false;
-                        });
-                      },
+                    showFollowButton(index),
+                    Divider(
+                      indent: 5,
                     ),
-                    Divider(indent: 5,),
                     RaisedButton(
                       child: Text("Add+"),
-                      onPressed: (){},
+                      onPressed: () {},
                     ),
                   ],
                 ),
@@ -197,11 +182,44 @@ class _ChatListPageState extends State<ChatListPage> {
     );
   }
 
+  Widget showFollowButton(int index){
+    return RaisedButton(
+      color: queryResult[index].followed ? transparentColor(SecondaryColor, 100) : PrimaryColor,
+      child: waitForFollowing
+          ? SizedBox(
+        height: 10,
+        width: 10,
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(
+              PrimaryColorDark),
+        ),
+      )
+          : Text(queryResult[index].followed ? 'Unfollow' : 'Follow'),
+      onPressed: waitForFollowing ? null : () async {
+        setState(() {
+          waitForFollowing = true;
+        });
+        if (queryResult[index].followed) {
+          await Database().unFollowUser(
+              context, widget.configuration, queryResult[index]);
+          queryResult[index].followed = false;
+        }else {
+          await Database().followUser(
+              context, widget.configuration, queryResult[index]);
+          queryResult[index].followed = true;
+        }
+        waitForFollowing = false;
+        setState(() {
+        });
+      },
+    );
+  }
+
   Widget showChatListWidget() {
     return Text("userIsNotSearching");
   }
 
   Future<List> getUsers() async {
-    return await searchUsers(context, query);
+    return await searchUsers(context, query, widget.configuration);
   }
 }

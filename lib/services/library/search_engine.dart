@@ -3,13 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/UserProfile.dart';
+import 'package:the_spot/services/library/configuration.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
 import 'package:the_spot/services/library/library.dart';
 
 import 'algolia.dart';
 
 Future<List<UserProfile>> searchUsers(
-    BuildContext context, String query) async {
+    BuildContext context, String query, Configuration configuration) async {
   List<UserProfile> users = [];
   if (await checkConnection(context)) {
     try {
@@ -36,11 +37,14 @@ Future<List<UserProfile>> searchUsers(
                 .data)); //returns documents in algolia order
             users[users.length - 1].userId = element;
           });
+
         }).catchError((err) {
           error(err.toString(), context);
           print(err);
         });
+        users = await Database().isUsersFriendOrFollowed(context, users, configuration);
       }
+
     } catch (err) {
       error(err, context);
       print(err);
