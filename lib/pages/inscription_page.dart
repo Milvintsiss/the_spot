@@ -414,9 +414,6 @@ class _InscriptionPage_AddProfilePicture
           Column(
             children: <Widget>[
               showProfilePictureWidget(),
-              Divider(
-                height: 40,
-              ),
               showTextAddAPictureWidget(),
             ],
           ),
@@ -448,15 +445,18 @@ class _InscriptionPage_AddProfilePicture
   }
 
   Widget showTextAddAPictureWidget() {
-    return Center(
-      child: Text(
-        "Adding a photo makes you more recognizable!",
-        style: TextStyle(
-          fontSize: 24,
-          color: PrimaryColorLight,
-          fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.only(top: 40),
+      child: Center(
+        child: Text(
+          "Adding a photo makes you more recognizable!",
+          style: TextStyle(
+            fontSize: 24,
+            color: PrimaryColorLight,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
         ),
-        textAlign: TextAlign.center,
       ),
     );
   }

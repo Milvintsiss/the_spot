@@ -30,6 +30,10 @@ class _RootPageState extends State<RootPage> {
   Status status = Status.NOT_DETERMINED;
   String _userId = "";
 
+  double screenWidth;
+  double screenHeight;
+  double textSizeFactor;
+
   final databaseReference = Firestore.instance;
 
   Configuration configuration = Configuration();
@@ -39,6 +43,7 @@ class _RootPageState extends State<RootPage> {
   @override
   void initState() {
     super.initState();
+
     getConfiguration();
   }
 
@@ -46,13 +51,19 @@ class _RootPageState extends State<RootPage> {
     FirebaseUser user = await widget.auth.getCurrentUser();
     if (user != null) {
       _userId = user.uid;
+    }
       configuration = await Configuration().getConfiguration(context, _userId);
+      configuration.screenHeight = screenHeight;
+      configuration.screenWidth = screenWidth;
+      configuration.textSizeFactor = textSizeFactor;
+
       if (configuration.userData != null) {
         _inscriptionState = false;
         configuration.userData.userId = _userId;
-      } else
+      } else {
         _inscriptionState = true;
-    }
+      }
+
 
     if (configuration.updateIsAvailable)
       status = Status.UPDATE_AVAILABLE;
@@ -117,6 +128,9 @@ class _RootPageState extends State<RootPage> {
 
   @override
   Widget build(BuildContext context) {
+    screenWidth = MediaQuery.of(context).size.width;
+    screenHeight = MediaQuery.of(context).size.height;
+    textSizeFactor = MediaQuery.of(context).textScaleFactor;
     switch (status) {
       case Status.UPDATE_AVAILABLE:
         return buildUpdateAvailableScreen();

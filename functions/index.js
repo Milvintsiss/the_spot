@@ -10,7 +10,6 @@ const usersIndex = algoliaClient.initIndex('users');
 
 admin.initializeApp(functions.config().firebase);
 
-
 exports.onUserDataCreation = functions.firestore.document('users/{userId}')
 .onCreate(snapshot => {
         //algolia
@@ -49,7 +48,7 @@ exports.updateUserPseudoAndUsernameInAlgolia = functions.https.onCall((data, con
 
 exports.addAllUsersDataToAlgolia = functions.https.onRequest((req, res) => {
     return admin.firestore().collection("users").get().then((docs) => {
-        var arr = [];
+        let arr = [];
         docs.forEach((doc) => {
             let user = {'Pseudo': doc.data()['Pseudo'], 'Username': doc.data()['Username']};
             user.objectID = doc.id;
@@ -57,7 +56,7 @@ exports.addAllUsersDataToAlgolia = functions.https.onRequest((req, res) => {
             arr.push(user);
         });
 
-        return usersIndex.saveObjects(arr, function (err, content) {
+        return usersIndex.saveObjects(arr, (err, content) => {
             if (err) {
              console.log(err.stack);
          }
@@ -74,8 +73,9 @@ exports.repairDatabase = functions.pubsub.schedule('every 24 hours').onRun((cont
   return admin.firestore().collection("spots").get().then((docs) => {
     return docs.forEach((doc) => {
         if (!("SpotName" in doc.data())){
+            // eslint-disable-next-line promise/no-nesting
             admin.firestore().collection("spots").doc(doc.id).delete()
-            .then(function() {
+            .then(() => {
                 return console.log("Document deleted:", doc.id);
             })
             .catch((err) => {
@@ -93,13 +93,14 @@ exports.repairDatabase = functions.pubsub.schedule('every 24 hours').onRun((cont
 exports.changeUserStringISODates_toTimestamp = functions.https.onRequest((req, res) => {
     return admin.firestore().collection("users").get().then((docs) => {
         return docs.forEach((doc) => {
-            var creationDate = doc.data()['CreationDate'];
-            var updateDate = doc.data()['LastUpdate'];
-            var _creationDate = parseISOString(creationDate);
-            var _updateDate = parseISOString(updateDate);
+            const creationDate = doc.data()['CreationDate'];
+            const updateDate = doc.data()['LastUpdate'];
+            const _creationDate = parseISOString(creationDate);
+            const _updateDate = parseISOString(updateDate);
+            // eslint-disable-next-line promise/no-nesting
             admin.firestore().collection("users").doc(doc.id)
                 .update({'CreationDate' : _creationDate, 'LastUpdate' : _updateDate})
-                .then(function() {
+                .then(() => {
                     return console.log("Success:", doc.id);
                 })
                 .catch((err) => {
@@ -112,8 +113,8 @@ exports.changeUserStringISODates_toTimestamp = functions.https.onRequest((req, r
 });
 
     function parseISOString(date) {
-          var b = date.split(/\D+/);
-          return new Date(Date.UTC(b[0], --b[1], b[2], b[3], b[4], b[5], b[6]));
+        const b = date.split(/\D+/);
+        return new Date(Date.UTC(b[0], --b[1], b[2], b[3], b[4], b[5], b[6]));
       }
 
 

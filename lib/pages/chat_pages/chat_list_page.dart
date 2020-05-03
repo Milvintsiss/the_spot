@@ -182,36 +182,42 @@ class _ChatListPageState extends State<ChatListPage> {
     );
   }
 
-  Widget showFollowButton(int index){
+  Widget showFollowButton(int index) {
     return RaisedButton(
-      color: queryResult[index].followed ? transparentColor(SecondaryColor, 100) : PrimaryColor,
+      color: queryResult[index].followed
+          ? transparentColor(SecondaryColor, 100)
+          : PrimaryColor,
       child: waitForFollowing
           ? SizedBox(
-        height: 10,
-        width: 10,
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(
-              PrimaryColorDark),
-        ),
-      )
+              height: 10,
+              width: 10,
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(PrimaryColorDark),
+              ),
+            )
           : Text(queryResult[index].followed ? 'Unfollow' : 'Follow'),
-      onPressed: waitForFollowing ? null : () async {
-        setState(() {
-          waitForFollowing = true;
-        });
-        if (queryResult[index].followed) {
-          await Database().unFollowUser(
-              context, widget.configuration, queryResult[index]);
-          queryResult[index].followed = false;
-        }else {
-          await Database().followUser(
-              context, widget.configuration, queryResult[index]);
-          queryResult[index].followed = true;
-        }
-        waitForFollowing = false;
-        setState(() {
-        });
-      },
+      onPressed: waitForFollowing
+          ? null
+          : () async {
+              setState(() {
+                waitForFollowing = true;
+              });
+              if (queryResult[index].followed) {
+                await Database().unFollowUser(
+                    context, widget.configuration, queryResult[index]);
+                queryResult[index].followed = false;
+                queryResult[index].numberOfFollowers--;
+                widget.configuration.userData.numberOfFollowing--;
+              } else {
+                await Database().followUser(
+                    context, widget.configuration, queryResult[index]);
+                queryResult[index].followed = true;
+                queryResult[index].numberOfFollowers++;
+                widget.configuration.userData.numberOfFollowing++;
+              }
+              waitForFollowing = false;
+              setState(() {});
+            },
     );
   }
 
