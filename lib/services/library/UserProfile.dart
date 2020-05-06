@@ -3,8 +3,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class UserProfile {
   UserProfile({
-    this.username,
     this.userId,
+    this.username,
     this.pseudo,
     this.numberOfFollowers,
     this.numberOfFollowing,
@@ -16,13 +16,17 @@ class UserProfile {
     this.Scooter,
     this.Skateboard,
     this.profilePictureDownloadPath,
-    this.friend,
+    this.isFriend,
+    this.isFollowed,
+    this.pendingFriendsId,
+    this.devicesTokens,
+    this.subscribedTopics,
     this.lastUpdate,
     this.creationDate,
   });
 
-  String username;
   String userId;
+  String username;
   String pseudo;
   int numberOfFollowers;
   int numberOfFollowing;
@@ -34,8 +38,14 @@ class UserProfile {
   String description;
   LatLng actualLocation;
   String profilePictureDownloadPath;
-  bool followed;
-  bool friend;
+  bool isFollowed;
+  bool isFriend;
+
+  List<String> pendingFriendsId;
+
+  List<String> devicesTokens;
+  List<String> subscribedTopics;
+
   final Timestamp lastUpdate;
   final Timestamp creationDate;
 
@@ -54,6 +64,9 @@ class UserProfile {
       'ActualLocationLongitude': actualLocation.longitude,
       'ActualLocationLatitude': actualLocation.latitude,
       'ProfilePictureDownloadPath': profilePictureDownloadPath,
+      'PendingFriendsId' : pendingFriendsId,
+      'DevicesTokens' : devicesTokens,
+      'SubscribedTopics': subscribedTopics,
       'LastUpdate': lastUpdate,
       'CreationDate': creationDate,
     };
@@ -61,6 +74,18 @@ class UserProfile {
 }
 
 UserProfile ConvertMapToUserProfile(Map userProfile) {
+  List<String> pendingFriendsId = [];
+  if (userProfile['PendingFriendsId'] != null) {
+    pendingFriendsId = userProfile['PendingFriendsId'].cast<String>();
+  }
+  List<String> devicesTokens = [];
+  if (userProfile['DevicesTokens'] != null) {
+    devicesTokens = userProfile['DevicesTokens'].cast<String>();
+  }
+  List<String> subscribedTopics = [];
+  if (userProfile['SubscribedTopics'] != null) {
+    subscribedTopics = userProfile['SubscribedTopics'].cast<String>();
+  }
   return UserProfile(
     username: userProfile['Username'],
     pseudo: userProfile['Pseudo'],
@@ -73,6 +98,9 @@ UserProfile ConvertMapToUserProfile(Map userProfile) {
     Scooter: userProfile['Scooter'],
     Skateboard: userProfile['Skateboard'],
     profilePictureDownloadPath: userProfile['ProfilePictureDownloadPath'],
+    pendingFriendsId: pendingFriendsId,
+    devicesTokens: devicesTokens,
+    subscribedTopics: subscribedTopics,
     lastUpdate: userProfile['LastUpdate'],
     creationDate: userProfile['CreationDate'],
     actualLocation: userProfile['ActualLocationLatitude'] != null &&

@@ -44,6 +44,8 @@ class _RootPageState extends State<RootPage> {
   void initState() {
     super.initState();
 
+    //init notifications
+
     getConfiguration();
   }
 
@@ -60,6 +62,7 @@ class _RootPageState extends State<RootPage> {
       if (configuration.userData != null) {
         _inscriptionState = false;
         configuration.userData.userId = _userId;
+        configuration.pushNotificationsManager.configuration = configuration;
       } else {
         _inscriptionState = true;
       }

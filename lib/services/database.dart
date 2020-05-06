@@ -1,6 +1,5 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:the_spot/services/library/configuration.dart';
 
 import 'package:the_spot/services/library/library.dart';
 
@@ -13,9 +12,9 @@ import 'package:the_spot/services/library/userGrade.dart';
 class Database {
   final database = Firestore.instance;
 
-  final HttpsCallable updateUserPseudoAndUsernameInAlgolia = CloudFunctions
-      .instance
-      .getHttpsCallable(functionName: 'updateUserPseudoAndUsernameInAlgolia');
+  CloudFunctions cloudFunctions = CloudFunctions(
+    region: 'us-central1',
+  );
 
   void createRecord() async {
     await database.collection("books").document("1").setData({
@@ -47,6 +46,9 @@ class Database {
       String description,
       String profilePictureDownloadPath,
       LatLng actualLocation}) async {
+    final HttpsCallable updateUserPseudoAndUsernameInAlgolia = cloudFunctions
+        .getHttpsCallable(functionName: 'updateUserPseudoAndUsernameInAlgolia');
+
     DateTime updateDate = DateTime.now();
     DateTime creationDate;
     if (onCreate) creationDate = updateDate;
@@ -136,6 +138,7 @@ class Database {
             .then((DocumentSnapshot document) {
           if (document.exists) {
             userProfile = ConvertMapToUserProfile(document.data);
+            userProfile.userId = userId;
           }
         }).catchError((err) {
           print(err);
@@ -175,8 +178,8 @@ class Database {
     return true;
   }
 
-  Future<bool> followUser(BuildContext context, Configuration configuration,
-      UserProfile userToFollow) async {
+  Future<bool> followUser(
+      BuildContext context, String mainUserId, String userToFollowId) async {
     bool succeed;
     DateTime date = DateTime.now();
     if (await checkConnection(context)) {
@@ -185,25 +188,21 @@ class Database {
         batch.setData(
             database
                 .collection('users')
-                .document(configuration.userData.userId)
+                .document(mainUserId)
                 .collection('Following')
-                .document(userToFollow.userId),
+                .document(userToFollowId),
             {'Date': date});
-        batch.updateData(
-            database
-                .collection('users')
-                .document(configuration.userData.userId),
+        batch.updateData(database.collection('users').document(mainUserId),
             {'NumberOfFollowing': FieldValue.increment(1)});
 
         batch.setData(
             database
                 .collection('users')
-                .document(userToFollow.userId)
+                .document(userToFollowId)
                 .collection('Followers')
-                .document(configuration.userData.userId),
+                .document(mainUserId),
             {'Date': date});
-        batch.updateData(
-            database.collection('users').document(userToFollow.userId),
+        batch.updateData(database.collection('users').document(userToFollowId),
             {'NumberOfFollowers': FieldValue.increment(1)});
 
         await batch.commit().then((value) => succeed = true).catchError((err) {
@@ -220,30 +219,27 @@ class Database {
     return succeed;
   }
 
-  Future<bool> unFollowUser(BuildContext context, Configuration configuration,
-      UserProfile userToFollow) async {
+  Future<bool> unFollowUser(
+      BuildContext context, String mainUserId, String userToUnFollowId) async {
     bool succeed;
     if (await checkConnection(context)) {
       try {
         WriteBatch batch = database.batch();
         batch.delete(database
             .collection('users')
-            .document(configuration.userData.userId)
+            .document(mainUserId)
             .collection('Following')
-            .document(userToFollow.userId));
-        batch.updateData(
-            database
-                .collection('users')
-                .document(configuration.userData.userId),
+            .document(userToUnFollowId));
+        batch.updateData(database.collection('users').document(mainUserId),
             {'NumberOfFollowing': FieldValue.increment(-1)});
 
         batch.delete(database
             .collection('users')
-            .document(userToFollow.userId)
+            .document(userToUnFollowId)
             .collection('Followers')
-            .document(configuration.userData.userId));
+            .document(mainUserId));
         batch.updateData(
-            database.collection('users').document(userToFollow.userId),
+            database.collection('users').document(userToUnFollowId),
             {'NumberOfFollowers': FieldValue.increment(-1)});
 
         await batch.commit().then((value) => succeed = true).catchError((err) {
@@ -260,8 +256,69 @@ class Database {
     return succeed;
   }
 
-  Future<List<UserProfile>> isUsersFriendOrFollowed(BuildContext context,
-      List<UserProfile> users, Configuration configuration) async {
+  Future<bool> sendFriendRequest(BuildContext context, String mainUserId,
+      String userSendindRequestPseudo, String userSendingRequestPictureDownloadPath, String userToAddAsFriendId) async {
+    final HttpsCallable sendFriendRequestNotificationTo = CloudFunctions
+        .instance
+        .getHttpsCallable(functionName: 'sendFriendRequestNotificationTo');
+
+    bool success = false;
+    if (await checkConnection(context)) {
+      try {
+        await database
+            .collection('users')
+            .document(userToAddAsFriendId)
+            .updateData({
+              'PendingFriendsId': FieldValue.arrayUnion([mainUserId])
+            })
+            .then((value) => success = true)
+            .catchError((err) {
+              print(err.toString());
+              error(err.toString(), context);
+              success = false;
+            });
+        sendFriendRequestNotificationTo.call(<String, dynamic>{
+          'userId': userToAddAsFriendId,
+          'pseudo': userSendindRequestPseudo,
+          'picturePath': userSendingRequestPictureDownloadPath
+        });
+      } catch (err) {
+        print(err.toString());
+        error(err.toString(), context);
+        success = false;
+      }
+    }
+    return success;
+  }
+
+  Future<bool> removeFriendRequest(BuildContext context, String mainUserId,
+      String userToAddAsFriendId) async {
+    bool success = false;
+    if (await checkConnection(context)) {
+      try {
+        await database
+            .collection('users')
+            .document(userToAddAsFriendId)
+            .updateData({
+              'PendingFriendsId': FieldValue.arrayRemove([mainUserId])
+            })
+            .then((value) => success = true)
+            .catchError((err) {
+              print(err.toString());
+              error(err.toString(), context);
+              success = false;
+            });
+      } catch (err) {
+        print(err.toString());
+        error(err.toString(), context);
+        success = false;
+      }
+    }
+    return success;
+  }
+
+  Future<List<UserProfile>> isUsersFriendOrFollowed(
+      BuildContext context, List<UserProfile> users, String mainUserId) async {
     if (await checkConnection(context)) {
       try {
         List<String> usersId = [];
@@ -270,20 +327,39 @@ class Database {
         });
         await database
             .collection('users')
-            .document(configuration.userData.userId)
+            .document(mainUserId)
             .collection('Following')
             .where(FieldPath.documentId, whereIn: usersId)
             .getDocuments()
             .then((QuerySnapshot snapshots) {
-              usersId.forEach((id) {
-                int index = snapshots.documents.indexWhere((element) => element.documentID == id);
-                if (index != -1) {
-                  users[usersId.indexOf(id)].followed = true;
-                } else
-                  users[usersId.indexOf(id)].followed = false;
+          usersId.forEach((id) {
+            int index = snapshots.documents
+                .indexWhere((element) => element.documentID == id);
+            if (index != -1) {
+              users[usersId.indexOf(id)].isFollowed = true;
+            } else
+              users[usersId.indexOf(id)].isFollowed = false;
+          });
+        }).catchError((err) {
+          print(err.toString());
+          error(err.toString(), context);
         });
-        })
-            .catchError((err) {
+        await database
+            .collection('users')
+            .document(mainUserId)
+            .collection('Friends')
+            .where(FieldPath.documentId, whereIn: usersId)
+            .getDocuments()
+            .then((QuerySnapshot snapshots) {
+          usersId.forEach((id) {
+            int index = snapshots.documents
+                .indexWhere((element) => element.documentID == id);
+            if (index != -1) {
+              users[usersId.indexOf(id)].isFriend = true;
+            } else
+              users[usersId.indexOf(id)].isFriend = false;
+          });
+        }).catchError((err) {
           print(err.toString());
           error(err.toString(), context);
         });
@@ -309,6 +385,9 @@ class Database {
             _isUsernameAlreadyInUse = true;
           else
             _isUsernameAlreadyInUse = false;
+        }).catchError((err) {
+          print(err.toString());
+          error(err.toString(), context);
         });
       } catch (err) {
         print(err);
@@ -318,6 +397,30 @@ class Database {
     } else
       return null;
     return _isUsernameAlreadyInUse;
+  }
+
+  Future<bool> addDeviceTokenToUserProfile(
+      BuildContext context, String userId, List<String> tokens) async {
+    bool success = false;
+    if (await checkConnection(context)) {
+      try {
+        await database
+            .collection('users')
+            .document(userId)
+            .updateData({'DevicesTokens': FieldValue.arrayUnion(tokens)})
+            .then((value) => success = true)
+            .catchError((err) {
+              success = false;
+              print(err.toString());
+              error(err.toString(), context);
+            });
+      } catch (err) {
+        success = false;
+        print(err);
+        error(err.toString(), context);
+      }
+    }
+    return success;
   }
 
   void updateUserLocation(

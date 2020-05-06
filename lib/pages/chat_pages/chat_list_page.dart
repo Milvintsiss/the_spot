@@ -24,8 +24,9 @@ class _ChatListPageState extends State<ChatListPage> {
   String query;
 
   List<UserProfile> queryResult = [];
-
-  bool waitForFollowing = false;
+  List<bool> waitForFollowing = [];
+  List<bool> friendRequestAlreadyDone = [];
+  List<bool> waitForSendingFriendRequest = [];
 
   @override
   Widget build(BuildContext context) {
@@ -42,12 +43,16 @@ class _ChatListPageState extends State<ChatListPage> {
 
   Widget showSearchBarWidget() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 40, 16, 0),
+      padding: EdgeInsets.fromLTRB(
+          widget.configuration.screenWidth / 26,
+          widget.configuration.screenWidth / 10,
+          widget.configuration.screenWidth / 26,
+          0),
       child: Container(
-        height: 40,
+        height: widget.configuration.screenWidth / 10,
         decoration: BoxDecoration(
             color: PrimaryColor,
-            borderRadius: BorderRadius.all(Radius.circular(30))),
+            borderRadius: BorderRadius.all(Radius.circular(100))),
         child: Padding(
           padding: EdgeInsets.fromLTRB(20, 0, 10, 0),
           child: TextField(
@@ -62,6 +67,18 @@ class _ChatListPageState extends State<ChatListPage> {
                 }
               });
               queryResult = await getUsers();
+              waitForFollowing.clear();
+              queryResult.forEach((element) {
+                waitForFollowing.add(false);
+                waitForSendingFriendRequest.add(false);
+                if (element.pendingFriendsId
+                        .indexOf(widget.configuration.userData.userId) !=
+                    -1) {
+                  friendRequestAlreadyDone.add(true);
+                } else {
+                  friendRequestAlreadyDone.add(false);
+                }
+              });
               setState(() {
                 isWaiting = false;
               });
@@ -90,19 +107,23 @@ class _ChatListPageState extends State<ChatListPage> {
   Widget showQueryResultsWidget() {
     if (isWaiting)
       return Padding(
-          padding: const EdgeInsets.only(top: 10),
+          padding: EdgeInsets.only(top: widget.configuration.screenWidth / 20),
           child: Center(
             child: CircularProgressIndicator(),
           ));
     else if (queryResult.length == 0 || queryResult == null)
       return Padding(
-        padding: const EdgeInsets.only(top: 10),
+        padding: EdgeInsets.only(top: widget.configuration.screenWidth / 40),
         child: Text("No result found for \"$query\""),
       );
     else
       return Expanded(
         child: ListView.builder(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
+          padding: EdgeInsets.fromLTRB(
+              widget.configuration.screenWidth / 20,
+              widget.configuration.screenWidth / 40,
+              widget.configuration.screenWidth / 20,
+              widget.configuration.screenWidth / 40),
           itemCount: queryResult.length,
           itemBuilder: (BuildContext context, int itemIndex) {
             return showResultWidget(itemIndex);
@@ -113,7 +134,6 @@ class _ChatListPageState extends State<ChatListPage> {
   }
 
   Widget showResultWidget(int index) {
-    bool waitForSendingFriendRequest = false;
     return GestureDetector(
       onTap: () => Navigator.push(
           context,
@@ -123,13 +143,14 @@ class _ChatListPageState extends State<ChatListPage> {
                     userProfile: queryResult[index],
                   ))),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
+        padding:
+            EdgeInsets.fromLTRB(0, widget.configuration.screenWidth / 60, 0, 0),
         child: Container(
-          padding: EdgeInsets.all(8),
-          height: 70,
+          padding: EdgeInsets.all(widget.configuration.screenWidth / 60),
+          height: widget.configuration.screenWidth / 6.5,
           decoration: BoxDecoration(
             color: PrimaryColorLight,
-            borderRadius: BorderRadius.circular(70),
+            borderRadius: BorderRadius.circular(100),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -138,40 +159,44 @@ class _ChatListPageState extends State<ChatListPage> {
                   tag: queryResult[index].userId,
                   child: ProfilePicture(
                       queryResult[index].profilePictureDownloadPath,
-                      size: 50)),
+                      size: widget.configuration.screenWidth / 8)),
               Divider(
-                indent: 10,
+                indent: widget.configuration.screenWidth / 50,
               ),
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(queryResult[index].pseudo),
+                    Text(
+                      queryResult[index].pseudo,
+                      style: TextStyle(
+                          fontSize: 15 * widget.configuration.textSizeFactor),
+                    ),
                     Text(
                       "@" + queryResult[index].username,
                       style: TextStyle(
-                          fontStyle: FontStyle.italic, color: Colors.white70),
+                          fontStyle: FontStyle.italic,
+                          color: Colors.white54,
+                          fontSize: 13 * widget.configuration.textSizeFactor),
                     ),
                   ],
                 ),
               ),
               ButtonTheme(
-                minWidth: 40,
+                minWidth: 0,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15)),
+                    borderRadius: BorderRadius.circular(
+                        widget.configuration.screenWidth / 25)),
                 buttonColor: PrimaryColor,
                 disabledColor: PrimaryColor,
                 child: Row(
                   children: <Widget>[
                     showFollowButton(index),
                     Divider(
-                      indent: 5,
+                      indent: widget.configuration.screenWidth / 60,
                     ),
-                    RaisedButton(
-                      child: Text("Add+"),
-                      onPressed: () {},
-                    ),
+                    showAddFriendButton(index),
                   ],
                 ),
               )
@@ -184,41 +209,106 @@ class _ChatListPageState extends State<ChatListPage> {
 
   Widget showFollowButton(int index) {
     return RaisedButton(
-      color: queryResult[index].followed
+      color: queryResult[index].isFollowed
           ? transparentColor(SecondaryColor, 100)
           : PrimaryColor,
-      child: waitForFollowing
+      child: waitForFollowing[index]
           ? SizedBox(
-              height: 10,
-              width: 10,
+              height: widget.configuration.screenWidth / 30,
+              width: widget.configuration.screenWidth / 30,
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(PrimaryColorDark),
               ),
             )
-          : Text(queryResult[index].followed ? 'Unfollow' : 'Follow'),
-      onPressed: waitForFollowing
+          : Text(
+              queryResult[index].isFollowed ? 'Unfollow' : 'Follow',
+              style: TextStyle(
+                  fontSize: 12 * widget.configuration.textSizeFactor,
+                  color: !queryResult[index].isFollowed
+                      ? Colors.black
+                      : Colors.black54),
+            ),
+      onPressed: waitForFollowing[index]
           ? null
           : () async {
               setState(() {
-                waitForFollowing = true;
+                waitForFollowing[index] = true;
               });
-              if (queryResult[index].followed) {
+              if (queryResult[index].isFollowed) {
                 await Database().unFollowUser(
-                    context, widget.configuration, queryResult[index]);
-                queryResult[index].followed = false;
+                    context,
+                    widget.configuration.userData.userId,
+                    queryResult[index].userId);
+                queryResult[index].isFollowed = false;
                 queryResult[index].numberOfFollowers--;
                 widget.configuration.userData.numberOfFollowing--;
               } else {
                 await Database().followUser(
-                    context, widget.configuration, queryResult[index]);
-                queryResult[index].followed = true;
+                    context,
+                    widget.configuration.userData.userId,
+                    queryResult[index].userId);
+                queryResult[index].isFollowed = true;
                 queryResult[index].numberOfFollowers++;
                 widget.configuration.userData.numberOfFollowing++;
               }
-              waitForFollowing = false;
+              waitForFollowing[index] = false;
               setState(() {});
             },
     );
+  }
+
+  Widget showAddFriendButton(int index) {
+    if (queryResult[index].isFriend) {
+      return Icon(
+        Icons.check_circle,
+      );
+    } else {
+      return RaisedButton(
+        color: friendRequestAlreadyDone[index]
+            ? transparentColor(SecondaryColor, 100)
+            : PrimaryColor,
+        child: waitForSendingFriendRequest[index]
+            ? SizedBox(
+          height: widget.configuration.screenWidth / 30,
+          width: widget.configuration.screenWidth / 30,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(PrimaryColorDark),
+                ),
+              )
+            : Text(
+                !friendRequestAlreadyDone[index] ? 'Add+' : 'Requested',
+                style: TextStyle(
+                    fontSize: 12 * widget.configuration.textSizeFactor,
+                    color: !friendRequestAlreadyDone[index]
+                        ? Colors.black
+                        : Colors.black54),
+              ),
+        onPressed: waitForSendingFriendRequest[index]
+            ? null
+            : () async {
+                setState(() {
+                  waitForSendingFriendRequest[index] = true;
+                });
+                if (!friendRequestAlreadyDone[index]) {
+                  await Database().sendFriendRequest(
+                      context,
+                      widget.configuration.userData.userId,
+                      widget.configuration.userData.pseudo,
+                      widget.configuration.userData.profilePictureDownloadPath,
+                      queryResult[index].userId);
+                } else {
+                  await Database().removeFriendRequest(
+                      context,
+                      widget.configuration.userData.userId,
+                      queryResult[index].userId);
+                }
+                friendRequestAlreadyDone[index] =
+                    !friendRequestAlreadyDone[index];
+                waitForSendingFriendRequest[index] = false;
+                setState(() {});
+              },
+      );
+    }
   }
 
   Widget showChatListWidget() {

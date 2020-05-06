@@ -11,7 +11,7 @@ const usersIndex = algoliaClient.initIndex('users');
 admin.initializeApp(functions.config().firebase);
 
 exports.onUserDataCreation = functions.firestore.document('users/{userId}')
-.onCreate(snapshot => {
+    .onCreate(snapshot => {
         //algolia
         const data = snapshot.data();
         const objectID = snapshot.id;
@@ -33,7 +33,7 @@ exports.onUserDataCreation = functions.firestore.document('users/{userId}')
 //    });
 
 exports.onUserDataDelete = functions.firestore.document('users/{userId}')
-.onDelete(snapshot => {
+    .onDelete(snapshot => {
         //algolia
         return usersIndex.deleteObject(snapshot.id);
     });
@@ -44,6 +44,34 @@ exports.updateUserPseudoAndUsernameInAlgolia = functions.https.onCall((data, con
     const algoliaData = data;
     const objectID = context.auth.uid;
     return usersIndex.saveObject({...algoliaData, objectID});
+});
+
+
+exports.sendFriendRequestNotificationTo = functions.https.onCall(async (data, context) => {
+    console.log('Send friend request notification to ' + data['userId'] + ' from ' + data['pseudo']);
+    let userDevicesTokens = [];
+    await admin.firestore().collection('users').doc(data['userId']).get()
+        .then((snapshot) => {
+            return userDevicesTokens = snapshot.data()['DevicesTokens'];
+        })
+        .catch((err) => {
+            return console.error(err);
+        });
+    return admin.messaging().sendToDevice(
+        userDevicesTokens,
+        {
+            notification: {
+                title: 'New friend request',
+                body: data['pseudo'] + ` wants to add you as friend`,
+                image: data['picturePath'],
+                click_action: 'FLUTTER_NOTIFICATION_CLICK',
+
+            },
+            data: {'userId': context.auth.uid, 'userPseudo': data['pseudo'], 'picturePath': data['picturePath']}
+        }
+    ).catch((err) => {
+        return console.error(err);
+    });
 });
 
 exports.addAllUsersDataToAlgolia = functions.https.onRequest((req, res) => {
@@ -58,10 +86,10 @@ exports.addAllUsersDataToAlgolia = functions.https.onRequest((req, res) => {
 
         return usersIndex.saveObjects(arr, (err, content) => {
             if (err) {
-             console.log(err.stack);
-         }
-         res.status(200).send(content);
-     });
+                console.log(err.stack);
+            }
+            res.status(200).send(content);
+        });
     }).catch((err) => {
         return console.error(err);
     });
@@ -70,22 +98,22 @@ exports.addAllUsersDataToAlgolia = functions.https.onRequest((req, res) => {
 exports.repairDatabase = functions.pubsub.schedule('every 24 hours').onRun((context) => {
 
 //get all spots collection, if spots are not initialized (missing SpotName value), erase them.
-  return admin.firestore().collection("spots").get().then((docs) => {
-    return docs.forEach((doc) => {
-        if (!("SpotName" in doc.data())){
-            // eslint-disable-next-line promise/no-nesting
-            admin.firestore().collection("spots").doc(doc.id).delete()
-            .then(() => {
-                return console.log("Document deleted:", doc.id);
-            })
-            .catch((err) => {
-                return console.error(err);
-            });
-        }
-    });
-        }).catch((err) => {
-            return console.error(err);
+    return admin.firestore().collection("spots").get().then((docs) => {
+        return docs.forEach((doc) => {
+            if (!("SpotName" in doc.data())) {
+                // eslint-disable-next-line promise/no-nesting
+                admin.firestore().collection("spots").doc(doc.id).delete()
+                    .then(() => {
+                        return console.log("Document deleted:", doc.id);
+                    })
+                    .catch((err) => {
+                        return console.error(err);
+                    });
+            }
         });
+    }).catch((err) => {
+        return console.error(err);
+    });
 
 //get all users followers and following and update numbers of following and followers
 });
@@ -99,7 +127,7 @@ exports.changeUserStringISODates_toTimestamp = functions.https.onRequest((req, r
             const _updateDate = parseISOString(updateDate);
             // eslint-disable-next-line promise/no-nesting
             admin.firestore().collection("users").doc(doc.id)
-                .update({'CreationDate' : _creationDate, 'LastUpdate' : _updateDate})
+                .update({'CreationDate': _creationDate, 'LastUpdate': _updateDate})
                 .then(() => {
                     return console.log("Success:", doc.id);
                 })
@@ -108,15 +136,14 @@ exports.changeUserStringISODates_toTimestamp = functions.https.onRequest((req, r
                 });
         });
     }).catch((err) => {
-            return console.error(err);
-        });
+        return console.error(err);
+    });
 });
 
-    function parseISOString(date) {
-        const b = date.split(/\D+/);
-        return new Date(Date.UTC(b[0], --b[1], b[2], b[3], b[4], b[5], b[6]));
-      }
-
+function parseISOString(date) {
+    const b = date.split(/\D+/);
+    return new Date(Date.UTC(b[0], --b[1], b[2], b[3], b[4], b[5], b[6]));
+}
 
 
 // // Create and Deploy Your First Cloud Functions

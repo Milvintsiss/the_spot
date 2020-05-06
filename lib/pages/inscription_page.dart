@@ -1,3 +1,4 @@
+import 'package:flushbar/flushbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -67,7 +68,7 @@ class _InscriptionPage extends State<InscriptionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         key: _scaffoldKey,
-        appBar:  showAppBar(),
+        appBar: showAppBar(),
         backgroundColor: PrimaryColorDark,
         body: Form(
           key: _formKey,
@@ -312,13 +313,10 @@ class _InscriptionPage extends State<InscriptionPage> {
                           context: context, username: _username) &&
                       _username != widget.configuration.userData.username) {
                     Vibrate.feedback(FeedbackType.warning);
-                    _scaffoldKey.currentState.showSnackBar(SnackBar(
-                      content: Text(
-                        AppLocalizations.of(context)
+                    FlushbarHelper.createError(
+                        message: AppLocalizations.of(context)
                             .translate('Sorry, this username is already used.'),
-                      ),
-                      duration: Duration(milliseconds: 3000),
-                    ));
+                        duration: Duration(milliseconds: 4000));
                   } else {
                     bool databaseUpdated = await Database().updateProfile(
                         context,
@@ -342,8 +340,7 @@ class _InscriptionPage extends State<InscriptionPage> {
                         widget.configuration.userData.Scooter = _Scooter;
                         widget.configuration.userData.Roller = _Roller;
                         Navigator.pop(context);
-                      }
-                      else
+                      } else
                         Navigator.push(
                             context,
                             MaterialPageRoute(

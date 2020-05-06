@@ -9,9 +9,10 @@ import 'package:the_spot/services/library/configuration.dart';
 import '../theme.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({Key key, this.auth, this.configuration, this.logoutCallback})
+  HomePage({Key key, this.initialIndex = 4, this.auth, this.configuration, this.logoutCallback})
       : super(key: key);
 
+  final int initialIndex; //0 chat, 1 news, 2 home, 3 map, 4 profile
   final BaseAuth auth;
   final VoidCallback logoutCallback;
   final Configuration configuration;
@@ -21,12 +22,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _currentIndex = 3;
+  int _currentIndex;
   List<Widget> _children;
 
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _children = [
       ChatListPage(configuration: widget.configuration,),
       FeatureNotAvailable(),
