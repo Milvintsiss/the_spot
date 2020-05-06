@@ -42,7 +42,7 @@ Future<List<UserProfile>> searchUsers(
           error(err.toString(), context);
           print(err);
         });
-        users = await Database().isUsersFriendOrFollowed(context, users, configuration);
+        users = await Database().isUsersFriendOrFollowed(context, users, configuration.userData.userId);
       }
 
     } catch (err) {

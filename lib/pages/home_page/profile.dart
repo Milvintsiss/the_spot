@@ -106,8 +106,7 @@ class _Profile extends State<Profile> {
           actions: <Widget>[
         Builder(builder: (BuildContext context) {
           return IconButton(
-            icon: Hero(
-                tag: 'optionButton_profilePage', child: Icon(Icons.settings)),
+            icon: Icon(Icons.settings),
             onPressed: () => Scaffold.of(context).openEndDrawer(),
             tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
           );
@@ -350,29 +349,26 @@ class _Profile extends State<Profile> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            Container(
-              width: widget.configuration.screenWidth / 3,
-              child: Center(
-                child: Text('Friends: ' + widget.userProfile.numberOfFriends.toString(),
-                style: TextStyle(color: SecondaryColor, fontSize: 16 * widget.configuration.textSizeFactor),),
-              ),
-            ),
-            Container(
-              width: widget.configuration.screenWidth / 3,
-              child: Center(
-                child: Text('Followers: ' + widget.userProfile.numberOfFollowers.toString(),
-                  style: TextStyle(color: SecondaryColor, fontSize: 16 * widget.configuration.textSizeFactor),),
-              ),
-            ),
-            Container(
-              width: widget.configuration.screenWidth / 3,
-              child: Center(
-                child: Text('Following: ' + widget.userProfile.numberOfFollowing.toString(),
-                  style: TextStyle(color: SecondaryColor, fontSize: 16 * widget.configuration.textSizeFactor),),
-              ),
-            ),
+            _showNUmberOfFriendsFollowersFollowing(widget.userProfile.numberOfFriends, 'Friends'),
+            _showNUmberOfFriendsFollowersFollowing(widget.userProfile.numberOfFollowers, 'Followers'),
+            _showNUmberOfFriendsFollowersFollowing(widget.userProfile.numberOfFollowing, 'Following'),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _showNUmberOfFriendsFollowersFollowing (int value, String text){
+    return Container(
+      width: widget.configuration.screenWidth / 3,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(value.toString(),
+            style: TextStyle(color: SecondaryColor, fontSize: 21 * widget.configuration.textSizeFactor),),
+          Text(text,
+            style: TextStyle(color: SecondaryColor, fontSize: 13 * widget.configuration.textSizeFactor),),
+        ],
       ),
     );
   }
@@ -391,9 +387,16 @@ class _Profile extends State<Profile> {
               border: Border.all(width: 2, color: isInstaClipSelected ? PrimaryColor : PrimaryColorDark),
             ),
             padding: EdgeInsets.all(widget.configuration.screenWidth / 40),
-            child: Icon(
-              Icons.videocam,
-              size: widget.configuration.screenWidth / 20,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(
+                  Icons.videocam,
+                  size: widget.configuration.screenWidth / 20,
+                  color: isInstaClipSelected ? Colors.black : Colors.white70,
+                ),
+                Text('Edits', style: TextStyle(color: isInstaClipSelected ? Colors.black : Colors.white70, fontSize: 12 * widget.configuration.textSizeFactor))
+              ],
             ),
           ),
         ),
@@ -408,9 +411,16 @@ class _Profile extends State<Profile> {
               border: Border.all(width: 2, color: !isInstaClipSelected ? PrimaryColor : PrimaryColorDark),
             ),
             padding: EdgeInsets.all(widget.configuration.screenWidth / 40),
-            child: Icon(
-              Icons.phone_android,
-              size: widget.configuration.screenWidth / 20,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(
+                  Icons.phone_android,
+                  size: widget.configuration.screenWidth / 20,
+                  color: isInstaClipSelected ? Colors.white70 : Colors.black,
+                ),
+                Text('InstaClips', style: TextStyle(color: isInstaClipSelected ? Colors.white70 : Colors.black, fontSize: 12 * widget.configuration.textSizeFactor),)
+              ],
             ),
           ),
         ),

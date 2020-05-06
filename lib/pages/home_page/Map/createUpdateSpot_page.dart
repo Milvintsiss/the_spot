@@ -1,3 +1,4 @@
+import 'package:flushbar/flushbar_helper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -22,6 +23,9 @@ class CreateUpdateSpotPage extends StatefulWidget {
 }
 
 class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
+  static const int maxAmountOfPictures = 10;
+
+
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
 
@@ -36,7 +40,6 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
   double spotGradeBeautyInput;
   double spotGradeFloorInput;
 
-  final int maxAmountOfPictures = 10;
 
   @override
   Widget build(BuildContext context) {
@@ -80,9 +83,11 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
   }
 
   Widget showAddLimitationText() {
-    return Text(
-      "You can add up to 10 photos",
-      style: TextStyle(color: PrimaryColorLight),
+    return Center(
+      child: Text(
+        "You can add up to $maxAmountOfPictures photos!",
+        style: TextStyle(color: PrimaryColorLight),
+      ),
     );
   }
 
@@ -130,10 +135,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
       print(imagesAddress);
     } else {
       Vibrate.feedback(FeedbackType.warning);
-      _scaffoldKey.currentState.showSnackBar(SnackBar(
-        content: Text("You riched the limit amount of photos!"),
-        duration: Duration(milliseconds: 1500),
-      ));
+      FlushbarHelper.createError(message: 'You riched the limit amount of photos!', duration: Duration(milliseconds: 1500)).show(context);
     }
   }
 
@@ -285,11 +287,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
         Navigator.pop(context);
       } else {
         Vibrate.feedback(FeedbackType.warning);
-        _scaffoldKey.currentState.showSnackBar(SnackBar(
-          content: Text(
-              "You must give a global grade, a floor grade and a beauty grade! Minimum grade is 1 star."),
-          duration: Duration(milliseconds: 4000),
-        ));
+        FlushbarHelper.createError(message: "You must give a global grade, a floor grade and a beauty grade! Minimum grade is 1 star.", duration: Duration(milliseconds: 4000)).show(context);
       }
     }
   }

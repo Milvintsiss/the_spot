@@ -2,11 +2,17 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:the_spot/app_localizations.dart';
+import 'package:the_spot/pages/home_page/profile.dart';
+import 'package:the_spot/services/library/UserProfile.dart';
+import 'package:the_spot/services/library/configuration.dart';
 import 'package:the_spot/theme.dart';
 import 'package:vibrate/vibrate.dart';
+
+import '../database.dart';
 
 Future<BitmapDescriptor> convertImageFileToBitmapDescriptor(File imageFile,
     {int size = 150,
@@ -34,8 +40,7 @@ Future<BitmapDescriptor> convertImageFileToBitmapDescriptor(File imageFile,
       Radius.circular(100)));
   canvas.clipPath(clipPath);
 
-
-  if(imageFile == null) {
+  if (imageFile == null) {
     //paint Icon background
     paint..color = PrimaryColorLight;
     canvas.drawCircle(Offset(radius, radius), radius, paint);
@@ -43,11 +48,15 @@ Future<BitmapDescriptor> convertImageFileToBitmapDescriptor(File imageFile,
     //paint Person Icon
     final icon = Icons.person;
     TextPainter textPainter = TextPainter(textDirection: TextDirection.rtl);
-    textPainter.text = TextSpan(text: String.fromCharCode(icon.codePoint),
-        style: TextStyle(fontSize: size * 4/5,fontFamily: icon.fontFamily, color: PrimaryColorDark));
+    textPainter.text = TextSpan(
+        text: String.fromCharCode(icon.codePoint),
+        style: TextStyle(
+            fontSize: size * 4 / 5,
+            fontFamily: icon.fontFamily,
+            color: PrimaryColorDark));
     textPainter.layout();
-    textPainter.paint(canvas, Offset(size * 1/10, size * 1/10));
-  }else {
+    textPainter.paint(canvas, Offset(size * 1 / 10, size * 1 / 10));
+  } else {
     //paint Profile Picture
     final Uint8List imageUint8List = await imageFile.readAsBytes();
     final ui.Codec codec = await ui.instantiateImageCodec(imageUint8List,
@@ -102,26 +111,74 @@ Future<BitmapDescriptor> convertImageFileToBitmapDescriptor(File imageFile,
   return BitmapDescriptor.fromBytes(data.buffer.asUint8List());
 }
 
-Widget ProfilePicture(String downloadPath, {double size = 50, Color borderColor = PrimaryColorDark}) {
+Widget ProfilePicture(String downloadPath,
+    {double size = 50,
+    Color borderColor = PrimaryColorDark,
+    double borderSize = 2}) {
   if (downloadPath != null)
-    return Container(
-      height: size, width: size,
-      padding: EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: borderColor,
-        shape: BoxShape.circle,
+    return SizedBox(
+      height: size,
+      width: size,
+      child: Container(
+        padding: EdgeInsets.all(borderSize),
+        decoration: BoxDecoration(
+          color: borderColor,
+          shape: BoxShape.circle,
+        ),
+        child: ClipOval(
+            child: Image.network(
+          downloadPath,
+          fit: BoxFit.fill,
+        )),
       ),
-      child: ClipOval(child: Image.network(downloadPath, fit: BoxFit.fill,)),
     );
   else
     return Container(
       height: size,
       width: size,
-      decoration: BoxDecoration(
-          color: PrimaryColor,
-          shape: BoxShape.circle),
-      child: Icon(Icons.person, size: size / 2,),
+      decoration: BoxDecoration(color: PrimaryColor, shape: BoxShape.circle),
+      child: Icon(
+        Icons.person,
+        size: size / 2,
+      ),
     );
+}
+
+Flushbar friendRequestInAppNotification(
+    BuildContext context, Configuration configuration, String userPseudo, String userPictureDownloadPath, String userId) {
+  return Flushbar(
+    messageText: Text(
+      "$userPseudo wants to add you as friend!",
+      style: TextStyle(color: PrimaryColorLight),
+    ),
+    backgroundColor: PrimaryColorDark,
+    icon: Hero(
+      tag: userId,
+      child: ProfilePicture(userPictureDownloadPath,
+          size: 41, borderColor: PrimaryColorLight, borderSize: 1),
+    ),
+    borderRadius: 100,
+    borderColor: PrimaryColorLight,
+    borderWidth: 1,
+    flushbarPosition: FlushbarPosition.TOP,
+    isDismissible: true,
+    dismissDirection: FlushbarDismissDirection.HORIZONTAL,
+    duration: Duration(seconds: 6),
+    mainButton: FlatButton(
+      child: Text('Accept'),
+      onPressed: () {
+        print("add friend");
+        Navigator.pop(context);
+      },
+    ),
+    onTap: (flushbar) async {
+      print('cliked');
+      UserProfile user = await Database().getProfileData(userId, context);
+      Navigator.push(context, MaterialPageRoute(
+        builder: (context) => Profile(userProfile: user, configuration: configuration,)
+      ));
+    },
+  );
 }
 
 Color transparentColor(Color color, int alpha) {
@@ -148,7 +205,12 @@ Future<bool> checkConnection(BuildContext context) async {
   return hasConnection;
 }
 
-void error(String error, BuildContext context, {Color backgroundColor = Colors.white, TextAlign textAlign = TextAlign.start, double fontSize = 20, FontWeight fontWeight = FontWeight.bold, Color textColor = Colors.red}) {
+void error(String error, BuildContext context,
+    {Color backgroundColor = Colors.white,
+    TextAlign textAlign = TextAlign.start,
+    double fontSize = 20,
+    FontWeight fontWeight = FontWeight.bold,
+    Color textColor = Colors.red}) {
   Vibrate.feedback(FeedbackType.warning);
 
   AlertDialog errorAlertDialog = new AlertDialog(
@@ -163,5 +225,3 @@ void error(String error, BuildContext context, {Color backgroundColor = Colors.w
 
   showDialog(context: context, child: errorAlertDialog);
 }
-
-
