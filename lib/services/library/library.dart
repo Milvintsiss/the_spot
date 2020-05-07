@@ -166,8 +166,8 @@ Flushbar friendRequestInAppNotification(
     duration: Duration(seconds: 6),
     mainButton: FlatButton(
       child: Text('Accept'),
-      onPressed: () {
-        print("add friend");
+      onPressed: () async {
+        Database().acceptFriendRequest(context, configuration.userData.userId, userId);
         Navigator.pop(context);
       },
     ),

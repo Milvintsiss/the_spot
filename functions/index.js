@@ -67,7 +67,7 @@ exports.sendFriendRequestNotificationTo = functions.https.onCall(async (data, co
                 click_action: 'FLUTTER_NOTIFICATION_CLICK',
 
             },
-            data: {'userId': context.auth.uid, 'userPseudo': data['pseudo'], 'picturePath': data['picturePath']}
+            data: {'type': 'friendRequest', 'userToAddId': context.auth.uid, 'userPseudo': data['pseudo'], 'picturePath': data['picturePath'], 'mainUserId': data['userId']}
         }
     ).catch((err) => {
         return console.error(err);

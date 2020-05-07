@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:the_spot/pages/home_page/friend_requests_page.dart';
 import 'package:the_spot/pages/inscription_page.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
@@ -36,14 +37,26 @@ class _Profile extends State<Profile> {
   bool isUser;
   bool isInstaClipSelected = false;
 
+  UserProfile _userProfile;
+
   @override
   void initState() {
     super.initState();
 
-    if (widget.userProfile.userId == widget.configuration.userData.userId)
+    if (widget.userProfile.userId == widget.configuration.userData.userId) {
       isUser = true;
-    else
+      _userProfile = widget.configuration.userData;
+      actualizeUserProfile();
+    } else {
       isUser = false;
+      _userProfile = widget.userProfile;
+    }
+  }
+
+  void actualizeUserProfile() async {
+    widget.configuration.userData = _userProfile = await Database()
+        .getProfileData(widget.configuration.userData.userId, context);
+    setState(() {});
   }
 
   void signOut() async {
@@ -58,7 +71,7 @@ class _Profile extends State<Profile> {
   void uploadAvatar() async {
     print("add an Avatar");
     await Storage().getPhotoFromUserStorageAndUpload(
-      storageRef: "ProfilePictures/" + widget.userProfile.userId,
+      storageRef: "ProfilePictures/" + _userProfile.userId,
       context: context,
       cropStyle: CropStyle.circle,
       cropAspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
@@ -67,15 +80,14 @@ class _Profile extends State<Profile> {
       compressQuality: 75,
     );
 
-    String profilePictureDownloadPath = await Storage()
-        .getUrlPhoto("ProfilePictures/" + widget.userProfile.userId);
+    String profilePictureDownloadPath =
+        await Storage().getUrlPhoto("ProfilePictures/" + _userProfile.userId);
 
-    await Database().updateProfile(context, widget.userProfile.userId,
+    await Database().updateProfile(context, _userProfile.userId,
         profilePictureDownloadPath: profilePictureDownloadPath);
 
     setState(() {
-      widget.userProfile.profilePictureDownloadPath =
-          profilePictureDownloadPath;
+      _userProfile.profilePictureDownloadPath = profilePictureDownloadPath;
     });
   }
 
@@ -101,9 +113,44 @@ class _Profile extends State<Profile> {
 
   AppBar showAppBar() {
     if (isUser)
-      return AppBar(
-          backgroundColor: PrimaryColorDark,
-          actions: <Widget>[
+      return AppBar(backgroundColor: PrimaryColorDark, actions: <Widget>[
+        Stack(children: [
+          Center(
+            child: IconButton(
+              icon: Icon(
+                Icons.person_add,
+                color: _userProfile.pendingFriendsId.length > 0
+                    ? Colors.white
+                    : Colors.black54,
+              ),
+              onPressed: () async {
+                await Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) =>
+                        FriendRequestsPage(widget.configuration)));
+                setState(() {});
+              },
+            ),
+          ),
+          _userProfile.pendingFriendsId.length > 0
+              ? Positioned(
+                  top: widget.configuration.screenWidth / 50,
+                  right: 0,
+                  child: Container(
+                    width: widget.configuration.screenWidth / 20,
+                    height: widget.configuration.screenWidth / 20,
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(100),
+                        color: Colors.red),
+                    child: Center(
+                        child: Text(
+                      widget.configuration.userData.pendingFriendsId.length
+                          .toString(),
+                      style: TextStyle(color: Colors.white),
+                    )),
+                  ),
+                )
+              : Container()
+        ]),
         Builder(builder: (BuildContext context) {
           return IconButton(
             icon: Icon(Icons.settings),
@@ -200,7 +247,7 @@ class _Profile extends State<Profile> {
                 signOut();
                 break;
               case 'Delete my account':
-                DeleteUser(widget.auth, widget.userProfile.userId,
+                DeleteUser(widget.auth, _userProfile.userId,
                         widget.logoutCallback, context)
                     .showDeleteUserDataConfirmDialog();
                 break;
@@ -216,18 +263,16 @@ class _Profile extends State<Profile> {
   Widget showTopProfile() {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [PrimaryColorDark, PrimaryColor]
-        )
-      ),
+          gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [PrimaryColorDark, PrimaryColor])),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
           Container(
-            padding:
-                EdgeInsets.fromLTRB(widget.configuration.screenWidth / 40, 0, widget.configuration.screenWidth / 30, 0),
+            padding: EdgeInsets.fromLTRB(widget.configuration.screenWidth / 40,
+                0, widget.configuration.screenWidth / 30, 0),
             width: widget.configuration.screenWidth / 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -269,11 +314,11 @@ class _Profile extends State<Profile> {
 
   Widget showAvatarWidget() {
     return Hero(
-      tag: widget.userProfile.userId,
+      tag: _userProfile.userId,
       child: GestureDetector(
         onTap: isUser ? uploadAvatar : null,
         child: Stack(overflow: Overflow.visible, children: <Widget>[
-          ProfilePicture(widget.userProfile.profilePictureDownloadPath,
+          ProfilePicture(_userProfile.profilePictureDownloadPath,
               size: widget.configuration.screenWidth / 3,
               borderColor: PrimaryColor),
           isUser
@@ -294,7 +339,7 @@ class _Profile extends State<Profile> {
   Widget showPseudoWidget() {
     return FittedBox(
       fit: BoxFit.scaleDown,
-      child: Text(widget.userProfile.pseudo,
+      child: Text(_userProfile.pseudo,
           style: TextStyle(
             color: PrimaryColorLight,
             fontSize: 30 * widget.configuration.textSizeFactor,
@@ -305,20 +350,20 @@ class _Profile extends State<Profile> {
   Widget showUsernameWidget() {
     return FittedBox(
       fit: BoxFit.scaleDown,
-      child: Text('@' + widget.userProfile.username,
-          style: TextStyle(color: SecondaryColorDark,
-            fontSize: 16 * widget.configuration.textSizeFactor,)),
+      child: Text('@' + _userProfile.username,
+          style: TextStyle(
+            color: SecondaryColorDark,
+            fontSize: 16 * widget.configuration.textSizeFactor,
+          )),
     );
   }
 
   Widget practiceButton(String practice) {
     bool isSelected = practice == "assets/images/Roller.png" &&
-        widget.userProfile.Roller ||
-        practice == "assets/images/BMX.png" && widget.userProfile.BMX ||
-        practice == "assets/images/Skateboard.png" &&
-            widget.userProfile.Skateboard ||
-        practice == "assets/images/Scooter.png" &&
-            widget.userProfile.Scooter;
+            _userProfile.Roller ||
+        practice == "assets/images/BMX.png" && _userProfile.BMX ||
+        practice == "assets/images/Skateboard.png" && _userProfile.Skateboard ||
+        practice == "assets/images/Scooter.png" && _userProfile.Scooter;
     return Padding(
       padding: const EdgeInsets.all(2),
       child: Material(
@@ -332,7 +377,8 @@ class _Profile extends State<Profile> {
           padding: EdgeInsets.all(widget.configuration.screenWidth / 45),
           child: Image.asset(
             practice,
-            color: isSelected ? Colors.black : transparentColor(Colors.black, 40),
+            color:
+                isSelected ? Colors.black : transparentColor(Colors.black, 40),
             width: widget.configuration.screenWidth / 15,
             fit: BoxFit.cover,
           ),
@@ -345,29 +391,41 @@ class _Profile extends State<Profile> {
     return Container(
       color: PrimaryColor,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(0, widget.configuration.screenWidth / 30, 0, widget.configuration.screenWidth / 30),
+        padding: EdgeInsets.fromLTRB(0, widget.configuration.screenWidth / 30,
+            0, widget.configuration.screenWidth / 30),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            _showNUmberOfFriendsFollowersFollowing(widget.userProfile.numberOfFriends, 'Friends'),
-            _showNUmberOfFriendsFollowersFollowing(widget.userProfile.numberOfFollowers, 'Followers'),
-            _showNUmberOfFriendsFollowersFollowing(widget.userProfile.numberOfFollowing, 'Following'),
+            _showNUmberOfFriendsFollowersFollowing(
+                _userProfile.numberOfFriends, 'Friends'),
+            _showNUmberOfFriendsFollowersFollowing(
+                _userProfile.numberOfFollowers, 'Followers'),
+            _showNUmberOfFriendsFollowersFollowing(
+                _userProfile.numberOfFollowing, 'Following'),
           ],
         ),
       ),
     );
   }
 
-  Widget _showNUmberOfFriendsFollowersFollowing (int value, String text){
+  Widget _showNUmberOfFriendsFollowersFollowing(int value, String text) {
     return Container(
       width: widget.configuration.screenWidth / 3,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(value.toString(),
-            style: TextStyle(color: SecondaryColor, fontSize: 21 * widget.configuration.textSizeFactor),),
-          Text(text,
-            style: TextStyle(color: SecondaryColor, fontSize: 13 * widget.configuration.textSizeFactor),),
+          Text(
+            value.toString(),
+            style: TextStyle(
+                color: SecondaryColor,
+                fontSize: 21 * widget.configuration.textSizeFactor),
+          ),
+          Text(
+            text,
+            style: TextStyle(
+                color: SecondaryColor,
+                fontSize: 13 * widget.configuration.textSizeFactor),
+          ),
         ],
       ),
     );
@@ -384,7 +442,9 @@ class _Profile extends State<Profile> {
             width: widget.configuration.screenWidth / 2,
             decoration: BoxDecoration(
               color: isInstaClipSelected ? PrimaryColor : PrimaryColorLight,
-              border: Border.all(width: 2, color: isInstaClipSelected ? PrimaryColor : PrimaryColorDark),
+              border: Border.all(
+                  width: 2,
+                  color: isInstaClipSelected ? PrimaryColor : PrimaryColorDark),
             ),
             padding: EdgeInsets.all(widget.configuration.screenWidth / 40),
             child: Row(
@@ -395,7 +455,11 @@ class _Profile extends State<Profile> {
                   size: widget.configuration.screenWidth / 20,
                   color: isInstaClipSelected ? Colors.black : Colors.white70,
                 ),
-                Text('Edits', style: TextStyle(color: isInstaClipSelected ? Colors.black : Colors.white70, fontSize: 12 * widget.configuration.textSizeFactor))
+                Text('Edits',
+                    style: TextStyle(
+                        color:
+                            isInstaClipSelected ? Colors.black : Colors.white70,
+                        fontSize: 12 * widget.configuration.textSizeFactor))
               ],
             ),
           ),
@@ -408,7 +472,10 @@ class _Profile extends State<Profile> {
             width: widget.configuration.screenWidth / 2,
             decoration: BoxDecoration(
               color: !isInstaClipSelected ? PrimaryColor : PrimaryColorLight,
-              border: Border.all(width: 2, color: !isInstaClipSelected ? PrimaryColor : PrimaryColorDark),
+              border: Border.all(
+                  width: 2,
+                  color:
+                      !isInstaClipSelected ? PrimaryColor : PrimaryColorDark),
             ),
             padding: EdgeInsets.all(widget.configuration.screenWidth / 40),
             child: Row(
@@ -419,7 +486,13 @@ class _Profile extends State<Profile> {
                   size: widget.configuration.screenWidth / 20,
                   color: isInstaClipSelected ? Colors.white70 : Colors.black,
                 ),
-                Text('InstaClips', style: TextStyle(color: isInstaClipSelected ? Colors.white70 : Colors.black, fontSize: 12 * widget.configuration.textSizeFactor),)
+                Text(
+                  'InstaClips',
+                  style: TextStyle(
+                      color:
+                          isInstaClipSelected ? Colors.white70 : Colors.black,
+                      fontSize: 12 * widget.configuration.textSizeFactor),
+                )
               ],
             ),
           ),
@@ -432,24 +505,29 @@ class _Profile extends State<Profile> {
     bool userHasVids = false;
     return Expanded(
       child: Container(
-        color: PrimaryColorLight,
-        child: userHasVids ? ListView(
-          children: <Widget>[],
-        ) :
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Center(
-                  child: Icon(
-                    Icons.priority_high,
-                    size: widget.configuration.screenWidth / 6,
-                  ),
-                ),
-                Divider(height: widget.configuration.screenWidth / 20),
-                Text('This user hasn\'t posted any vid for the moment', style: TextStyle(color: Colors.black, fontSize: 18 * widget.configuration.textSizeFactor),)
-              ],
-            )
-      ),
+          color: PrimaryColorLight,
+          child: userHasVids
+              ? ListView(
+                  children: <Widget>[],
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Center(
+                      child: Icon(
+                        Icons.priority_high,
+                        size: widget.configuration.screenWidth / 6,
+                      ),
+                    ),
+                    Divider(height: widget.configuration.screenWidth / 20),
+                    Text(
+                      'This user hasn\'t posted any vid for the moment',
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18 * widget.configuration.textSizeFactor),
+                    )
+                  ],
+                )),
     );
   }
 }

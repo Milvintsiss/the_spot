@@ -260,7 +260,7 @@ class _ChatListPageState extends State<ChatListPage> {
   Widget showAddFriendButton(int index) {
     if (queryResult[index].isFriend) {
       return Icon(
-        Icons.check_circle,
+        Icons.check,
       );
     } else {
       return RaisedButton(
