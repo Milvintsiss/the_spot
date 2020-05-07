@@ -9,6 +9,7 @@ class UserProfile {
     this.numberOfFollowers,
     this.numberOfFollowing,
     this.numberOfFriends,
+    this.friends,
     this.description,
     this.actualLocation,
     this.BMX,
@@ -31,6 +32,7 @@ class UserProfile {
   int numberOfFollowers;
   int numberOfFollowing;
   int numberOfFriends;
+  List<String> friends;
   bool BMX;
   bool Roller;
   bool Scooter;
@@ -56,6 +58,7 @@ class UserProfile {
       'NumberOfFollowers': numberOfFollowers,
       'NumberOfFollowing': numberOfFollowing,
       'NumberOfFriends': numberOfFriends,
+      'Friends': friends,
       'BMX': BMX,
       'Roller': Roller,
       'Scooter': Scooter,
@@ -78,6 +81,10 @@ UserProfile ConvertMapToUserProfile(Map userProfile) {
   if (userProfile['PendingFriendsId'] != null) {
     pendingFriendsId = userProfile['PendingFriendsId'].cast<String>();
   }
+  List<String> friendsId = [];
+  if (userProfile['Friends'] != null) {
+    friendsId = userProfile['Friends'].cast<String>();
+  }
   List<String> devicesTokens = [];
   if (userProfile['DevicesTokens'] != null) {
     devicesTokens = userProfile['DevicesTokens'].cast<String>();
@@ -93,6 +100,7 @@ UserProfile ConvertMapToUserProfile(Map userProfile) {
     numberOfFollowers: userProfile['NumberOfFollowers'] ?? 0,
     numberOfFollowing: userProfile['NumberOfFollowing'] ?? 0,
     numberOfFriends: userProfile['NumberOfFriends'] ?? 0,
+    friends: friendsId,
     BMX: userProfile['BMX'],
     Roller: userProfile['Roller'],
     Scooter: userProfile['Scooter'],

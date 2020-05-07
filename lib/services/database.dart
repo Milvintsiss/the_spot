@@ -155,6 +155,35 @@ class Database {
     return null;
   }
 
+  Future<List<UserProfile>> getUsersByIds(
+      BuildContext context, List<String> ids) async {
+    List<UserProfile> usersProfile = [];
+
+    if (await checkConnection(context)) {
+      try {
+        await database
+            .collection('users')
+            .where(FieldPath.documentId, whereIn: ids)
+            .getDocuments()
+            .then((QuerySnapshot querySnapshot) =>
+                querySnapshot.documents.forEach((document) {
+                  UserProfile userProfile =
+                      ConvertMapToUserProfile(document.data);
+                  userProfile.userId = document.documentID;
+                  usersProfile.add(userProfile);
+                }))
+            .catchError((err) {
+          print(err);
+          error(err.toString(), context);
+        });
+      } catch (err) {
+        print(err);
+        error(err.toString(), context);
+      }
+    }
+    return usersProfile;
+  }
+
   Future<bool> deleteProfileData(BuildContext context, String userId) async {
     if (await checkConnection(context)) {
       try {
@@ -256,8 +285,12 @@ class Database {
     return succeed;
   }
 
-  Future<bool> sendFriendRequest(BuildContext context, String mainUserId,
-      String userSendindRequestPseudo, String userSendingRequestPictureDownloadPath, String userToAddAsFriendId) async {
+  Future<bool> sendFriendRequest(
+      BuildContext context,
+      String mainUserId,
+      String userSendindRequestPseudo,
+      String userSendingRequestPictureDownloadPath,
+      String userToAddAsFriendId) async {
     final HttpsCallable sendFriendRequestNotificationTo = CloudFunctions
         .instance
         .getHttpsCallable(functionName: 'sendFriendRequestNotificationTo');
@@ -317,6 +350,55 @@ class Database {
     return success;
   }
 
+  Future<bool> acceptFriendRequest(
+      BuildContext context, String mainUserId, String userToAddId) async {
+    bool success = true;
+    if (await checkConnection(context)) {
+      try {
+        WriteBatch batch = database.batch();
+        batch.updateData(database.collection('users').document(mainUserId), {
+          'Friends': FieldValue.arrayUnion([userToAddId]),
+          'PendingFriendsId': FieldValue.arrayRemove([userToAddId]),
+          'NumberOfFriends': FieldValue.increment(1)
+        });
+        batch.updateData(database.collection('users').document(userToAddId), {
+          'Friends': FieldValue.arrayUnion([mainUserId])
+        });
+        await batch.commit().catchError((err) {
+          print(err.toString());
+          error(err.toString(), context);
+          success = false;
+        });
+      } catch (err) {
+        print(err.toString());
+        error(err.toString(), context);
+        success = false;
+      }
+    }
+    return success;
+  }
+
+  Future<bool> refuseFriendRequest(
+      BuildContext context, String mainUserId, String userToAddId) async {
+    bool success = true;
+    if (await checkConnection(context)) {
+      try {
+        await database.collection('users').document(mainUserId).updateData({
+          'PendingFriendsId': FieldValue.arrayRemove([userToAddId])
+        }).catchError((err) {
+          print(err.toString());
+          error(err.toString(), context);
+          success = false;
+        });
+      } catch (err) {
+        print(err.toString());
+        error(err.toString(), context);
+        success = false;
+      }
+    }
+    return success;
+  }
+
   Future<List<UserProfile>> isUsersFriendOrFollowed(
       BuildContext context, List<UserProfile> users, String mainUserId) async {
     if (await checkConnection(context)) {
@@ -344,25 +426,32 @@ class Database {
           print(err.toString());
           error(err.toString(), context);
         });
-        await database
-            .collection('users')
-            .document(mainUserId)
-            .collection('Friends')
-            .where(FieldPath.documentId, whereIn: usersId)
-            .getDocuments()
-            .then((QuerySnapshot snapshots) {
-          usersId.forEach((id) {
-            int index = snapshots.documents
-                .indexWhere((element) => element.documentID == id);
-            if (index != -1) {
-              users[usersId.indexOf(id)].isFriend = true;
-            } else
-              users[usersId.indexOf(id)].isFriend = false;
-          });
-        }).catchError((err) {
-          print(err.toString());
-          error(err.toString(), context);
+
+        users.forEach((element) {
+          if (element.friends.contains(mainUserId))
+            element.isFriend = true;
+          else
+            element.isFriend = false;
         });
+//        await database
+//            .collection('users')
+//            .document(mainUserId)
+//            .collection('Friends')
+//            .where(FieldPath.documentId, whereIn: usersId)
+//            .getDocuments()
+//            .then((QuerySnapshot snapshots) {
+//          usersId.forEach((id) {
+//            int index = snapshots.documents
+//                .indexWhere((element) => element.documentID == id);
+//            if (index != -1) {
+//              users[usersId.indexOf(id)].isFriend = true;
+//            } else
+//              users[usersId.indexOf(id)].isFriend = false;
+//          });
+//        }).catchError((err) {
+//          print(err.toString());
+//          error(err.toString(), context);
+//        });
       } catch (err) {
         print(err.toString());
         error(err.toString(), context);

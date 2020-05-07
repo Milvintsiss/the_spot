@@ -23,8 +23,24 @@ class PushNotificationsManager {
       _firebaseMessaging.configure(
         onMessage: (Map<String, dynamic> message) async {
           print("onMessage: $message");
-          friendRequestInAppNotification(context, configuration, message['data']['userPseudo'], message['data']['picturePath'], message['data']['userId']).show(context);
-          //TODO better UI for notification
+
+          switch (message['data']['type']) {
+            case 'friendRequest':
+              {
+                if (message['data']['mainUserId'] ==
+                    configuration.userData.userId) {
+                  //send notification only if the user is connected on this device
+
+                  friendRequestInAppNotification(
+                          context,
+                          configuration,
+                          message['data']['userPseudo'],
+                          message['data']['picturePath'],
+                          message['data']['userToAddId'])
+                      .show(context);
+                }
+              }
+          }
         },
         onLaunch: (Map<String, dynamic> message) async {
           print("onLaunch: $message");
@@ -44,14 +60,15 @@ class PushNotificationsManager {
     }
   }
 
-  void subscribeToTopic(String topic){
+  void subscribeToTopic(String topic) {
     _firebaseMessaging.subscribeToTopic(topic);
   }
-  void unsubscribeFromTopic(String topic){
+
+  void unsubscribeFromTopic(String topic) {
     _firebaseMessaging.unsubscribeFromTopic(topic);
   }
+
   Future<String> getToken() async {
     return await _firebaseMessaging.getToken();
   }
-
 }
