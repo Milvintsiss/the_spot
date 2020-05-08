@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:the_spot/services/database.dart';
-import 'package:the_spot/services/library/UserProfile.dart';
+import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/services/library/pushNotificationManager.dart';
 

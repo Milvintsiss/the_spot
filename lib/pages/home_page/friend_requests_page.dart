@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:the_spot/services/database.dart';
-import 'package:the_spot/services/library/UserProfile.dart';
+import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/library/configuration.dart';
 import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/theme.dart';

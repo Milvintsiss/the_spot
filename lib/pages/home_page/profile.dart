@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:the_spot/pages/home_page/followers_following_friends_page.dart';
 import 'package:the_spot/pages/home_page/friend_requests_page.dart';
 import 'package:the_spot/pages/inscription_page.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/deleteUser.dart';
-import 'package:the_spot/services/library/UserProfile.dart';
+import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/library/configuration.dart';
 import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/services/library/library.dart';
@@ -409,24 +410,36 @@ class _Profile extends State<Profile> {
   }
 
   Widget _showNUmberOfFriendsFollowersFollowing(int value, String text) {
-    return Container(
-      width: widget.configuration.screenWidth / 3,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            value.toString(),
-            style: TextStyle(
-                color: SecondaryColor,
-                fontSize: 21 * widget.configuration.textSizeFactor),
-          ),
-          Text(
-            text,
-            style: TextStyle(
-                color: SecondaryColor,
-                fontSize: 13 * widget.configuration.textSizeFactor),
-          ),
-        ],
+    return InkWell(
+      onTap: () async {
+        await Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => FollowersFollowingFriendsPage(
+            configuration: widget.configuration,
+            userProfile: _userProfile,
+            type: text,
+          )
+        ));
+        setState(() {});
+      },
+      child: Container(
+        width: widget.configuration.screenWidth / 3,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              value.toString(),
+              style: TextStyle(
+                  color: SecondaryColor,
+                  fontSize: 21 * widget.configuration.textSizeFactor),
+            ),
+            Text(
+              text,
+              style: TextStyle(
+                  color: SecondaryColor,
+                  fontSize: 13 * widget.configuration.textSizeFactor),
+            ),
+          ],
+        ),
       ),
     );
   }
