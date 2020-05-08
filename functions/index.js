@@ -67,9 +67,49 @@ exports.sendFriendRequestNotificationTo = functions.https.onCall(async (data, co
                 click_action: 'FLUTTER_NOTIFICATION_CLICK',
 
             },
-            data: {'type': 'friendRequest', 'userToAddId': context.auth.uid, 'userPseudo': data['pseudo'], 'picturePath': data['picturePath'], 'mainUserId': data['userId']}
+            data: {
+                'type': 'friendRequest',
+                'userToAddId': context.auth.uid,
+                'userPseudo': data['pseudo'],
+                'picturePath': data['picturePath'],
+                'mainUserId': data['userId']
+            }
         }
     ).catch((err) => {
+        return console.error(err);
+    });
+});
+
+exports.repairCountFollowingFollowers = functions.https.onRequest((req, res) => {
+    admin.firestore().collection('users').get()
+        .then((docs) => {
+            return docs.docs.forEach((doc) => {
+                admin.firestore().collection('users').doc(doc.id).collection('Following').get()
+                    .then((docs) => {
+                        return admin.firestore().collection('users').doc(doc.id).update({'NumberOfFollowing': docs.size}).catch((err) => {
+                            return console.error(err);
+                        });
+                    }).catch((err) => {
+                    return console.error(err);
+                });
+                admin.firestore().collection('users').doc(doc.id).collection('Followers').get()
+                    .then((docs) => {
+                        return admin.firestore().collection('users').doc(doc.id).update({'NumberOfFollowers': docs.size}).catch((err) => {
+                            return console.error(err);
+                        });
+                    }).catch((err) => {
+                    return console.error(err);
+                });
+                return admin.firestore().collection('users').doc(doc.id).get()
+                    .then((doc) => {
+                        return admin.firestore().collection('users').doc(doc.id).update({'NumberOfFriends': doc.data()['Friends'].length}).catch((err) => {
+                            return console.error(err);
+                        });
+                    }).catch((err) => {
+                    return console.error(err);
+                });
+            })
+        }).catch((err) => {
         return console.error(err);
     });
 });

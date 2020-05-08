@@ -2,7 +2,7 @@ import 'package:algolia/algolia.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:the_spot/services/database.dart';
-import 'package:the_spot/services/library/UserProfile.dart';
+import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/library/configuration.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
 import 'package:the_spot/services/library/library.dart';

@@ -5,7 +5,7 @@ import 'package:the_spot/services/library/library.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:the_spot/services/library/UserProfile.dart';
+import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
 import 'package:the_spot/services/library/userGrade.dart';
 
@@ -156,26 +156,31 @@ class Database {
   }
 
   Future<List<UserProfile>> getUsersByIds(
-      BuildContext context, List<String> ids) async {
+      BuildContext context, List<String> ids,
+      {bool verifyIfFriendsOrFollowed = false, String mainUserId}) async {
     List<UserProfile> usersProfile = [];
 
-    if (await checkConnection(context)) {
+    if (await checkConnection(context) && ids.length > 0) {
       try {
         await database
             .collection('users')
             .where(FieldPath.documentId, whereIn: ids)
             .getDocuments()
-            .then((QuerySnapshot querySnapshot) =>
-                querySnapshot.documents.forEach((document) {
-                  UserProfile userProfile =
-                      ConvertMapToUserProfile(document.data);
-                  userProfile.userId = document.documentID;
-                  usersProfile.add(userProfile);
+            .then((QuerySnapshot querySnapshot) => ids.forEach((element) {
+                  usersProfile.add(ConvertMapToUserProfile(querySnapshot
+                      .documents
+                      .firstWhere((document) => document.documentID == element)
+                      .data)); //returns documents in query order
+                  usersProfile[usersProfile.length - 1].userId = element;
                 }))
             .catchError((err) {
           print(err);
           error(err.toString(), context);
         });
+        if (verifyIfFriendsOrFollowed) {
+          usersProfile =
+              await isUsersFriendOrFollowed(context, usersProfile, mainUserId);
+        }
       } catch (err) {
         print(err);
         error(err.toString(), context);
@@ -205,6 +210,89 @@ class Database {
       return false;
     }
     return true;
+  }
+
+  Future<Map<String, Object>> getFollowersOf(
+      BuildContext context,
+      String mainUserId,
+      String userToQueryId,
+      Timestamp start,
+      int limit) async {
+    List<String> usersId = [];
+    List<UserProfile> users = [];
+    Timestamp lastTimestamp;
+    if (await checkConnection(context)) {
+      try {
+        await database
+            .collection('users')
+            .document(userToQueryId)
+            .collection('Followers')
+            .orderBy('Date', descending: true)
+            .startAfter([start])
+            .limit(limit)
+            .getDocuments()
+            .then((QuerySnapshot querySnapshot) {
+              if (querySnapshot.documents.length > 0) {
+                querySnapshot.documents
+                    .forEach((element) => usersId.add(element.documentID));
+                lastTimestamp = querySnapshot
+                    .documents[querySnapshot.documents.length - 1].data['Date'];
+              }
+            })
+            .catchError((err) {
+              print(err);
+              error(err.toString(), context);
+              return false;
+            });
+        users = await getUsersByIds(context, usersId,
+            verifyIfFriendsOrFollowed: true, mainUserId: mainUserId);
+      } catch (err) {
+        print(err.toString());
+        error(err.toString(), context);
+      }
+    }
+    return {'users': users, 'lastTimestamp': lastTimestamp};
+  }
+
+  Future<Map<String, Object>> getFollowingOf(
+      BuildContext context,
+      String mainUserId,
+      String userToQueryId,
+      Timestamp start,
+      int limit) async {
+    List<String> usersId = [];
+    List<UserProfile> users = [];
+    Timestamp lastTimestamp;
+    if (await checkConnection(context)) {
+      try {
+        await database
+            .collection('users')
+            .document(userToQueryId)
+            .collection('Following')
+            .orderBy('Date', descending: true)
+            .startAfter([start])
+            .limit(limit)
+            .getDocuments()
+            .then((QuerySnapshot querySnapshot) {
+          if (querySnapshot.documents.length > 0) {
+              querySnapshot.documents
+                  .forEach((element) => usersId.add(element.documentID));
+              lastTimestamp = querySnapshot
+                  .documents[querySnapshot.documents.length - 1].data['Date'];
+            }})
+            .catchError((err) {
+              print(err);
+              error(err.toString(), context);
+              return false;
+            });
+        users = await getUsersByIds(context, usersId,
+            verifyIfFriendsOrFollowed: true, mainUserId: mainUserId);
+      } catch (err) {
+        print(err.toString());
+        error(err.toString(), context);
+      }
+    }
+    return {'users': users, 'lastTimestamp': lastTimestamp};
   }
 
   Future<bool> followUser(
