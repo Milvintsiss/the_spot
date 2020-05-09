@@ -10,14 +10,17 @@ import 'package:the_spot/services/library/library.dart';
 import 'algolia.dart';
 
 Future<List<UserProfile>> searchUsers(
-    BuildContext context, String query, Configuration configuration) async {
+    BuildContext context, String query, Configuration configuration, int page) async {
   List<UserProfile> users = [];
   if (await checkConnection(context)) {
     try {
       final Algolia algolia = AlgoliaObject.algolia; //initiate algolia
       final firestore = Firestore.instance;
 
-      AlgoliaQuery algoliaQuery = algolia.instance.index('users').search(query);
+      if(page == -1)
+        page = 0;
+
+      AlgoliaQuery algoliaQuery = algolia.instance.index('users').search(query).setPage(page);
       AlgoliaQuerySnapshot algoliaQuerySnapshot =
           await algoliaQuery.getObjects();
 

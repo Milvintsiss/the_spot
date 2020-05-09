@@ -25,6 +25,7 @@ class _FollowersFollowingFriendsPageState
   bool isWaiting = true;
   List<UserProfile> queryResult = [];
   Timestamp index = Timestamp.now();
+  int querySize = 10;
 
   String noResultMessage;
   String appBarTitle;
@@ -36,7 +37,6 @@ class _FollowersFollowingFriendsPageState
   }
 
   Future init() async {
-    print("called");
     switch (widget.type) {
       case "Followers":
         {
@@ -49,7 +49,7 @@ class _FollowersFollowingFriendsPageState
               widget.configuration.userData.userId,
               widget.userProfile.userId,
               index,
-              10);
+              querySize);
 
           queryResult.addAll(res['users']);
           index = res['lastTimestamp'];
@@ -69,7 +69,7 @@ class _FollowersFollowingFriendsPageState
               widget.configuration.userData.userId,
               widget.userProfile.userId,
               index,
-              4);
+              querySize);
 
           index = res['lastTimestamp'];
           setState(() {
@@ -102,25 +102,29 @@ class _FollowersFollowingFriendsPageState
       appBar: AppBar(
         title: Text(appBarTitle),
       ),
-      body: isWaiting ? Padding(
-          padding: EdgeInsets.only(top: widget.configuration.screenWidth / 20),
-          child: Center(
-            child: CircularProgressIndicator(),
-          )): showQueryResultsWidget(),
+      body: showQueryResultsWidget(),
     );
   }
 
   Widget showQueryResultsWidget() {
-    if (queryResult.length == 0 || queryResult == null)
+    if (isWaiting) {
+      return Center(
+        child: CircularProgressIndicator(),
+      );
+    } else if (queryResult.length == 0 || queryResult == null)
       return Padding(
         padding: EdgeInsets.only(top: widget.configuration.screenWidth / 20),
         child: Center(child: Text(noResultMessage)),
       );
     else
-      return UsersListView(
-        configuration: widget.configuration,
-        query: queryResult,
-        onBottomListReachedCallback: init,
+      return Column(
+        children: <Widget>[
+          UsersListView(
+            configuration: widget.configuration,
+            query: queryResult,
+            onBottomListReachedCallback: init,
+          ),
+        ],
       );
   }
 }

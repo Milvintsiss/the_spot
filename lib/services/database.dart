@@ -401,7 +401,7 @@ class Database {
         sendFriendRequestNotificationTo.call(<String, dynamic>{
           'userId': userToAddAsFriendId,
           'pseudo': userSendindRequestPseudo,
-          'picturePath': userSendingRequestPictureDownloadPath
+          'picturePath': userSendingRequestPictureDownloadPath ?? ""
         });
       } catch (err) {
         print(err.toString());
@@ -450,7 +450,8 @@ class Database {
           'NumberOfFriends': FieldValue.increment(1)
         });
         batch.updateData(database.collection('users').document(userToAddId), {
-          'Friends': FieldValue.arrayUnion([mainUserId])
+          'Friends': FieldValue.arrayUnion([mainUserId]),
+          'NumberOfFriends': FieldValue.increment(1)
         });
         await batch.commit().catchError((err) {
           print(err.toString());

@@ -58,8 +58,12 @@ class Configuration {
       if (userId != null && userId.length > 0) {
         configuration.userData =
             await Database().getProfileData(userId, context);
-        configuration.userData.devicesTokens = [await configuration.pushNotificationsManager.getToken()];
-        Database().addDeviceTokenToUserProfile(context, userId, configuration.userData.devicesTokens);
+        if(configuration.userData != null) {
+          configuration.userData.devicesTokens =
+          [await configuration.pushNotificationsManager.getToken()];
+          Database().addDeviceTokenToUserProfile(
+              context, userId, configuration.userData.devicesTokens);
+        }
       }
     }
     return configuration;

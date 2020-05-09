@@ -19,6 +19,8 @@ class _ChatListPageState extends State<ChatListPage> {
   bool userIsSearching = false;
   bool isWaiting = true;
 
+  int page;
+
   String query;
 
   List<UserProfile> queryResult = [];
@@ -53,6 +55,7 @@ class _ChatListPageState extends State<ChatListPage> {
           child: TextField(
             onChanged: (String value) async {
               setState(() {
+                page = -1;
                 isWaiting = true;
                 if (value.trim().length > 0) {
                   query = value.trim();
@@ -61,10 +64,7 @@ class _ChatListPageState extends State<ChatListPage> {
                   userIsSearching = false;
                 }
               });
-              queryResult = await getUsers();
-              setState(() {
-                isWaiting = false;
-              });
+              getUsersCallback();
             },
             style: TextStyle(color: Colors.white),
             textInputAction: TextInputAction.search,
@@ -88,12 +88,9 @@ class _ChatListPageState extends State<ChatListPage> {
   }
 
   Widget showQueryResultsWidget() {
-    if (isWaiting)
-      return Padding(
-          padding: EdgeInsets.only(top: widget.configuration.screenWidth / 20),
-          child: Center(
-            child: CircularProgressIndicator(),
-          ));
+    if(isWaiting){
+      return Center(child: CircularProgressIndicator(),);
+    }
     else if (queryResult.length == 0 || queryResult == null)
       return Padding(
         padding: EdgeInsets.only(top: widget.configuration.screenWidth / 40),
@@ -103,6 +100,7 @@ class _ChatListPageState extends State<ChatListPage> {
       return UsersListView(
         configuration: widget.configuration,
         query: queryResult,
+        onBottomListReachedCallback: getUsersCallback,
       );
   }
 
@@ -110,7 +108,19 @@ class _ChatListPageState extends State<ChatListPage> {
     return Text("userIsNotSearching");
   }
 
-  Future<List> getUsers() async {
-    return await searchUsers(context, query, widget.configuration);
+  Future getUsersCallback() async {
+    if(page == -1 || page == 0) {
+      queryResult =
+      await searchUsers(context, query, widget.configuration, page);
+    }else{
+      queryResult.addAll(await searchUsers(context, query, widget.configuration, page));
+    }
+    setState(() {
+      isWaiting = false;
+    });
+    await Future.delayed(Duration(seconds: 1));
+
+    print("page: $page");
+    page ++;
   }
 }

@@ -73,59 +73,56 @@ class _UsersListViewState extends State<UsersListView> {
       setState(() {
         isLoadingData = true;
       });
+      Future.delayed(Duration.zero, () {
+        scrollController.animateTo(
+            scrollController.position.maxScrollExtent + 10,
+            duration: Duration(milliseconds: 500),
+            curve: Curves.ease);
+      });
       await widget.onBottomListReachedCallback();
       setState(() {
         isLoadingData = false;
       });
-      await Future.delayed(Duration(milliseconds: 500));
-      scrollController.animateTo(
-          scrollController.position.maxScrollExtent,
-          duration: Duration(milliseconds: 500),
-          curve: Curves.ease);
+      await Future.delayed(Duration(milliseconds: 1200));
       scrollDisabled = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        Expanded(
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (ScrollNotification scrollInfo) {
-              if (scrollInfo.metrics.pixels ==
-                  scrollInfo.metrics.maxScrollExtent) {
-                onBottomListReached();
-                scrollDisabled = true;
-              }
-              return true;
-            },
-            child: ListView(
-              controller: scrollController,
-              children: [
-                ListView.builder(
-                  padding: EdgeInsets.fromLTRB(
-                      widget.configuration.screenWidth / 20,
-                      widget.configuration.screenWidth / 40,
-                      widget.configuration.screenWidth / 20,
-                      widget.configuration.screenWidth / 20),
-                  itemCount: widget.query.length,
-                  itemBuilder: (BuildContext context, int itemIndex) {
-                    return showResultWidget(itemIndex);
-                  },
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                ),
-                isLoadingData
-                    ? Center(child: CircularProgressIndicator())
-                    : Container()
-              ],
-              physics: AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics()),
+    return Expanded(
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (ScrollNotification scrollInfo) {
+          if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+            onBottomListReached();
+            scrollDisabled = true;
+          }
+          return true;
+        },
+        child: ListView(
+          controller: scrollController,
+          children: [
+            ListView.builder(
+              padding: EdgeInsets.fromLTRB(
+                  widget.configuration.screenWidth / 20,
+                  widget.configuration.screenWidth / 40,
+                  widget.configuration.screenWidth / 20,
+                  widget.configuration.screenWidth / 20),
+              itemCount: widget.query.length,
+              itemBuilder: (BuildContext context, int itemIndex) {
+                return showResultWidget(itemIndex);
+              },
+              shrinkWrap: true,
+              physics: ScrollPhysics(),
             ),
-          ),
+            isLoadingData
+                ? Center(child: CircularProgressIndicator())
+                : Container()
+          ],
+          physics:
+              AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
         ),
-      ],
+      ),
     );
   }
 
