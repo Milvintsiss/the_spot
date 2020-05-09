@@ -115,7 +115,7 @@ Widget ProfilePicture(String downloadPath,
     {double size = 50,
     Color borderColor = PrimaryColorDark,
     double borderSize = 2}) {
-  if (downloadPath != null)
+  if (downloadPath != null && downloadPath != "")
     return SizedBox(
       height: size,
       width: size,

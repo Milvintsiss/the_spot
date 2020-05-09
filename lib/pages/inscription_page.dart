@@ -309,14 +309,18 @@ class _InscriptionPage extends State<InscriptionPage> {
               ),
               onPressed: () async {
                 if (validateAndSave()) {
+                  bool isUserUsername = false;
+                  if(updateProfile){
+                    isUserUsername = _username == widget.configuration.userData.username;
+                  }
                   if (await Database().isUsernameAlreadyInUse(
                           context: context, username: _username) &&
-                      _username != widget.configuration.userData.username) {
+                      !isUserUsername) {
                     Vibrate.feedback(FeedbackType.warning);
                     FlushbarHelper.createError(
                         message: AppLocalizations.of(context)
                             .translate('Sorry, this username is already used.'),
-                        duration: Duration(milliseconds: 4000));
+                        duration: Duration(milliseconds: 4000)).show(context);
                   } else {
                     bool databaseUpdated = await Database().updateProfile(
                         context,
