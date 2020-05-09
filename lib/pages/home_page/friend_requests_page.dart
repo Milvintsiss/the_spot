@@ -59,6 +59,7 @@ class _FriendRequestsPageState extends State<FriendRequestsPage> {
                 return showResultWidget(itemIndex);
               },
               shrinkWrap: true,
+              physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
             )
           : Center(child: CircularProgressIndicator()),
     );

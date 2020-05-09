@@ -397,11 +397,11 @@ class _Profile extends State<Profile> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            _showNUmberOfFriendsFollowersFollowing(
+            _showNumberOfFriendsFollowersFollowing(
                 _userProfile.numberOfFriends, 'Friends'),
-            _showNUmberOfFriendsFollowersFollowing(
+            _showNumberOfFriendsFollowersFollowing(
                 _userProfile.numberOfFollowers, 'Followers'),
-            _showNUmberOfFriendsFollowersFollowing(
+            _showNumberOfFriendsFollowersFollowing(
                 _userProfile.numberOfFollowing, 'Following'),
           ],
         ),
@@ -409,7 +409,7 @@ class _Profile extends State<Profile> {
     );
   }
 
-  Widget _showNUmberOfFriendsFollowersFollowing(int value, String text) {
+  Widget _showNumberOfFriendsFollowersFollowing(int value, String text) {
     return InkWell(
       onTap: () async {
         await Navigator.of(context).push(MaterialPageRoute(
