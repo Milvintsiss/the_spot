@@ -77,11 +77,11 @@ class _UsersListViewState extends State<UsersListView> {
       setState(() {
         isLoadingData = false;
       });
+      await Future.delayed(Duration(milliseconds: 500));
       scrollController.animateTo(
-          (itemsSize + spaceBetweenItems) * widget.query.length - widget.configuration.screenHeight,
-          duration: Duration(milliseconds: 100),
+          scrollController.position.maxScrollExtent,
+          duration: Duration(milliseconds: 500),
           curve: Curves.ease);
-      await Future.delayed(Duration(seconds: 1));
       scrollDisabled = false;
     }
   }
