@@ -35,10 +35,8 @@ class _FollowersFollowingFriendsPageState
     init();
   }
 
-  void init() async {
-    setState(() {
-      isWaiting = true;
-    });
+  Future init() async {
+    print("called");
     switch (widget.type) {
       case "Followers":
         {
@@ -104,16 +102,11 @@ class _FollowersFollowingFriendsPageState
       appBar: AppBar(
         title: Text(appBarTitle),
       ),
-      body: Column(
-        children: <Widget>[
-          showQueryResultsWidget(),
-          isWaiting ? Padding(
-              padding: EdgeInsets.only(top: widget.configuration.screenWidth / 20),
-              child: Center(
-                child: CircularProgressIndicator(),
-              )): Container(),
-        ],
-      ),
+      body: isWaiting ? Padding(
+          padding: EdgeInsets.only(top: widget.configuration.screenWidth / 20),
+          child: Center(
+            child: CircularProgressIndicator(),
+          )): showQueryResultsWidget(),
     );
   }
 
