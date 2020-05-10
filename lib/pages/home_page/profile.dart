@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -55,9 +56,19 @@ class _Profile extends State<Profile> {
   }
 
   void actualizeUserProfile() async {
-    widget.configuration.userData = _userProfile = await Database()
-        .getProfileData(widget.configuration.userData.userId, context);
-    setState(() {});
+    if (isUser && await checkConnection(context))
+      Firestore.instance
+          .collection('users')
+          .document(widget.configuration.userData.userId)
+          .snapshots()
+          .listen((event) {
+        print(event.data);
+        widget.configuration.userData = ConvertMapToUserProfile(event.data);
+        widget.configuration.userData.userId = event.documentID;
+        setState(() {
+          _userProfile = widget.configuration.userData;
+        });
+      });
   }
 
   void signOut() async {
@@ -413,12 +424,11 @@ class _Profile extends State<Profile> {
     return InkWell(
       onTap: () async {
         await Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => FollowersFollowingFriendsPage(
-            configuration: widget.configuration,
-            userProfile: _userProfile,
-            type: text,
-          )
-        ));
+            builder: (context) => FollowersFollowingFriendsPage(
+                  configuration: widget.configuration,
+                  userProfile: _userProfile,
+                  type: text,
+                )));
         setState(() {});
       },
       child: Container(

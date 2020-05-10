@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 
@@ -125,6 +127,7 @@ class Database {
     }
     return true;
   }
+
 
   Future<UserProfile> getProfileData(
       String userId, BuildContext context) async {
