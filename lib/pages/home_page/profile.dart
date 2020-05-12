@@ -1,6 +1,3 @@
-import 'dart:async';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -47,10 +44,7 @@ class _Profile extends State<Profile> {
   void initState() {
     super.initState();
     //listen to changes on user profile
-    widget.configuration.addListener(() {setState(() {
-      if(isUser)
-        _userProfile = widget.configuration.userData;
-    }); });
+    widget.configuration.addListener(onUserDataChanged);
 
     if (widget.userProfile.userId == widget.configuration.userData.userId) {
       isUser = true;
@@ -60,6 +54,19 @@ class _Profile extends State<Profile> {
       isUser = false;
       _userProfile = widget.userProfile;
     }
+  }
+
+  void onUserDataChanged(){
+    setState(() {
+      if(isUser)
+        _userProfile = widget.configuration.userData;
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.configuration.removeListener(onUserDataChanged);
+    super.dispose();
   }
 
   void actualizeUserProfile() async {

@@ -41,6 +41,7 @@ class _UsersListViewState extends State<UsersListView> {
   @override
   void initState() {
     super.initState();
+    widget.configuration.addListener(onUserDataChanged);
     spaceBetweenItems = widget.configuration.screenWidth / 60;
     itemsSize = widget.configuration.screenWidth / 6.5;
     init();
@@ -50,6 +51,17 @@ class _UsersListViewState extends State<UsersListView> {
   void didUpdateWidget(UsersListView oldWidget) {
     super.didUpdateWidget(oldWidget);
     init();
+  }
+
+  void onUserDataChanged(){
+    setState(() {
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.configuration.removeListener(onUserDataChanged);
+    super.dispose();
   }
 
   void init() {

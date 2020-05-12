@@ -319,7 +319,7 @@ class _InscriptionPage extends State<InscriptionPage> {
                     Vibrate.feedback(FeedbackType.warning);
                     FlushbarHelper.createError(
                         message: AppLocalizations.of(context)
-                            .translate('Sorry, this username is already used.'),
+                            .translate('Sorry, username \"$_username\" is already used.'),
                         duration: Duration(milliseconds: 4000)).show(context);
                   } else {
                     bool databaseUpdated = await Database().updateProfile(
