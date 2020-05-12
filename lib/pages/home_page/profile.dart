@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -44,6 +46,11 @@ class _Profile extends State<Profile> {
   @override
   void initState() {
     super.initState();
+    //listen to changes on user profile
+    widget.configuration.addListener(() {setState(() {
+      if(isUser)
+        _userProfile = widget.configuration.userData;
+    }); });
 
     if (widget.userProfile.userId == widget.configuration.userData.userId) {
       isUser = true;
@@ -56,19 +63,19 @@ class _Profile extends State<Profile> {
   }
 
   void actualizeUserProfile() async {
-    if (isUser && await checkConnection(context))
-      Firestore.instance
-          .collection('users')
-          .document(widget.configuration.userData.userId)
-          .snapshots()
-          .listen((event) {
-        print(event.data);
-        widget.configuration.userData = ConvertMapToUserProfile(event.data);
-        widget.configuration.userData.userId = event.documentID;
-        setState(() {
-          _userProfile = widget.configuration.userData;
-        });
-      });
+//    if (isUser && await checkConnection(context))
+//      Firestore.instance
+//          .collection('users')
+//          .document(widget.configuration.userData.userId)
+//          .snapshots()
+//          .listen((event) {
+//        print(event.data);
+//        widget.configuration.userData = ConvertMapToUserProfile(event.data);
+//        widget.configuration.userData.userId = event.documentID;
+//        setState(() {
+//          _userProfile = widget.configuration.userData;
+//        });
+//      });
   }
 
   void signOut() async {

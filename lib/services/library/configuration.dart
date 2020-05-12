@@ -5,7 +5,7 @@ import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/services/library/pushNotificationManager.dart';
 
-class Configuration {
+class Configuration with ChangeNotifier {
   Configuration(
       {this.userData,
       this.screenHeight,
@@ -67,5 +67,22 @@ class Configuration {
       }
     }
     return configuration;
+  }
+
+  void setUserProfileListenerAndGetDeviceToken(BuildContext context, String userId,) async {
+    if (userId != null && userId.length > 0) {
+      Firestore.instance
+          .collection('users')
+          .document(userId)
+          .snapshots()
+          .listen((event) {
+        print(event.data);
+        userData = ConvertMapToUserProfile(event.data);
+        userData.userId = event.documentID;
+        notifyListeners();
+      });
+      Database().addDeviceTokenToUserProfile(
+          context, userId, [await pushNotificationsManager.getToken()]);
+    }
   }
 }

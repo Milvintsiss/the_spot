@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:the_spot/theme.dart';
 
 class FeatureNotAvailable extends StatefulWidget {
   @override
@@ -20,6 +19,12 @@ class _FeatureNotAvailableState extends State<FeatureNotAvailable>
     iconAnimation =
         Tween<double>(begin: 0, end: 0.4).animate(animationController);
     animationController.repeat(reverse: true,);
+  }
+
+  @override
+  void dispose() {
+    animationController.dispose();
+    super.dispose();
   }
 
   @override

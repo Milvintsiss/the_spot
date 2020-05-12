@@ -31,7 +31,7 @@ class _UsersListViewState extends State<UsersListView> {
 
   List<bool> waitForFollowing = [];
   List<bool> friendRequestAlreadyDone = [];
-  List<bool> waitForSendingFriendRequest = [];
+  List<bool> waitForSendingAcceptFriendRequest = [];
 
   int initialItemsCount;
 
@@ -56,7 +56,7 @@ class _UsersListViewState extends State<UsersListView> {
     waitForFollowing.clear();
     widget.query.forEach((element) {
       waitForFollowing.add(false);
-      waitForSendingFriendRequest.add(false);
+      waitForSendingAcceptFriendRequest.add(false);
       if (element.pendingFriendsId
               .indexOf(widget.configuration.userData.userId) !=
           -1) {
@@ -127,11 +127,13 @@ class _UsersListViewState extends State<UsersListView> {
   }
 
   Widget showResultWidget(int index) {
-    bool isUser;
-    if (widget.query[index].userId == widget.configuration.userData.userId) {
+    bool isUser = false;
+    bool hasSendAFriendRequest = false;
+    if (widget.query[index].userId == widget.configuration.userData.userId)
       isUser = true;
-    } else
-      isUser = false;
+    if (widget.configuration.userData.pendingFriendsId
+        .contains(widget.query[index].userId)) hasSendAFriendRequest = true;
+
     return GestureDetector(
       onTap: () => Navigator.push(
           context,
@@ -193,7 +195,11 @@ class _UsersListViewState extends State<UsersListView> {
                     Divider(
                       indent: widget.configuration.screenWidth / 60,
                     ),
-                    isUser ? Container() : showAddFriendButton(index),
+                    isUser
+                        ? Container()
+                        : hasSendAFriendRequest
+                            ? showAcceptButton(index)
+                            : showAddFriendButton(index),
                   ],
                 ),
               )
@@ -201,6 +207,35 @@ class _UsersListViewState extends State<UsersListView> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget showAcceptButton(int index) {
+    return RaisedButton(
+      color: Colors.green,
+      child: waitForSendingAcceptFriendRequest[index]
+          ? SizedBox(
+              height: widget.configuration.screenWidth / 30,
+              width: widget.configuration.screenWidth / 30,
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(PrimaryColorDark),
+              ),
+            )
+          : Text(
+              'Accept',
+              style: TextStyle(
+                  fontSize: 12 * widget.configuration.textSizeFactor,
+                  color: Colors.white),
+            ),
+      onPressed: () async {
+        setState(() {
+          waitForSendingAcceptFriendRequest[index] = true;
+        });
+        await Database().acceptFriendRequest(context,
+            widget.configuration.userData.userId, widget.query[index].userId);
+        waitForSendingAcceptFriendRequest[index] = false;
+        setState(() {});
+      },
     );
   }
 
@@ -264,7 +299,7 @@ class _UsersListViewState extends State<UsersListView> {
         color: friendRequestAlreadyDone[index]
             ? transparentColor(SecondaryColor, 100)
             : PrimaryColor,
-        child: waitForSendingFriendRequest[index]
+        child: waitForSendingAcceptFriendRequest[index]
             ? SizedBox(
                 height: widget.configuration.screenWidth / 30,
                 width: widget.configuration.screenWidth / 30,
@@ -280,11 +315,11 @@ class _UsersListViewState extends State<UsersListView> {
                         ? Colors.black
                         : Colors.black54),
               ),
-        onPressed: waitForSendingFriendRequest[index]
+        onPressed: waitForSendingAcceptFriendRequest[index]
             ? null
             : () async {
                 setState(() {
-                  waitForSendingFriendRequest[index] = true;
+                  waitForSendingAcceptFriendRequest[index] = true;
                 });
                 if (!friendRequestAlreadyDone[index]) {
                   await Database().sendFriendRequest(
@@ -301,7 +336,7 @@ class _UsersListViewState extends State<UsersListView> {
                 }
                 friendRequestAlreadyDone[index] =
                     !friendRequestAlreadyDone[index];
-                waitForSendingFriendRequest[index] = false;
+                waitForSendingAcceptFriendRequest[index] = false;
                 setState(() {});
               },
       );
