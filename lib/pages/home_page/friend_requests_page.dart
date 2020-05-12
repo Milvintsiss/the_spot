@@ -154,15 +154,9 @@ class _FriendRequestsPageState extends State<FriendRequestsPage> {
         setState(() {
           waiting[index] = true;
         });
-
-        if (await Database().acceptFriendRequest(context,
-            widget.configuration.userData.userId, queryResult[index].userId)) {
-          widget.configuration.userData.pendingFriendsId.remove(queryResult[index].userId);
-          widget.configuration.userData.friends.add(queryResult[index].userId);
-          widget.configuration.userData.numberOfFriends ++;
-          queryResult.removeAt(index);
-        }
-
+        await Database().acceptFriendRequest(context,
+            widget.configuration.userData.userId, queryResult[index].userId);
+        queryResult.removeAt(index);
         waiting[index] = false;
         setState(() {});
       },

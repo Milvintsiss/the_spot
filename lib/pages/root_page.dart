@@ -54,19 +54,19 @@ class _RootPageState extends State<RootPage> {
     if (user != null) {
       _userId = user.uid;
     }
-      configuration = await Configuration().getConfiguration(context, _userId);
-      configuration.screenHeight = screenHeight;
-      configuration.screenWidth = screenWidth;
-      configuration.textSizeFactor = textSizeFactor;
+    configuration = await Configuration().getConfiguration(context, _userId);
+    configuration.setUserProfileListenerAndGetDeviceToken(context, _userId);
+    configuration.screenHeight = screenHeight;
+    configuration.screenWidth = screenWidth;
+    configuration.textSizeFactor = textSizeFactor;
 
-      if (configuration.userData != null) {
-        _inscriptionState = false;
-        configuration.userData.userId = _userId;
-        configuration.pushNotificationsManager.configuration = configuration;
-      } else {
-        _inscriptionState = true;
-      }
-
+    if (configuration.userData != null) {
+      _inscriptionState = false;
+      configuration.userData.userId = _userId;
+      configuration.pushNotificationsManager.configuration = configuration;
+    } else {
+      _inscriptionState = true;
+    }
 
     if (configuration.updateIsAvailable)
       status = Status.UPDATE_AVAILABLE;
@@ -75,8 +75,12 @@ class _RootPageState extends State<RootPage> {
     else {
       status = user == null ? Status.NOT_LOGGED_IN : Status.LOGGED_IN;
     }
-    if (configuration.alertMessage != null && configuration.alertMessage.length > 0) {
-      error(configuration.alertMessage, context, backgroundColor: PrimaryColorDark, textColor: Colors.white, textAlign: TextAlign.center);
+    if (configuration.alertMessage != null &&
+        configuration.alertMessage.length > 0) {
+      error(configuration.alertMessage, context,
+          backgroundColor: PrimaryColorDark,
+          textColor: Colors.white,
+          textAlign: TextAlign.center);
     }
 
     setState(() {});
@@ -111,10 +115,10 @@ class _RootPageState extends State<RootPage> {
     return Scaffold(
       body: Center(
           child: Text(
-            "A new version of the spot is now available! Please update to keep using TheSpot! ",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          )),
+        "A new version of the spot is now available! Please update to keep using TheSpot! ",
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      )),
     );
   }
 
