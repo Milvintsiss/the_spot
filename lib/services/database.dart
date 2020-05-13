@@ -91,26 +91,26 @@ class Database {
               .collection('users')
               .document(userId)
               .setData(update)
-              .catchError((error) {
-            error(error.toString(), context);
-            print(error);
+              .catchError((err) {
+            print("Database Error: " + err.toString());
+            error("Database Error: " + err.toString(), context);
             return false;
           });
           await database
               .collection("usersLocation")
               .document(userId)
               .setData({}).catchError((err) {
-            print(err);
-            error(err.toString(), context);
+            print("Database Error: " + err.toString());
+            error("Database Error: " + err.toString(), context);
           });
         } else {
           await database
               .collection('users')
               .document(userId)
               .updateData(update)
-              .catchError((error) {
-            error(error.toString(), context);
-            print(error);
+              .catchError((err) {
+            print("Database Error: " + err.toString());
+            error("Database Error: " + err.toString(), context);
             return false;
           });
           if (usernameOrPseudoChange)
@@ -128,7 +128,6 @@ class Database {
     return true;
   }
 
-
   Future<UserProfile> getProfileData(
       String userId, BuildContext context) async {
     UserProfile userProfile;
@@ -144,8 +143,8 @@ class Database {
             userProfile.userId = userId;
           }
         }).catchError((err) {
-          print(err);
-          error(err.toString(), context);
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
           return null;
         });
       } catch (err) {
@@ -160,30 +159,30 @@ class Database {
 
   Future<List<UserProfile>> getUsersByIds(
       BuildContext context, List<String> ids,
-      {bool verifyIfFriendsOrFollowed = false, String mainUserId}) async {
+      {bool verifyIfFriendsOrFollowed = false,
+      String mainUserId}) async {
     List<UserProfile> usersProfile = [];
 
     if (await checkConnection(context) && ids.length > 0) {
       try {
-        await database
-            .collection('users')
-            .where(FieldPath.documentId, whereIn: ids)
-            .getDocuments()
-            .then((QuerySnapshot querySnapshot) => ids.forEach((element) {
-                  usersProfile.add(ConvertMapToUserProfile(querySnapshot
-                      .documents
-                      .firstWhere((document) => document.documentID == element)
-                      .data)); //returns documents in query order
-                  usersProfile[usersProfile.length - 1].userId = element;
-                }))
-            .catchError((err) {
-          print(err);
-          error(err.toString(), context);
-        });
-        if (verifyIfFriendsOrFollowed) {
-          usersProfile =
-              await isUsersFriendOrFollowed(context, usersProfile, mainUserId);
-        }
+          await database
+              .collection('users')
+              .where(FieldPath.documentId, whereIn: ids)
+              .getDocuments()
+              .then((QuerySnapshot querySnapshot) => ids.forEach((element) {
+            usersProfile.add(ConvertMapToUserProfile(querySnapshot.documents
+                .firstWhere((document) => document.documentID == element)
+                .data)); //returns documents in query order
+            usersProfile[usersProfile.length - 1].userId = element;
+          }))
+              .catchError((err) {
+            print("Database Error: " + err.toString());
+            error("Database Error: " + err.toString(), context);
+          });
+          if (verifyIfFriendsOrFollowed) {
+            usersProfile =
+            await isUsersFriendOrFollowed(context, usersProfile, mainUserId);
+          }
       } catch (err) {
         print(err);
         error(err.toString(), context);
@@ -200,8 +199,8 @@ class Database {
             .document(userId)
             .delete()
             .catchError((err) {
-          print(err);
-          error(err.toString(), context);
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
           return false;
         });
       } catch (err) {
@@ -243,8 +242,8 @@ class Database {
               }
             })
             .catchError((err) {
-              print(err);
-              error(err.toString(), context);
+              print("Database Error: " + err.toString());
+              error("Database Error: " + err.toString(), context);
               return false;
             });
         users = await getUsersByIds(context, usersId,
@@ -277,15 +276,16 @@ class Database {
             .limit(limit)
             .getDocuments()
             .then((QuerySnapshot querySnapshot) {
-          if (querySnapshot.documents.length > 0) {
-              querySnapshot.documents
-                  .forEach((element) => usersId.add(element.documentID));
-              lastTimestamp = querySnapshot
-                  .documents[querySnapshot.documents.length - 1].data['Date'];
-            }})
+              if (querySnapshot.documents.length > 0) {
+                querySnapshot.documents
+                    .forEach((element) => usersId.add(element.documentID));
+                lastTimestamp = querySnapshot
+                    .documents[querySnapshot.documents.length - 1].data['Date'];
+              }
+            })
             .catchError((err) {
-              print(err);
-              error(err.toString(), context);
+              print("Database Error: " + err.toString());
+              error("Database Error: " + err.toString(), context);
               return false;
             });
         users = await getUsersByIds(context, usersId,
@@ -326,8 +326,8 @@ class Database {
             {'NumberOfFollowers': FieldValue.increment(1)});
 
         await batch.commit().then((value) => succeed = true).catchError((err) {
-          print(err.toString());
-          error(err.toString(), context);
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
           succeed = false;
         });
       } catch (err) {
@@ -363,8 +363,8 @@ class Database {
             {'NumberOfFollowers': FieldValue.increment(-1)});
 
         await batch.commit().then((value) => succeed = true).catchError((err) {
-          print(err.toString());
-          error(err.toString(), context);
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
           succeed = false;
         });
       } catch (err) {
@@ -397,8 +397,8 @@ class Database {
             })
             .then((value) => success = true)
             .catchError((err) {
-              print(err.toString());
-              error(err.toString(), context);
+              print("Database Error: " + err.toString());
+              error("Database Error: " + err.toString(), context);
               success = false;
             });
         sendFriendRequestNotificationTo.call(<String, dynamic>{
@@ -428,8 +428,8 @@ class Database {
             })
             .then((value) => success = true)
             .catchError((err) {
-              print(err.toString());
-              error(err.toString(), context);
+              print("Database Error: " + err.toString());
+              error("Database Error: " + err.toString(), context);
               success = false;
             });
       } catch (err) {
@@ -457,8 +457,8 @@ class Database {
           'NumberOfFriends': FieldValue.increment(1)
         });
         await batch.commit().catchError((err) {
-          print(err.toString());
-          error(err.toString(), context);
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
           success = false;
         });
       } catch (err) {
@@ -478,8 +478,36 @@ class Database {
         await database.collection('users').document(mainUserId).updateData({
           'PendingFriendsId': FieldValue.arrayRemove([userToAddId])
         }).catchError((err) {
-          print(err.toString());
-          error(err.toString(), context);
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
+          success = false;
+        });
+      } catch (err) {
+        print(err.toString());
+        error(err.toString(), context);
+        success = false;
+      }
+    }
+    return success;
+  }
+
+  Future<bool> removeFriend(
+      BuildContext context, String mainUserId, String userToRemoveId) async {
+    bool success = true;
+    if (await checkConnection(context)) {
+      try {
+        WriteBatch batch = database.batch();
+        batch.updateData(database.collection('users').document(mainUserId), {
+          'Friends': FieldValue.arrayRemove([userToRemoveId]),
+          'NumberOfFriends': FieldValue.increment(-1)
+        });
+        batch.updateData(database.collection('users').document(userToRemoveId), {
+          'Friends': FieldValue.arrayRemove([mainUserId]),
+          'NumberOfFriends': FieldValue.increment(-1)
+        });
+        await batch.commit().catchError((err) {
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
           success = false;
         });
       } catch (err) {
@@ -515,8 +543,8 @@ class Database {
               users[usersId.indexOf(id)].isFollowed = false;
           });
         }).catchError((err) {
-          print(err.toString());
-          error(err.toString(), context);
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
         });
 
         users.forEach((element) {
@@ -541,8 +569,8 @@ class Database {
 //              users[usersId.indexOf(id)].isFriend = false;
 //          });
 //        }).catchError((err) {
-//          print(err.toString());
-//          error(err.toString(), context);
+//        print("Database Error: " + err.toString());
+//        error("Database Error: " + err.toString(), context);
 //        });
       } catch (err) {
         print(err.toString());
@@ -567,8 +595,8 @@ class Database {
           else
             _isUsernameAlreadyInUse = false;
         }).catchError((err) {
-          print(err.toString());
-          error(err.toString(), context);
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
         });
       } catch (err) {
         print(err);
@@ -592,8 +620,8 @@ class Database {
             .then((value) => success = true)
             .catchError((err) {
               success = false;
-              print(err.toString());
-              error(err.toString(), context);
+              print("Database Error: " + err.toString());
+              error("Database Error: " + err.toString(), context);
             });
       } catch (err) {
         success = false;
@@ -614,8 +642,8 @@ class Database {
         'UserLocationLatitude': userLocation.latitude,
         'UserId': userId,
       }).catchError((err) {
-        print(err);
-        error(err.toString(), context);
+        print("Database Error: " + err.toString());
+        error("Database Error: " + err.toString(), context);
       });
     }
   }
@@ -652,8 +680,8 @@ class Database {
             .add(_spotData)
             .then((value) => spotId = value.documentID)
             .catchError((err) {
-          print(err);
-          error(err.toString(), context);
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
           state = "error";
         });
       } else {
@@ -662,8 +690,8 @@ class Database {
             .document(spotId)
             .updateData(_spotData)
             .catchError((err) {
-          print(err);
-          error(err.toString(), context);
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
           state = "error";
         });
       }
@@ -727,8 +755,8 @@ class Database {
             .then((QuerySnapshot querySnapshot) {
           spots = convertSpotsData(querySnapshot, getAll);
         }).catchError((err) {
-          print(err);
-          error(err.toString(), context);
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
           return null;
         });
       } else {
@@ -742,8 +770,8 @@ class Database {
             .then((QuerySnapshot querySnapshot) {
           spots = convertSpotsData(querySnapshot, getAll);
         }).catchError((err) {
-          print(err);
-          error(err.toString(), context);
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
           return null;
         });
       }

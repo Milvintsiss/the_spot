@@ -37,6 +37,10 @@ class Profile extends StatefulWidget {
 class _Profile extends State<Profile> {
   bool isUser;
   bool isInstaClipSelected = false;
+  bool waitingForAcceptOrRefuse = false;
+  bool waitForFollowing = false;
+  bool requested = false;
+  bool waitForSendingFriendRequest = false;
 
   UserProfile _userProfile;
 
@@ -49,40 +53,21 @@ class _Profile extends State<Profile> {
     if (widget.userProfile.userId == widget.configuration.userData.userId) {
       isUser = true;
       _userProfile = widget.configuration.userData;
-      actualizeUserProfile();
     } else {
       isUser = false;
       _userProfile = widget.userProfile;
     }
   }
 
-  void onUserDataChanged(){
-    setState(() {
-      if(isUser)
-        _userProfile = widget.configuration.userData;
-    });
+  void onUserDataChanged() {
+    if (isUser) _userProfile = widget.configuration.userData;
+    setState(() {});
   }
 
   @override
   void dispose() {
     widget.configuration.removeListener(onUserDataChanged);
     super.dispose();
-  }
-
-  void actualizeUserProfile() async {
-//    if (isUser && await checkConnection(context))
-//      Firestore.instance
-//          .collection('users')
-//          .document(widget.configuration.userData.userId)
-//          .snapshots()
-//          .listen((event) {
-//        print(event.data);
-//        widget.configuration.userData = ConvertMapToUserProfile(event.data);
-//        widget.configuration.userData.userId = event.documentID;
-//        setState(() {
-//          _userProfile = widget.configuration.userData;
-//        });
-//      });
   }
 
   void signOut() async {
@@ -120,19 +105,18 @@ class _Profile extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: PrimaryColorDark,
+      backgroundColor: PrimaryColor,
       appBar: showAppBar(),
       endDrawer: showDrawer(),
-      body: Padding(
-        padding: EdgeInsets.only(top: widget.configuration.screenWidth / 20),
-        child: Column(
-          children: <Widget>[
-            showTopProfile(),
-            showNUmberOfFriendsFollowersFollowing(),
-            showSelectorButton(),
-            showVideosLayout(),
-          ],
-        ),
+      body: Column(
+        children: <Widget>[
+          showTopProfile(),
+          showNumberOfFriendsFollowersFollowing(),
+          showFollowRequestRemoveFriendButtons(),
+          showAcceptRefuseButtons(),
+          showSelectorButton(),
+          showVideosLayout(),
+        ],
       ),
     );
   }
@@ -288,6 +272,7 @@ class _Profile extends State<Profile> {
 
   Widget showTopProfile() {
     return Container(
+      padding: EdgeInsets.only(top: widget.configuration.screenWidth / 20),
       decoration: BoxDecoration(
           gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -413,7 +398,7 @@ class _Profile extends State<Profile> {
     );
   }
 
-  Widget showNUmberOfFriendsFollowersFollowing() {
+  Widget showNumberOfFriendsFollowersFollowing() {
     return Container(
       color: PrimaryColor,
       child: Padding(
@@ -464,6 +449,255 @@ class _Profile extends State<Profile> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget showFollowRequestRemoveFriendButtons() {
+    if (isUser ||
+        widget.configuration.userData.pendingFriendsId
+            .contains(_userProfile.userId))
+      return Container();
+    else
+      return ButtonTheme(
+        minWidth: 0,
+        shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(widget.configuration.screenWidth / 10)),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+              horizontal: widget.configuration.screenWidth / 50),
+          child: Row(
+            children: <Widget>[
+              showFollowButton(),
+              Divider(
+                indent: widget.configuration.screenWidth / 50,
+              ),
+              showAddRemoveFriendButton(),
+            ],
+          ),
+        ),
+      );
+  }
+
+  Widget showFollowButton() {
+    return Expanded(
+      child: RaisedButton(
+        color: _userProfile.isFollowed
+            ? PrimaryColor
+            : transparentColor(SecondaryColor, 100),
+        child: waitForFollowing
+            ? SizedBox(
+                height: widget.configuration.screenWidth / 30,
+                width: widget.configuration.screenWidth / 30,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(PrimaryColorLight),
+                ),
+              )
+            : Text(
+                _userProfile.isFollowed ? 'Unfollow' : 'Follow',
+                style: TextStyle(
+                    fontSize: 12 * widget.configuration.textSizeFactor,
+                    color: !_userProfile.isFollowed
+                        ? Colors.black
+                        : Colors.black54),
+              ),
+        onPressed: waitForFollowing
+            ? null
+            : () async {
+                setState(() {
+                  waitForFollowing = true;
+                });
+                if (_userProfile.isFollowed) {
+                  await Database().unFollowUser(
+                      context,
+                      widget.configuration.userData.userId,
+                      _userProfile.userId);
+                  widget.userProfile.isFollowed = false;
+                  widget.userProfile.numberOfFollowers--;
+                } else {
+                  await Database().followUser(
+                      context,
+                      widget.configuration.userData.userId,
+                      _userProfile.userId);
+                  widget.userProfile.isFollowed = true;
+                  widget.userProfile.numberOfFollowers++;
+                }
+                waitForFollowing = false;
+                setState(() {});
+              },
+      ),
+    );
+  }
+
+  Widget showAddRemoveFriendButton() {
+    if (_userProfile.pendingFriendsId
+        .contains(widget.configuration.userData.userId)) requested = true;
+    if (_userProfile.isFriend) {
+      return Expanded(
+        child: RaisedButton(
+          color: PrimaryColor,
+          child: waitForSendingFriendRequest
+              ? SizedBox(
+                  height: widget.configuration.screenWidth / 30,
+                  width: widget.configuration.screenWidth / 30,
+                  child: CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(PrimaryColorLight),
+                  ),
+                )
+              : Text(
+                  "Remove",
+                  style: TextStyle(
+                      fontSize: 12 * widget.configuration.textSizeFactor,
+                      color: Colors.black54),
+                ),
+          onPressed: waitForSendingFriendRequest
+              ? null
+              : () async {
+                  setState(() {
+                    waitForSendingFriendRequest = true;
+                  });
+                  await Database().removeFriend(
+                      context,
+                      widget.configuration.userData.userId,
+                      _userProfile.userId);
+                  widget.userProfile.isFriend = false;
+                  setState(() {
+                    waitForSendingFriendRequest = false;
+                    _userProfile.isFriend = false;
+                  });
+                },
+        ),
+      );
+    } else {
+      return Expanded(
+        child: RaisedButton(
+          color:
+              requested ? PrimaryColor : transparentColor(SecondaryColor, 100),
+          child: waitForSendingFriendRequest
+              ? SizedBox(
+                  height: widget.configuration.screenWidth / 30,
+                  width: widget.configuration.screenWidth / 30,
+                  child: CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(PrimaryColorLight),
+                  ),
+                )
+              : Text(
+                  !requested ? 'Add+' : 'Requested',
+                  style: TextStyle(
+                      fontSize: 12 * widget.configuration.textSizeFactor,
+                      color: !requested ? Colors.black : Colors.black54),
+                ),
+          onPressed: waitForSendingFriendRequest
+              ? null
+              : () async {
+                  setState(() {
+                    waitForSendingFriendRequest = true;
+                  });
+                  if (!requested) {
+                    await Database().sendFriendRequest(
+                        context,
+                        widget.configuration.userData.userId,
+                        widget.configuration.userData.pseudo,
+                        widget
+                            .configuration.userData.profilePictureDownloadPath,
+                        _userProfile.userId);
+                    requested = true;
+                  } else {
+                    await Database().removeFriendRequest(
+                        context,
+                        widget.configuration.userData.userId,
+                        _userProfile.userId);
+                    requested = false;
+                  }
+                  waitForSendingFriendRequest = false;
+                  setState(() {});
+                },
+        ),
+      );
+    }
+  }
+
+  Widget showAcceptRefuseButtons() {
+    if (!isUser &&
+        widget.configuration.userData.pendingFriendsId
+            .contains(_userProfile.userId)) if (waitingForAcceptOrRefuse)
+      return SizedBox(
+        height: widget.configuration.screenWidth / 20,
+        width: widget.configuration.screenWidth / 20,
+        child: CircularProgressIndicator(),
+      );
+    else
+      return ButtonTheme(
+        minWidth: 0,
+        shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(widget.configuration.screenWidth / 10)),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+              horizontal: widget.configuration.screenWidth / 50),
+          child: Row(
+            children: <Widget>[
+              showRefuseButton(),
+              Divider(
+                indent: widget.configuration.screenWidth / 50,
+              ),
+              showAcceptButton(),
+            ],
+          ),
+        ),
+      );
+    else
+      return Container();
+  }
+
+  Widget showAcceptButton() {
+    return Expanded(
+      child: RaisedButton(
+        color: Colors.green,
+        child: Text(
+          'Accept',
+          style: TextStyle(
+              fontSize: 12 * widget.configuration.textSizeFactor,
+              color: Colors.white),
+        ),
+        onPressed: () async {
+          setState(() {
+            waitingForAcceptOrRefuse = true;
+          });
+          await Database().acceptFriendRequest(context,
+              widget.configuration.userData.userId, _userProfile.userId);
+          _userProfile.isFriend = true;
+          waitingForAcceptOrRefuse = false;
+          setState(() {});
+        },
+      ),
+    );
+  }
+
+  Widget showRefuseButton() {
+    return Expanded(
+      child: RaisedButton(
+        color: Colors.red,
+        child: Text(
+          'Refuse',
+          style: TextStyle(
+              fontSize: 12 * widget.configuration.textSizeFactor,
+              color: Colors.white),
+        ),
+        onPressed: () async {
+          setState(() {
+            waitingForAcceptOrRefuse = true;
+          });
+
+          await Database().refuseFriendRequest(context,
+              widget.configuration.userData.userId, _userProfile.userId);
+
+          waitingForAcceptOrRefuse = false;
+          setState(() {});
+        },
       ),
     );
   }
