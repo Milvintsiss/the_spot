@@ -25,6 +25,7 @@ class _FollowersFollowingFriendsPageState
   bool isWaiting = true;
   List<UserProfile> queryResult = [];
   Timestamp index = Timestamp.now();
+  int friendsIndex = 0;
   int querySize = 10;
 
   String noResultMessage;
@@ -83,10 +84,24 @@ class _FollowersFollowingFriendsPageState
           noResultMessage = "This user hasn't added friends yet.";
           appBarTitle = "Friends of " + widget.userProfile.pseudo;
 
-          queryResult = await Database().getUsersByIds(
-              context, widget.userProfile.friends,
-              verifyIfFriendsOrFollowed: true,
-              mainUserId: widget.userProfile.userId);
+          if (friendsIndex < widget.userProfile.friends.length) {
+            int range =
+            friendsIndex + querySize > widget.userProfile.friends.length
+                ? widget.userProfile.friends.length
+                : friendsIndex + querySize;
+
+            List<String> query =
+            widget.userProfile.friends.getRange(friendsIndex, range).toList();
+
+            List<UserProfile> res = await Database().getUsersByIds(
+                context, query,
+                verifyIfFriendsOrFollowed: true,
+                mainUserId: widget.userProfile.userId);
+            friendsIndex = friendsIndex + querySize;
+            setState(() {
+              queryResult.addAll(res);
+            });
+          }
           setState(() {
             isWaiting = false;
           });

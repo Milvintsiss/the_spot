@@ -23,17 +23,49 @@ class _FriendRequestsPageState extends State<FriendRequestsPage> {
 
   List<bool> waiting = [];
 
+  bool noResult = false;
+
   @override
   void initState() {
     super.initState();
+    widget.configuration.addListener(onUserDataChanged);
 
     getUsersData();
   }
 
-  void getUsersData() async {
+  void onUserDataChanged() async {
+    await getUsersData();
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.configuration.removeListener(onUserDataChanged);
+    super.dispose();
+  }
+
+  Future getUsersData() async {
+    noResult = false;
     print(widget.configuration.userData.pendingFriendsId);
-    queryResult = await Database()
-        .getUsersByIds(context, widget.configuration.userData.pendingFriendsId);
+    queryResult.clear();
+    if (widget.configuration.userData.pendingFriendsId.length == 0) {
+      setState(() {
+        noResult = true;
+      });
+    } else {
+      for (int i = 0;
+          i < widget.configuration.userData.pendingFriendsId.length;
+          i = i + 10) {
+        List<String> query = widget.configuration.userData.pendingFriendsId
+            .getRange(
+                i,
+                i + 10 > widget.configuration.userData.pendingFriendsId.length
+                    ? widget.configuration.userData.pendingFriendsId.length
+                    : i + 10)
+            .toList();
+        queryResult.addAll(await Database().getUsersByIds(context, query));
+      }
+    }
     queryResult.forEach((element) {
       waiting.add(false);
     });
@@ -47,21 +79,24 @@ class _FriendRequestsPageState extends State<FriendRequestsPage> {
     return Scaffold(
       backgroundColor: PrimaryColorDark,
       appBar: AppBar(),
-      body: isDataLoaded
-          ? ListView.builder(
-              padding: EdgeInsets.fromLTRB(
-                  widget.configuration.screenWidth / 20,
-                  widget.configuration.screenWidth / 40,
-                  widget.configuration.screenWidth / 20,
-                  widget.configuration.screenWidth / 40),
-              itemCount: queryResult.length,
-              itemBuilder: (BuildContext context, int itemIndex) {
-                return showResultWidget(itemIndex);
-              },
-              shrinkWrap: true,
-              physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            )
-          : Center(child: CircularProgressIndicator()),
+      body: noResult
+          ? Center(child: Text("You don't have any friends request yet.", style: TextStyle(fontSize: widget.configuration.textSizeFactor * 20),))
+          : isDataLoaded
+              ? ListView.builder(
+                  padding: EdgeInsets.fromLTRB(
+                      widget.configuration.screenWidth / 20,
+                      widget.configuration.screenWidth / 40,
+                      widget.configuration.screenWidth / 20,
+                      widget.configuration.screenWidth / 40),
+                  itemCount: queryResult.length,
+                  itemBuilder: (BuildContext context, int itemIndex) {
+                    return showResultWidget(itemIndex);
+                  },
+                  shrinkWrap: true,
+                  physics: AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics()),
+                )
+              : Center(child: CircularProgressIndicator()),
     );
   }
 
@@ -122,8 +157,6 @@ class _FriendRequestsPageState extends State<FriendRequestsPage> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
                               widget.configuration.screenWidth / 25)),
-                      buttonColor: PrimaryColor,
-                      disabledColor: PrimaryColor,
                       child: Row(
                         children: <Widget>[
                           showRefuseButton(index),
@@ -156,7 +189,6 @@ class _FriendRequestsPageState extends State<FriendRequestsPage> {
         });
         await Database().acceptFriendRequest(context,
             widget.configuration.userData.userId, queryResult[index].userId);
-        queryResult.removeAt(index);
         waiting[index] = false;
         setState(() {});
       },
@@ -177,11 +209,8 @@ class _FriendRequestsPageState extends State<FriendRequestsPage> {
           waiting[index] = true;
         });
 
-        if (await Database().refuseFriendRequest(context,
-            widget.configuration.userData.userId, queryResult[index].userId)) {
-          widget.configuration.userData.pendingFriendsId.remove(queryResult[index].userId);
-          queryResult.removeAt(index);
-        }
+        await Database().refuseFriendRequest(context,
+            widget.configuration.userData.userId, queryResult[index].userId);
 
         waiting[index] = false;
         setState(() {});

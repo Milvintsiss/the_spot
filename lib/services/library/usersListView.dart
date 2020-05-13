@@ -53,9 +53,8 @@ class _UsersListViewState extends State<UsersListView> {
     init();
   }
 
-  void onUserDataChanged(){
-    setState(() {
-    });
+  void onUserDataChanged() {
+    setState(() {});
   }
 
   @override
@@ -147,13 +146,16 @@ class _UsersListViewState extends State<UsersListView> {
         .contains(widget.query[index].userId)) hasSendAFriendRequest = true;
 
     return GestureDetector(
-      onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => Profile(
-                    configuration: widget.configuration,
-                    userProfile: widget.query[index],
-                  ))),
+      onTap: () async {
+        await Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => Profile(
+                      configuration: widget.configuration,
+                      userProfile: widget.query[index],
+                    )));
+        setState(() {});
+      },
       child: Padding(
         padding: EdgeInsets.fromLTRB(0, spaceBetweenItems, 0, 0),
         child: Container(
@@ -285,7 +287,6 @@ class _UsersListViewState extends State<UsersListView> {
                     widget.query[index].userId);
                 widget.query[index].isFollowed = false;
                 widget.query[index].numberOfFollowers--;
-                widget.configuration.userData.numberOfFollowing--;
               } else {
                 await Database().followUser(
                     context,
@@ -293,7 +294,6 @@ class _UsersListViewState extends State<UsersListView> {
                     widget.query[index].userId);
                 widget.query[index].isFollowed = true;
                 widget.query[index].numberOfFollowers++;
-                widget.configuration.userData.numberOfFollowing++;
               }
               waitForFollowing[index] = false;
               setState(() {});
@@ -340,11 +340,13 @@ class _UsersListViewState extends State<UsersListView> {
                       widget.configuration.userData.pseudo,
                       widget.configuration.userData.profilePictureDownloadPath,
                       widget.query[index].userId);
+                  widget.query[index].pendingFriendsId.add(widget.configuration.userData.userId);
                 } else {
                   await Database().removeFriendRequest(
                       context,
                       widget.configuration.userData.userId,
                       widget.query[index].userId);
+                  widget.query[index].pendingFriendsId.remove(widget.configuration.userData.userId);
                 }
                 friendRequestAlreadyDone[index] =
                     !friendRequestAlreadyDone[index];
