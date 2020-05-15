@@ -654,11 +654,15 @@ class Database {
     newChatGroup.activeMessagesCount = 1;
     newChatGroup.totalMessagesCount = 1;
 
+    Map data = newChatGroup.toMap();
+    //create tags
+    newChatGroup.members.forEach((element) => data.putIfAbsent(element, () => null));
+
     if (await checkConnection(context)) {
       try {
         await database
             .collection(GROUP_CHATS_COLLECTION)
-            .add(newChatGroup.toMap())
+            .add(data)
             .then((document) => newChatGroup.id = document.documentID)
             .catchError((err) {
           print("Database Error: " + err.toString());
