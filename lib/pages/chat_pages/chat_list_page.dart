@@ -53,21 +53,12 @@ class _ChatListPageState extends State<ChatListPage> {
         child: Padding(
           padding: EdgeInsets.fromLTRB(20, 0, 10, 0),
           child: TextField(
-            onChanged: (String value) async {
-              setState(() {
-                page = -1;
-                isWaiting = true;
-                if (value.trim().length > 0) {
-                  query = value.trim();
-                  userIsSearching = true;
-                } else {
-                  userIsSearching = false;
-                }
-              });
-              getUsersCallback();
+            onChanged: (String value) {
+              query = value.trim();
             },
             style: TextStyle(color: Colors.white),
             textInputAction: TextInputAction.search,
+            onEditingComplete: onSearchButtonPressed,
             decoration: InputDecoration(
               hintText: "Search...",
               hintStyle: TextStyle(color: Colors.white70),
@@ -78,13 +69,26 @@ class _ChatListPageState extends State<ChatListPage> {
               disabledBorder: InputBorder.none,
               suffixIcon: IconButton(
                 icon: Icon(Icons.search),
-                onPressed: () {},
+                onPressed: onSearchButtonPressed,
               ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  void onSearchButtonPressed() async {
+    page = 0;
+    setState(() {
+      isWaiting = true;
+      if (query.length > 0) {
+        userIsSearching = true;
+        getUsersCallback();
+      } else {
+        userIsSearching = false;
+      }
+    });
   }
 
   Widget showQueryResultsWidget() {

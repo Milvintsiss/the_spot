@@ -76,7 +76,7 @@ class UserProfile {
   }
 }
 
-UserProfile ConvertMapToUserProfile(Map userProfile) {
+UserProfile convertMapToUserProfile(Map userProfile) {
   List<String> pendingFriendsId = [];
   if (userProfile['PendingFriendsId'] != null) {
     pendingFriendsId = userProfile['PendingFriendsId'].cast<String>();

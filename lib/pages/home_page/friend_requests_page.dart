@@ -47,20 +47,21 @@ class _FriendRequestsPageState extends State<FriendRequestsPage> {
   Future getUsersData() async {
     noResult = false;
     print(widget.configuration.userData.pendingFriendsId);
+    List<String> pendingFriends = widget.configuration.userData.friends.reversed.toList();
     queryResult.clear();
-    if (widget.configuration.userData.pendingFriendsId.length == 0) {
+    if (pendingFriends.length == 0) {
       setState(() {
         noResult = true;
       });
     } else {
       for (int i = 0;
-          i < widget.configuration.userData.pendingFriendsId.length;
+          i < pendingFriends.length;
           i = i + 10) {
-        List<String> query = widget.configuration.userData.pendingFriendsId
+        List<String> query = pendingFriends
             .getRange(
                 i,
-                i + 10 > widget.configuration.userData.pendingFriendsId.length
-                    ? widget.configuration.userData.pendingFriendsId.length
+                i + 10 > pendingFriends.length
+                    ? pendingFriends.length
                     : i + 10)
             .toList();
         queryResult.addAll(await Database().getUsersByIds(context, query));

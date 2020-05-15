@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:the_spot/services/library/chatGroup.dart';
 
 import 'package:the_spot/services/library/library.dart';
 
@@ -11,31 +12,16 @@ import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
 import 'package:the_spot/services/library/userGrade.dart';
 
+const String USERS_COLLECTION = 'users';
+const String SPOTS_COLLECTION = 'spots';
+const String GROUP_CHATS_COLLECTION = 'groupChats';
+
 class Database {
   final database = Firestore.instance;
 
-  CloudFunctions cloudFunctions = CloudFunctions(
+  final CloudFunctions cloudFunctions = CloudFunctions(
     region: 'us-central1',
   );
-
-  void createRecord() async {
-    await database.collection("books").document("1").setData({
-      'title': 'Mastering Flutter',
-      'description': 'Programming Guide for Dart'
-    });
-
-    DocumentReference ref = await database.collection("books").add({
-      'title': 'Flutter in Action',
-      'description': 'Complete Programming Guide to learn Flutter'
-    });
-    print(ref.documentID);
-  }
-
-  void getData() {
-    database.collection("books").getDocuments().then((QuerySnapshot snapshot) {
-      snapshot.documents.forEach((f) => print('${f.data}}'));
-    });
-  }
 
   Future<bool> updateProfile(BuildContext context, String userId,
       {bool onCreate = false,
@@ -88,7 +74,7 @@ class Database {
       try {
         if (onCreate) {
           await database
-              .collection('users')
+              .collection(USERS_COLLECTION)
               .document(userId)
               .setData(update)
               .catchError((err) {
@@ -105,7 +91,7 @@ class Database {
           });
         } else {
           await database
-              .collection('users')
+              .collection(USERS_COLLECTION)
               .document(userId)
               .updateData(update)
               .catchError((err) {
@@ -134,12 +120,12 @@ class Database {
     if (await checkConnection(context)) {
       try {
         await database
-            .collection("users")
+            .collection(USERS_COLLECTION)
             .document(userId)
             .get()
             .then((DocumentSnapshot document) {
           if (document.exists) {
-            userProfile = ConvertMapToUserProfile(document.data);
+            userProfile = convertMapToUserProfile(document.data);
             userProfile.userId = userId;
           }
         }).catchError((err) {
@@ -159,30 +145,30 @@ class Database {
 
   Future<List<UserProfile>> getUsersByIds(
       BuildContext context, List<String> ids,
-      {bool verifyIfFriendsOrFollowed = false,
-      String mainUserId}) async {
+      {bool verifyIfFriendsOrFollowed = false, String mainUserId}) async {
     List<UserProfile> usersProfile = [];
 
     if (await checkConnection(context) && ids.length > 0) {
       try {
-          await database
-              .collection('users')
-              .where(FieldPath.documentId, whereIn: ids)
-              .getDocuments()
-              .then((QuerySnapshot querySnapshot) => ids.forEach((element) {
-            usersProfile.add(ConvertMapToUserProfile(querySnapshot.documents
-                .firstWhere((document) => document.documentID == element)
-                .data)); //returns documents in query order
-            usersProfile[usersProfile.length - 1].userId = element;
-          }))
-              .catchError((err) {
-            print("Database Error: " + err.toString());
-            error("Database Error: " + err.toString(), context);
-          });
-          if (verifyIfFriendsOrFollowed) {
-            usersProfile =
-            await isUsersFriendOrFollowed(context, usersProfile, mainUserId);
-          }
+        await database
+            .collection(USERS_COLLECTION)
+            .where(FieldPath.documentId, whereIn: ids)
+            .getDocuments()
+            .then((QuerySnapshot querySnapshot) => ids.forEach((element) {
+                  usersProfile.add(convertMapToUserProfile(querySnapshot
+                      .documents
+                      .firstWhere((document) => document.documentID == element)
+                      .data)); //returns documents in query order
+                  usersProfile[usersProfile.length - 1].userId = element;
+                }))
+            .catchError((err) {
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
+        });
+        if (verifyIfFriendsOrFollowed) {
+          usersProfile =
+              await isUsersFriendOrFollowed(context, usersProfile, mainUserId);
+        }
       } catch (err) {
         print(err);
         error(err.toString(), context);
@@ -195,7 +181,7 @@ class Database {
     if (await checkConnection(context)) {
       try {
         await database
-            .collection('users')
+            .collection(USERS_COLLECTION)
             .document(userId)
             .delete()
             .catchError((err) {
@@ -226,7 +212,7 @@ class Database {
     if (await checkConnection(context)) {
       try {
         await database
-            .collection('users')
+            .collection(USERS_COLLECTION)
             .document(userToQueryId)
             .collection('Followers')
             .orderBy('Date', descending: true)
@@ -268,7 +254,7 @@ class Database {
     if (await checkConnection(context)) {
       try {
         await database
-            .collection('users')
+            .collection(USERS_COLLECTION)
             .document(userToQueryId)
             .collection('Following')
             .orderBy('Date', descending: true)
@@ -307,22 +293,24 @@ class Database {
         WriteBatch batch = database.batch();
         batch.setData(
             database
-                .collection('users')
+                .collection(USERS_COLLECTION)
                 .document(mainUserId)
                 .collection('Following')
                 .document(userToFollowId),
             {'Date': date});
-        batch.updateData(database.collection('users').document(mainUserId),
+        batch.updateData(
+            database.collection(USERS_COLLECTION).document(mainUserId),
             {'NumberOfFollowing': FieldValue.increment(1)});
 
         batch.setData(
             database
-                .collection('users')
+                .collection(USERS_COLLECTION)
                 .document(userToFollowId)
                 .collection('Followers')
                 .document(mainUserId),
             {'Date': date});
-        batch.updateData(database.collection('users').document(userToFollowId),
+        batch.updateData(
+            database.collection(USERS_COLLECTION).document(userToFollowId),
             {'NumberOfFollowers': FieldValue.increment(1)});
 
         await batch.commit().then((value) => succeed = true).catchError((err) {
@@ -346,20 +334,21 @@ class Database {
       try {
         WriteBatch batch = database.batch();
         batch.delete(database
-            .collection('users')
+            .collection(USERS_COLLECTION)
             .document(mainUserId)
             .collection('Following')
             .document(userToUnFollowId));
-        batch.updateData(database.collection('users').document(mainUserId),
+        batch.updateData(
+            database.collection(USERS_COLLECTION).document(mainUserId),
             {'NumberOfFollowing': FieldValue.increment(-1)});
 
         batch.delete(database
-            .collection('users')
+            .collection(USERS_COLLECTION)
             .document(userToUnFollowId)
             .collection('Followers')
             .document(mainUserId));
         batch.updateData(
-            database.collection('users').document(userToUnFollowId),
+            database.collection(USERS_COLLECTION).document(userToUnFollowId),
             {'NumberOfFollowers': FieldValue.increment(-1)});
 
         await batch.commit().then((value) => succeed = true).catchError((err) {
@@ -390,7 +379,7 @@ class Database {
     if (await checkConnection(context)) {
       try {
         await database
-            .collection('users')
+            .collection(USERS_COLLECTION)
             .document(userToAddAsFriendId)
             .updateData({
               'PendingFriendsId': FieldValue.arrayUnion([mainUserId])
@@ -421,7 +410,7 @@ class Database {
     if (await checkConnection(context)) {
       try {
         await database
-            .collection('users')
+            .collection(USERS_COLLECTION)
             .document(userToAddAsFriendId)
             .updateData({
               'PendingFriendsId': FieldValue.arrayRemove([mainUserId])
@@ -447,12 +436,14 @@ class Database {
     if (await checkConnection(context)) {
       try {
         WriteBatch batch = database.batch();
-        batch.updateData(database.collection('users').document(mainUserId), {
+        batch.updateData(
+            database.collection(USERS_COLLECTION).document(mainUserId), {
           'Friends': FieldValue.arrayUnion([userToAddId]),
           'PendingFriendsId': FieldValue.arrayRemove([userToAddId]),
           'NumberOfFriends': FieldValue.increment(1)
         });
-        batch.updateData(database.collection('users').document(userToAddId), {
+        batch.updateData(
+            database.collection(USERS_COLLECTION).document(userToAddId), {
           'Friends': FieldValue.arrayUnion([mainUserId]),
           'NumberOfFriends': FieldValue.increment(1)
         });
@@ -475,7 +466,10 @@ class Database {
     bool success = true;
     if (await checkConnection(context)) {
       try {
-        await database.collection('users').document(mainUserId).updateData({
+        await database
+            .collection(USERS_COLLECTION)
+            .document(mainUserId)
+            .updateData({
           'PendingFriendsId': FieldValue.arrayRemove([userToAddId])
         }).catchError((err) {
           print("Database Error: " + err.toString());
@@ -497,11 +491,13 @@ class Database {
     if (await checkConnection(context)) {
       try {
         WriteBatch batch = database.batch();
-        batch.updateData(database.collection('users').document(mainUserId), {
+        batch.updateData(
+            database.collection(USERS_COLLECTION).document(mainUserId), {
           'Friends': FieldValue.arrayRemove([userToRemoveId]),
           'NumberOfFriends': FieldValue.increment(-1)
         });
-        batch.updateData(database.collection('users').document(userToRemoveId), {
+        batch.updateData(
+            database.collection(USERS_COLLECTION).document(userToRemoveId), {
           'Friends': FieldValue.arrayRemove([mainUserId]),
           'NumberOfFriends': FieldValue.increment(-1)
         });
@@ -528,7 +524,7 @@ class Database {
           usersId.add(user.userId);
         });
         await database
-            .collection('users')
+            .collection(USERS_COLLECTION)
             .document(mainUserId)
             .collection('Following')
             .where(FieldPath.documentId, whereIn: usersId)
@@ -554,7 +550,7 @@ class Database {
             element.isFriend = false;
         });
 //        await database
-//            .collection('users')
+//            .collection(USERS_COLLECTION)
 //            .document(mainUserId)
 //            .collection('Friends')
 //            .where(FieldPath.documentId, whereIn: usersId)
@@ -586,7 +582,7 @@ class Database {
     if (await checkConnection(context)) {
       try {
         await database
-            .collection('users')
+            .collection(USERS_COLLECTION)
             .where('Username', isEqualTo: username)
             .getDocuments()
             .then((QuerySnapshot querySnapshot) {
@@ -614,7 +610,7 @@ class Database {
     if (await checkConnection(context)) {
       try {
         await database
-            .collection('users')
+            .collection(USERS_COLLECTION)
             .document(userId)
             .updateData({'DevicesTokens': FieldValue.arrayUnion(tokens)})
             .then((value) => success = true)
@@ -648,6 +644,58 @@ class Database {
     }
   }
 
+  Future<ChatGroup> createNewChatGroup(
+      BuildContext context, ChatGroup newChatGroup) async {
+    Timestamp date = Timestamp.now();
+    newChatGroup.lastUpdate = date;
+    newChatGroup.lastMessage = date;
+    newChatGroup.creationDate = date;
+    newChatGroup.hasArchiveMessages = false;
+    newChatGroup.activeMessagesCount = 1;
+    newChatGroup.totalMessagesCount = 1;
+
+    if (await checkConnection(context)) {
+      try {
+        await database
+            .collection(GROUP_CHATS_COLLECTION)
+            .add(newChatGroup.toMap())
+            .then((document) => newChatGroup.id = document.documentID)
+            .catchError((err) {
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
+        });
+      } catch (err) {
+        print(err);
+        error(err.toString(), context);
+      }
+    }
+    return newChatGroup;
+  }
+
+  Future<bool> sendMessageToGroup(BuildContext context, String mainUserId,
+      String groupId, Message message) async {
+    bool success = true;
+    if (await checkConnection(context)) {
+      try {
+        await database
+            .collection(GROUP_CHATS_COLLECTION)
+            .document(groupId)
+            .updateData({
+          'Messages': FieldValue.arrayUnion([message.toMap()])
+        }).catchError((err) {
+          success = false;
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
+        });
+      } catch (err) {
+        success = false;
+        print(err);
+        error(err.toString(), context);
+      }
+    }
+    return success;
+  }
+
   Future<String> updateASpot(
       {@required BuildContext context,
       @required String spotId,
@@ -676,7 +724,7 @@ class Database {
 
       if (onCreate) {
         await database
-            .collection("spots")
+            .collection(SPOTS_COLLECTION)
             .add(_spotData)
             .then((value) => spotId = value.documentID)
             .catchError((err) {
@@ -686,7 +734,7 @@ class Database {
         });
       } else {
         await database
-            .collection("spots")
+            .collection(SPOTS_COLLECTION)
             .document(spotId)
             .updateData(_spotData)
             .catchError((err) {
@@ -750,7 +798,7 @@ class Database {
     if (await checkConnection(context)) {
       if (matchName == null) {
         await database
-            .collection("spots")
+            .collection(SPOTS_COLLECTION)
             .getDocuments()
             .then((QuerySnapshot querySnapshot) {
           spots = convertSpotsData(querySnapshot, getAll);
@@ -761,7 +809,7 @@ class Database {
         });
       } else {
         await database
-            .collection("spots")
+            .collection(SPOTS_COLLECTION)
             .where(
               'SpotName',
               isEqualTo: matchName,
