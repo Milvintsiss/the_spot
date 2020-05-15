@@ -77,7 +77,7 @@ class Configuration with ChangeNotifier {
           .snapshots()
           .listen((event) {
         print(event.data);
-        userData = ConvertMapToUserProfile(event.data);
+        userData = convertMapToUserProfile(event.data);
         userData.userId = event.documentID;
         notifyListeners();
       });

@@ -84,14 +84,16 @@ class _FollowersFollowingFriendsPageState
           noResultMessage = "This user hasn't added friends yet.";
           appBarTitle = "Friends of " + widget.userProfile.pseudo;
 
-          if (friendsIndex < widget.userProfile.friends.length) {
+          List<String> friends = widget.userProfile.friends.reversed.toList();
+
+          if (friendsIndex < friends.length) {
             int range =
-            friendsIndex + querySize > widget.userProfile.friends.length
-                ? widget.userProfile.friends.length
+            friendsIndex + querySize > friends.length
+                ? friends.length
                 : friendsIndex + querySize;
 
             List<String> query =
-            widget.userProfile.friends.getRange(friendsIndex, range).toList();
+            friends.getRange(friendsIndex, range).toList();
 
             List<UserProfile> res = await Database().getUsersByIds(
                 context, query,

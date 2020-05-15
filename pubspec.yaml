@@ -38,9 +38,9 @@ dependencies:
 
   #database #firebase #algolia
   firebase_core: ^0.4.4+3
-  firebase_auth: ^0.15.3
+  firebase_auth: ^0.16.0
   cloud_firestore: ^0.13.0+1
-  cloud_functions: ^0.4.2+3
+  cloud_functions: ^0.5.0
   firebase_messaging: ^6.0.13
   firebase_storage: ^3.1.1
 

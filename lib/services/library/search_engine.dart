@@ -35,7 +35,7 @@ Future<List<UserProfile>> searchUsers(
             .getDocuments()
             .then((QuerySnapshot querySnapshot) {
           documentsId.forEach((element) {
-            users.add(ConvertMapToUserProfile(querySnapshot.documents
+            users.add(convertMapToUserProfile(querySnapshot.documents
                 .firstWhere((document) => document.documentID == element)
                 .data)); //returns documents in algolia order
             users[users.length - 1].userId = element;
