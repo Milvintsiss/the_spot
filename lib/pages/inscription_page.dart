@@ -5,7 +5,7 @@ import 'package:image_cropper/image_cropper.dart';
 
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/root_page.dart';
-import 'package:the_spot/services/library/configuration.dart';
+import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/services/configuration.dart';
 import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/theme.dart';
