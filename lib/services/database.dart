@@ -655,8 +655,6 @@ class Database {
     newChatGroup.totalMessagesCount = 1;
 
     Map data = newChatGroup.toMap();
-    //create tags
-    newChatGroup.members.forEach((element) => data.putIfAbsent(element, () => null));
 
     if (await checkConnection(context)) {
       try {

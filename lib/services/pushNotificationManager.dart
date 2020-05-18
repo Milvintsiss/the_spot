@@ -1,6 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:the_spot/services/library/configuration.dart';
+import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/services/configuration.dart';
 import 'package:the_spot/services/library/library.dart';
 
 class PushNotificationsManager {

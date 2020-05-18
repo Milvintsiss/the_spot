@@ -10,7 +10,7 @@ import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/deleteUser.dart';
 import 'package:the_spot/services/library/userProfile.dart';
-import 'package:the_spot/services/library/configuration.dart';
+import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/services/configuration.dart';
 import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/services/library/library.dart';
 

@@ -158,6 +158,24 @@ exports.repairDatabase = functions.pubsub.schedule('every 24 hours').onRun((cont
 //get all users followers and following and update numbers of following and followers
 });
 
+exports.addPropertyToUserProfile = functions.https.onRequest((req, res) => {
+    return admin.firestore().collection("users").get().then((docs) => {
+        return docs.forEach((doc) => {
+            // eslint-disable-next-line promise/no-nesting
+            admin.firestore().collection("users").doc(doc.id)
+                .update({'AcceptNoFriendMessages': true})
+                .then(() => {
+                    return console.log("Success:", doc.id);
+                })
+                .catch((err) => {
+                    return console.error(err);
+                });
+        });
+    }).catch((err) => {
+        return console.error(err);
+    });
+});
+
 exports.changeUserStringISODates_toTimestamp = functions.https.onRequest((req, res) => {
     return admin.firestore().collection("users").get().then((docs) => {
         return docs.forEach((doc) => {

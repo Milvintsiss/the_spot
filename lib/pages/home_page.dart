@@ -4,7 +4,7 @@ import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/pages/home_page/Map/map.dart';
 import 'package:the_spot/pages/home_page/profile.dart';
 import 'package:the_spot/pages/chat_pages/chat_list_page.dart';
-import 'package:the_spot/services/library/configuration.dart';
+import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/services/configuration.dart';
 
 import '../theme.dart';
 

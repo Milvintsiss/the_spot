@@ -10,11 +10,11 @@ import 'package:location/location.dart';
 import 'package:the_spot/pages/home_page/Map/createUpdateSpot_page.dart';
 import 'package:the_spot/pages/home_page/Map/spotInfo.dart';
 import 'package:the_spot/services/database.dart';
-import 'package:the_spot/services/library/configuration.dart';
+import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/services/configuration.dart';
 import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/services/library/map_helper.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
-import 'package:the_spot/services/library/search_engine.dart';
+import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/services/search_engine.dart';
 
 import '../../../theme.dart';
 

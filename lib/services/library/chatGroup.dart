@@ -4,6 +4,7 @@ import 'package:the_spot/services/library/userProfile.dart';
 class ChatGroup {
   String id;
   String name;
+  String imageDownloadPath;
   List<String> adminsIds;
   List<String> membersIds;
   List<Message> messages;
@@ -16,10 +17,12 @@ class ChatGroup {
   Timestamp creationDate;
 
   List<UserProfile> members;
+  bool isGroup;
 
   ChatGroup(
       {this.id,
       this.name,
+      this.imageDownloadPath,
       this.adminsIds,
       this.membersIds,
       this.messages,
@@ -33,11 +36,11 @@ class ChatGroup {
 
   Map<String, dynamic> toMap() {
     return {
-      'Id': id,
       'Name': name,
+      'ImageDownloadPath': imageDownloadPath,
       'AdminsIds': adminsIds,
       'MembersIds': membersIds,
-      'Messages': messages,
+      'Messages': convertListOfMessagesToListOfMap(messages),
       'HasArchiveMessages': hasArchiveMessages,
       'ActiveMessagesCount': activeMessagesCount,
       'TotalMessagesCount': totalMessagesCount,
@@ -49,8 +52,9 @@ class ChatGroup {
 }
 
 ChatGroup convertMapToChatGroup(Map map) {
-  return ChatGroup(
+  ChatGroup chatGroup = ChatGroup(
       name: map['Name'],
+      imageDownloadPath: map['ImageDownloadPath'],
       adminsIds: map['AdminsIds'].cast<String>(),
       membersIds: map['MembersIds'].cast<String>(),
       messages: convertListOfMapsToListOfMessages(map['Messages'].cast<Map>()),
@@ -60,6 +64,11 @@ ChatGroup convertMapToChatGroup(Map map) {
       lastMessage: map['LastMessage'],
       lastUpdate: map['LastUpdate'],
       creationDate: map['CreationDate']);
+  if(chatGroup.membersIds.length > 2)
+    chatGroup.isGroup = true;
+  else
+    chatGroup.isGroup = false;
+  return chatGroup;
 }
 
 class Message {
@@ -86,4 +95,10 @@ List<Message> convertListOfMapsToListOfMessages(List<Map> maps) {
   List<Message> messages = [];
   maps.forEach((map) => messages.add(convertMapToMessage(map)));
   return messages;
+}
+
+List<Map> convertListOfMessagesToListOfMap(List<Message> messages) {
+  List<Map> messagesMaps = [];
+  messages.forEach((element) => messagesMaps.add(element.toMap()));
+  return messagesMaps;
 }
