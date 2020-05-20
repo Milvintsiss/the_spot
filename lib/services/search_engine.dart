@@ -3,22 +3,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/userProfile.dart';
-import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/services/configuration.dart';
+import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
 import 'package:the_spot/services/library/library.dart';
 
 import 'algolia.dart';
 
 Future<List<UserProfile>> searchUsers(
-    BuildContext context, String query, Configuration configuration, int page) async {
+    BuildContext context, String query, Configuration configuration, int page, {bool verifyIfUsersAreFollowedOrFriends = true}) async {
   List<UserProfile> users = [];
   if (await checkConnection(context)) {
     try {
       final Algolia algolia = AlgoliaObject.algolia; //initiate algolia
       final firestore = Firestore.instance;
-
-      if(page == -1)
-        page = 0;
 
       AlgoliaQuery algoliaQuery = algolia.instance.index('users').search(query).setPage(page);
       AlgoliaQuerySnapshot algoliaQuerySnapshot =
@@ -45,6 +42,7 @@ Future<List<UserProfile>> searchUsers(
           error(err.toString(), context);
           print(err);
         });
+        if(verifyIfUsersAreFollowedOrFriends)
         users = await Database().isUsersFriendOrFollowed(context, users, configuration.userData.userId);
       }
 

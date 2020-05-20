@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/userProfile.dart';
-import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/services/configuration.dart';
+import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/theme.dart';
 
@@ -47,7 +47,7 @@ class _FriendRequestsPageState extends State<FriendRequestsPage> {
   Future getUsersData() async {
     noResult = false;
     print(widget.configuration.userData.pendingFriendsId);
-    List<String> pendingFriends = widget.configuration.userData.friends.reversed.toList();
+    List<String> pendingFriends = widget.configuration.userData.pendingFriendsId.reversed.toList();
     queryResult.clear();
     if (pendingFriends.length == 0) {
       setState(() {

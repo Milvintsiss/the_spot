@@ -17,5 +17,6 @@
   "Have an account? Sign in": "J'ai déjà un compte",
   "Select your hobby(ies)": "Sélectionnez vos disciplines",
   "Sorry, this username is already used.": "Désolé, ce nom d'utilisateur est déjà utilisé.",
-  "Please connect to internet!": "Connectez-vous à internet pour continuer!"
+  "Please connect to internet!": "Connectez-vous à internet pour continuer!",
+  "Sorry, username \"%DYNAMIC\" is already used.": "Désolé, le nom d'utilisateur \"%DYNAMIC\" est déjà utilisé."
 }
