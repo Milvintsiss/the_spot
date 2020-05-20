@@ -5,7 +5,7 @@ import 'package:image_cropper/image_cropper.dart';
 
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/root_page.dart';
-import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/services/configuration.dart';
+import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/theme.dart';
@@ -29,6 +29,8 @@ class InscriptionPage extends StatefulWidget {
 class _InscriptionPage extends State<InscriptionPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
+
+  bool isWaiting = false;
 
   String _username;
   String _pseudo;
@@ -70,17 +72,22 @@ class _InscriptionPage extends State<InscriptionPage> {
         key: _scaffoldKey,
         appBar: showAppBar(),
         backgroundColor: PrimaryColorDark,
-        body: Form(
-          key: _formKey,
-          child: ListView(
-            padding: EdgeInsets.fromLTRB(30.0, 60.0, 30.0, 0.0),
-            children: <Widget>[
-              showUsernameInput(),
-              showPseudoInput(),
-              showPracticesButtons(),
-              showNextButton(),
-            ],
-          ),
+        body: Stack(
+          children: [
+            Form(
+              key: _formKey,
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(30.0, 60.0, 30.0, 0.0),
+                children: <Widget>[
+                  showUsernameInput(),
+                  showPseudoInput(),
+                  showPracticesButtons(),
+                  showNextButton(),
+                ],
+              ),
+            ),
+            isWaiting ? Center(child: CircularProgressIndicator()) : Container(),
+          ],
         ));
   }
 
@@ -310,16 +317,23 @@ class _InscriptionPage extends State<InscriptionPage> {
               onPressed: () async {
                 if (validateAndSave()) {
                   bool isUserUsername = false;
+                  setState(() {
+                    isWaiting = true;
+                  });
                   if(updateProfile){
                     isUserUsername = _username == widget.configuration.userData.username;
                   }
                   if (await Database().isUsernameAlreadyInUse(
                           context: context, username: _username) &&
                       !isUserUsername) {
+                    setState(() {
+                      isWaiting = false;
+                    });
                     Vibrate.feedback(FeedbackType.warning);
                     FlushbarHelper.createError(
+
                         message: AppLocalizations.of(context)
-                            .translate('Sorry, username \"$_username\" is already used.'),
+                            .translate('Sorry, username \"%DYNAMIC\" is already used.', dynamic: _username),
                         duration: Duration(milliseconds: 4000)).show(context);
                   } else {
                     bool databaseUpdated = await Database().updateProfile(
@@ -337,12 +351,6 @@ class _InscriptionPage extends State<InscriptionPage> {
                     if (databaseUpdated) {
                       print("Profile updated with success");
                       if (updateProfile) {
-                        widget.configuration.userData.username = _username;
-                        widget.configuration.userData.pseudo = _pseudo;
-                        widget.configuration.userData.BMX = _BMX;
-                        widget.configuration.userData.Skateboard = _Skateboard;
-                        widget.configuration.userData.Scooter = _Scooter;
-                        widget.configuration.userData.Roller = _Roller;
                         Navigator.pop(context);
                       } else
                         Navigator.push(
@@ -354,8 +362,11 @@ class _InscriptionPage extends State<InscriptionPage> {
                                       userId: widget.userId,
                                     )));
                     } else {
+                      setState(() {
+                        isWaiting = false;
+                      });
                       Vibrate.feedback(FeedbackType.warning);
-                      print("Error when updating the Profile...");
+                      error("Error when updating the Profile...", context);
                     }
                   }
                 }

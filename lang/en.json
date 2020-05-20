@@ -17,5 +17,6 @@
   "Have an account? Sign in": "Have an account? Sign in",
   "Select your hobby(ies)": "Select your hobby(ies)",
   "Sorry, this username is already used.": "Sorry, this username is already used.",
-  "Please connect to internet!": "Please connect to internet!"
+  "Please connect to internet!": "Please connect to internet!",
+  "Sorry, username \"%DYNAMIC\" is already used.": "Sorry, username \"%DYNAMIC\" is already used."
 }

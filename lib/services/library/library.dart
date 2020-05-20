@@ -8,7 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/home_page/profile.dart';
 import 'package:the_spot/services/library/userProfile.dart';
-import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/services/configuration.dart';
+import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/theme.dart';
 import 'package:vibrate/vibrate.dart';
 
@@ -114,7 +114,8 @@ Future<BitmapDescriptor> convertImageFileToBitmapDescriptor(File imageFile,
 Widget ProfilePicture(String downloadPath,
     {double size = 50,
     Color borderColor = PrimaryColorDark,
-    double borderSize = 2}) {
+    double borderSize = 2,
+    bool isAnUser = true}) {
   if (downloadPath != null && downloadPath != "")
     return SizedBox(
       height: size,
@@ -138,14 +139,71 @@ Widget ProfilePicture(String downloadPath,
       width: size,
       decoration: BoxDecoration(color: PrimaryColor, shape: BoxShape.circle),
       child: Icon(
-        Icons.person,
+        isAnUser ? Icons.person : Icons.people,
         size: size / 2,
       ),
     );
 }
 
+Widget userItem(
+    UserProfile user, double sizeReference, double textSizeReference,
+    {bool isDeletable = false,
+    VoidCallback deleteCallback,
+    Color background = SecondaryColorDark,
+    Color pseudoColor = Colors.white70,
+    FontWeight pseudoFontWeight = FontWeight.bold,
+    double borderSize,
+    Color borderColor = SecondaryColorLight}) {
+  if (borderSize == null) borderSize = sizeReference / 300;
+  return Container(
+    padding: EdgeInsets.all(sizeReference / 120),
+    decoration: BoxDecoration(
+      color: background,
+      borderRadius: BorderRadius.circular(sizeReference / 20),
+      border: Border.all(width: borderSize, color: borderColor),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ProfilePicture(user.profilePictureDownloadPath,
+            size: sizeReference / 20, borderSize: 0.5),
+        Divider(
+          indent: sizeReference / 120,
+        ),
+        Text(
+          user.pseudo,
+          style: TextStyle(
+              color: pseudoColor,
+              fontWeight: pseudoFontWeight,
+              fontSize: 14 * textSizeReference),
+        ),
+        isDeletable
+            ? SizedBox(
+                height: sizeReference / 25,
+                width: sizeReference / 25,
+                child: IconButton(
+                  tooltip: "Delete from the list",
+                  icon: Icon(
+                    Icons.cancel,
+                    color: borderColor,
+                  ),
+                  padding: EdgeInsets.zero,
+                  iconSize: sizeReference / 25,
+                  onPressed: deleteCallback,
+                ),
+              )
+            : Container(),
+      ],
+    ),
+  );
+}
+
 Flushbar friendRequestInAppNotification(
-    BuildContext context, Configuration configuration, String userPseudo, String userPictureDownloadPath, String userId) {
+    BuildContext context,
+    Configuration configuration,
+    String userPseudo,
+    String userPictureDownloadPath,
+    String userId) {
   return Flushbar(
     messageText: Text(
       "$userPseudo wants to add you as friend!",
@@ -167,18 +225,28 @@ Flushbar friendRequestInAppNotification(
     mainButton: FlatButton(
       child: Text('Accept'),
       onPressed: () async {
-        Database().acceptFriendRequest(context, configuration.userData.userId, userId);
+        Database().acceptFriendRequest(
+            context, configuration.userData.userId, userId);
         Navigator.pop(context);
       },
     ),
     onTap: (flushbar) async {
       print('cliked');
       UserProfile user = await Database().getProfileData(userId, context);
-      Navigator.push(context, MaterialPageRoute(
-        builder: (context) => Profile(userProfile: user, configuration: configuration,)
-      ));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => Profile(
+                    userProfile: user,
+                    configuration: configuration,
+                  )));
     },
   );
+}
+
+Map deleteMapNullKeys(Map map, {List<String> exceptions = const []}) {
+  map.removeWhere((key, value) => value == null && !exceptions.contains(key));
+  return map;
 }
 
 Color transparentColor(Color color, int alpha) {

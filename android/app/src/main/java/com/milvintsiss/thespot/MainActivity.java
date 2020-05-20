@@ -1,4 +1,4 @@
-package com.x1026.the_spot;
+package com.milvintsiss.thespot;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;

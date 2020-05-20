@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:the_spot/pages/home_page/profile.dart';
 import 'package:the_spot/services/library/userProfile.dart';
-import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/services/configuration.dart';
+import 'package:the_spot/services/configuration.dart';
 
 import '../../theme.dart';
 import '../database.dart';

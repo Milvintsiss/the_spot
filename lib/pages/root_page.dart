@@ -5,7 +5,7 @@ import 'package:the_spot/pages/inscription_page.dart';
 import 'package:the_spot/pages/login_signup_page.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/pages/home_page.dart';
-import 'file:///C:/Users/plest/StudioProjects/the_spot/lib/services/configuration.dart';
+import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/theme.dart';
 

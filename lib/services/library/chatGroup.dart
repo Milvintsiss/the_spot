@@ -7,7 +7,9 @@ class ChatGroup {
   String imageDownloadPath;
   List<String> adminsIds;
   List<String> membersIds;
+  String creatorId;
   List<Message> messages;
+  bool onlyAdminsCanChangeChatNameOrPicture;
   bool hasArchiveMessages;
   int activeMessagesCount;
   int totalMessagesCount;
@@ -19,13 +21,16 @@ class ChatGroup {
   List<UserProfile> members;
   bool isGroup;
 
+
   ChatGroup(
       {this.id,
       this.name,
       this.imageDownloadPath,
       this.adminsIds,
       this.membersIds,
+      this.creatorId,
       this.messages,
+      this.onlyAdminsCanChangeChatNameOrPicture,
       this.hasArchiveMessages,
       this.activeMessagesCount,
       this.totalMessagesCount,
@@ -40,7 +45,9 @@ class ChatGroup {
       'ImageDownloadPath': imageDownloadPath,
       'AdminsIds': adminsIds,
       'MembersIds': membersIds,
+      'CreatorId' : creatorId,
       'Messages': convertListOfMessagesToListOfMap(messages),
+      'OnlyAdminsCanChangeChatNameOrPicture': onlyAdminsCanChangeChatNameOrPicture,
       'HasArchiveMessages': hasArchiveMessages,
       'ActiveMessagesCount': activeMessagesCount,
       'TotalMessagesCount': totalMessagesCount,
@@ -57,14 +64,16 @@ ChatGroup convertMapToChatGroup(Map map) {
       imageDownloadPath: map['ImageDownloadPath'],
       adminsIds: map['AdminsIds'].cast<String>(),
       membersIds: map['MembersIds'].cast<String>(),
+      creatorId: map['CreatorId'],
       messages: convertListOfMapsToListOfMessages(map['Messages'].cast<Map>()),
+      onlyAdminsCanChangeChatNameOrPicture: map['OnlyAdminsCanChangeChatNameOrPicture'],
       hasArchiveMessages: map['HasArchiveMessages'],
       activeMessagesCount: map['ActiveMessagesCount'],
       totalMessagesCount: map['TotalMessagesCount'],
       lastMessage: map['LastMessage'],
       lastUpdate: map['LastUpdate'],
       creationDate: map['CreationDate']);
-  if(chatGroup.membersIds.length > 2)
+  if (chatGroup.membersIds.length > 2)
     chatGroup.isGroup = true;
   else
     chatGroup.isGroup = false;
@@ -97,7 +106,9 @@ List<Message> convertListOfMapsToListOfMessages(List<Map> maps) {
   return messages;
 }
 
-List<Map> convertListOfMessagesToListOfMap(List<Message> messages) {
+List<Map> convertListOfMessagesToListOfMap(List<Message> messages, {bool reverse = false}) {
+  if(reverse)
+    messages = messages.reversed.toList();
   List<Map> messagesMaps = [];
   messages.forEach((element) => messagesMaps.add(element.toMap()));
   return messagesMaps;
