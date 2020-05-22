@@ -4,18 +4,3 @@ This application is a place where you **share** places that you can ride with ot
 The which of **TheSpot** is to create a **real social** media to bring together all the riders of the **world**!
 
 >In the future **TheSpot** will integrate a news page, a publication page (like Instagram or Facebook page), city chats and more...
-
-
-
-## Notes
-
-#### To implement for iOS:
-- verify Map
-- image_picker
-- crop image
-
-
-add following in Podfile:
-pod 'Firebase/Auth'
-
-
