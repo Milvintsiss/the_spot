@@ -258,7 +258,7 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget showBottomTools() {
     return Container(
-      height: widget.configuration.screenHeight / 12,
+      height: widget.configuration.screenHeight / 11,
       color: PrimaryColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -319,7 +319,6 @@ class _ChatPageState extends State<ChatPage> {
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Container(
-          padding: EdgeInsets.all(widget.configuration.screenWidth / 60),
           decoration: BoxDecoration(
               color: PrimaryColorLight,
               border: Border.all(
@@ -327,10 +326,31 @@ class _ChatPageState extends State<ChatPage> {
                   width: widget.configuration.screenWidth / 300),
               borderRadius:
                   BorderRadius.circular(widget.configuration.screenWidth)),
-          child: TextField(
-            controller: sendBoxController,
-            onChanged: (value) => newMessage = value.trim(),
-            onSubmitted: (value) => sendMessage(),
+          child: Center(
+            child: TextField(
+              minLines: 1,
+              maxLines: 10,
+              textAlignVertical: TextAlignVertical.center,
+              controller: sendBoxController,
+              onChanged: (value) => newMessage = value.trim(),
+              onSubmitted: (value) => sendMessage(),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14 * widget.configuration.textSizeFactor),
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.symmetric(horizontal: widget.configuration.screenWidth / 25),
+                hintText: "Send a message...",
+                hintStyle: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14 * widget.configuration.textSizeFactor),
+                border: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+              ),
+            ),
           ),
         ),
       ),
