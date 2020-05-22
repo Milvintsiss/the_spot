@@ -150,21 +150,33 @@ class Database {
 
     if (await checkConnection(context) && ids.length > 0) {
       try {
-        await database
-            .collection(USERS_COLLECTION)
-            .where(FieldPath.documentId, whereIn: ids)
-            .getDocuments()
-            .then((QuerySnapshot querySnapshot) => ids.forEach((element) {
-                  usersProfile.add(convertMapToUserProfile(querySnapshot
-                      .documents
-                      .firstWhere((document) => document.documentID == element)
-                      .data)); //returns documents in query order
-                  usersProfile[usersProfile.length - 1].userId = element;
-                }))
-            .catchError((err) {
-          print("Database Error: " + err.toString());
-          error("Database Error: " + err.toString(), context);
-        });
+          for (int i = 0;
+          i < ids.length;
+          i = i + 10) {
+            List<String> query = ids
+                .getRange(
+                i,
+                i + 10 > ids.length //if there is more than 10, do query in few times
+                    ? ids.length
+                    : i + 10)
+                .toList();
+            await database
+                .collection(USERS_COLLECTION)
+                .where(FieldPath.documentId, whereIn: query)
+                .getDocuments()
+                .then((QuerySnapshot querySnapshot) => query.forEach((id) {
+              usersProfile.add(convertMapToUserProfile(querySnapshot
+                  .documents
+                  .firstWhere((document) => document.documentID == id)
+                  .data)); //returns documents in query order
+              usersProfile[usersProfile.length - 1].userId = id;
+            }))
+                .catchError((err) {
+              print("Database Error: " + err.toString());
+              error("Database Error: " + err.toString(), context);
+            });
+
+        }
         if (verifyIfFriendsOrFollowed) {
           usersProfile =
               await isUsersFriendOrFollowed(context, usersProfile, mainUserId);
@@ -522,33 +534,47 @@ class Database {
         List<String> usersId = [];
         users.forEach((user) {
           usersId.add(user.userId);
+          user.isFollowed = false;
         });
-        await database
-            .collection(USERS_COLLECTION)
-            .document(mainUserId)
-            .collection('Following')
-            .where(FieldPath.documentId, whereIn: usersId)
-            .getDocuments()
-            .then((QuerySnapshot snapshots) {
-          usersId.forEach((id) {
-            int index = snapshots.documents
-                .indexWhere((element) => element.documentID == id);
-            if (index != -1) {
-              users[usersId.indexOf(id)].isFollowed = true;
-            } else
-              users[usersId.indexOf(id)].isFollowed = false;
+        for (int i = 0;
+        i < usersId.length;
+        i = i + 10) {
+          List<String> query = usersId
+              .getRange(
+              i,
+              i + 10 > usersId
+                  .length //if there is more than 10, do query in few times
+                  ? usersId.length
+                  : i + 10)
+              .toList();
+          await database
+              .collection(USERS_COLLECTION)
+              .document(mainUserId)
+              .collection('Following')
+              .where(FieldPath.documentId, whereIn: query)
+              .getDocuments()
+              .then((QuerySnapshot snapshots) {
+            query.forEach((userId) {
+              int index = snapshots.documents
+                  .indexWhere((document) => document.documentID == userId);
+              if (index != -1)
+                users[usersId.indexOf(userId)].isFollowed = true;
+            });
+          }).catchError((err) {
+            print("Database Error: " + err.toString());
+            error("Database Error: " + err.toString(), context);
           });
-        }).catchError((err) {
-          print("Database Error: " + err.toString());
-          error("Database Error: " + err.toString(), context);
+        }
+
+        users.forEach((user) {
+          if (user.friends.contains(mainUserId))
+            user.isFriend = true;
+          else
+            user.isFriend = false;
         });
 
-        users.forEach((element) {
-          if (element.friends.contains(mainUserId))
-            element.isFriend = true;
-          else
-            element.isFriend = false;
-        });
+
+        //code if friends are stocked in a collection
 //        await database
 //            .collection(USERS_COLLECTION)
 //            .document(mainUserId)
@@ -683,7 +709,8 @@ class Database {
             .collection(GROUP_CHATS_COLLECTION)
             .document(groupId)
             .updateData({
-          'Messages': FieldValue.arrayUnion([message.toMap()])
+          'Messages': FieldValue.arrayUnion([message.toMap()]),
+          'LastMessage': Timestamp.now(),
         }).catchError((err) {
           success = false;
           print("Database Error: " + err.toString());
@@ -844,7 +871,7 @@ class Database {
         print(imagesDownloadUrls);
       }
 
-      //convert the List of UserGradess to a List of Map
+      //convert the List of UserGrades to a List of Map
       List<UserGrades> usersGrades = [];
       if (data['UsersGrades'] != null) {
         usersGrades = ConvertMapToUsersGrades(data['UsersGrades'].cast<Map>());
