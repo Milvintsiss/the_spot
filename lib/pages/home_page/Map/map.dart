@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/home_page/Map/createUpdateSpot_page.dart';
 import 'package:the_spot/pages/home_page/Map/spotInfo.dart';
 import 'package:the_spot/services/database.dart';
@@ -64,7 +65,7 @@ class _Map extends State<Map> {
   bool _mapType = false;
 
   /// Current map zoom. Initial zoom will be 15, street level
-  double _currentZoom = 15;
+  double _currentZoom = 5.5;
 
   /// Map loading flag
   bool _isMapLoading = true;
@@ -97,12 +98,22 @@ class _Map extends State<Map> {
 
   /// Inits [Fluster] and all the markers with network images and updates the loading state.
   void _initMarkersAndUsers() async {
-    spots = await searchSpots(context, matchName: matchName);
+    if(matchName != null && matchName.contains('position:')){
+      matchName = matchName.replaceAll('position:', "");
+      print(matchName);
+      double lat = double.parse(matchName.split(",")[0]);
+      double lng = double.parse(matchName.split(",")[1]);
+      print("$lat,$lng");
+      _mapController.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, lng), 25));
+      matchName = null;
+    }else {
+      spots = await searchSpots(context, matchName: matchName);
 
-    await getUserLocationAndUpdate();
+      await getUserLocationAndUpdate();
 
-    _initUsersCluster();
-    _initSpotsCluster();
+      _initUsersCluster();
+      _initSpotsCluster();
+    }
   }
 
   void _initUsersCluster() async {
@@ -259,7 +270,7 @@ class _Map extends State<Map> {
               myLocationButtonEnabled: false,
               mapType: _mapType ? MapType.normal : MapType.hybrid,
               initialCameraPosition: CameraPosition(
-                target: LatLng(41.143029, -8.611274),
+                target: LatLng(47.1428, 2.4583),
                 zoom: _currentZoom,
               ),
               markers: _markers,
@@ -291,7 +302,7 @@ class _Map extends State<Map> {
                       child: Padding(
                         padding: const EdgeInsets.all(4),
                         child: Text(
-                          'Loading...',
+                          AppLocalizations.of(context).translate("Loading..."),
                           style: TextStyle(color: Colors.white),
                         ),
                       ),
@@ -332,14 +343,14 @@ class _Map extends State<Map> {
                     ),
                     onPressed: _initMarkersAndUsers,
                   ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.place,
-                      size: 30,
-                      color: PrimaryColorDark,
-                    ),
-                    onPressed: () => print("place button pressed"),
-                  ),
+//                  IconButton(
+//                    icon: Icon(
+//                      Icons.place,
+//                      size: 30,
+//                      color: PrimaryColorDark,
+//                    ),
+//                    onPressed: () => print("place button pressed"),
+//                  ),
                   IconButton(
                     icon: Icon(
                       Icons.add_circle,
@@ -390,7 +401,7 @@ class _Map extends State<Map> {
             style: TextStyle(color: Colors.white),
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
-              hintText: "Search...",
+              hintText: AppLocalizations.of(context).translate("Search..."),
               hintStyle: TextStyle(color: Colors.white70),
               border: InputBorder.none,
               focusedBorder: InputBorder.none,
@@ -440,7 +451,7 @@ class _Map extends State<Map> {
         context: context,
         child: AlertDialog(
           content: Text(
-              "Please show us the location of your spot by a click on it on the map"),
+              AppLocalizations.of(context).translate("Please show us the location of your spot by a press on his location on the map")),
           actions: <Widget>[
             FlatButton(
               child: Text("Ok"),
@@ -472,10 +483,10 @@ class _Map extends State<Map> {
     showDialog(
         context: context,
         child: AlertDialog(
-          content: Text("Create a spot at this place?"),
+          content: Text(AppLocalizations.of(context).translate("Create a spot at this place?")),
           actions: <Widget>[
             FlatButton(
-              child: Text("Yes"),
+              child: Text(AppLocalizations.of(context).translate("Yes")),
               onPressed: () {
                 setState(() {
                   _markers.remove(Marker(
@@ -487,7 +498,7 @@ class _Map extends State<Map> {
               },
             ),
             FlatButton(
-                child: Text("No"),
+                child: Text(AppLocalizations.of(context).translate("No")),
                 onPressed: () {
                   setState(() {
                     _markers.remove(Marker(

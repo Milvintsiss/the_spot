@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/gallery.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
@@ -39,7 +40,8 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
   @override
   void initState() {
     super.initState();
-    indexOfUserRate = widget.spot.usersGrades.indexWhere((userGrade) => userGrade.userId == widget.userId);
+    indexOfUserRate = widget.spot.usersGrades
+        .indexWhere((userGrade) => userGrade.userId == widget.userId);
   }
 
   @override
@@ -62,9 +64,7 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
           child: ListView(
             padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
             children: <Widget>[
-              _isSpotHasImages
-                  ? showSpotPhotosWidget()
-                  : Container(),
+              _isSpotHasImages ? showSpotPhotosWidget() : Container(),
               showSpotNameWidget(),
               showSpotGradesWidget(),
               showSpotDescriptionWidget(widget.spot.description),
@@ -112,25 +112,43 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: <Widget>[
-                    Text(
-                      "This spot was rated " +
-                          widget.spot.usersGrades.length.toString() +
-                          " times!",
-                      style: TextStyle(
-                          color: PrimaryColorDark, fontStyle: FontStyle.italic),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      child: Text(
+                        AppLocalizations.of(context).translate(
+                            "This spot was rated %DYNAMIC times!",
+                            dynamic: widget.spot.usersGrades.length.toString()),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: PrimaryColorDark,
+                            fontStyle: FontStyle.italic),
+                      ),
                     ),
-                    showSpotGradeWidget("Spot:    ", spotGrade),
-                    showSpotGradeWidget("Floor:   ", spotGradeFloor),
-                    showSpotGradeWidget("Beauty:", spotGradeBeauty),
+                    showSpotGradeWidget("Spot:", "Spot", spotGrade),
+                    showSpotGradeWidget(
+                        AppLocalizations.of(context).translate("Floor:"),
+                        "Floor",
+                        spotGradeFloor),
+                    showSpotGradeWidget(
+                        AppLocalizations.of(context).translate("Photogenic:"),
+                        "Photogenic",
+                        spotGradeBeauty),
                   ],
                 ),
                 Divider(
                   indent: 30,
                 ),
                 RaisedButton(
-                  child:
-                      Text(userIsRatingTheSpot ? "Confirm" : indexOfUserRate != -1 ? "Change my rating" : "Rate this spot"),
+                  child: Text(userIsRatingTheSpot
+                      ? AppLocalizations.of(context).translate("Confirm")
+                      : indexOfUserRate != -1
+                          ? AppLocalizations.of(context)
+                              .translate("Change my rating")
+                          : AppLocalizations.of(context)
+                              .translate("Rate this spot")),
                   onPressed: () => onGradeButtonPressed(),
                 ),
                 userIsRatingTheSpot
@@ -155,7 +173,8 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
             ),
             userRatingNotComplete
                 ? Text(
-                    "You must give a grade for all fields! Minimum rating is 1 star.",
+                    AppLocalizations.of(context).translate(
+                        "You must give a global grade, a floor grade and a \"photogenic grade!\" Minimum grade is 1 star."),
                     style: TextStyle(
                         color: Colors.red, fontWeight: FontWeight.bold),
                   )
@@ -176,14 +195,14 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
         spotGradeInput != null &&
         spotGradeBeautyInput != null &&
         spotGradeFloorInput != null) {
-      if(indexOfUserRate != -1) {
+      if (indexOfUserRate != -1) {
         widget.spot.usersGrades[indexOfUserRate] = userGrades;
         await Database().updateASpot(
             context: context,
             spotId: widget.spot.markerId,
             spotGrades: widget.spot.usersGrades,
             creatorId: widget.userId);
-      }else{
+      } else {
         widget.spot.usersGrades.add(userGrades);
         indexOfUserRate = widget.spot.usersGrades.length - 1;
         await Database().updateASpot(
@@ -212,14 +231,13 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
   }
 
   Widget showSpotGradeWidget(
-    String spotGradeName,
-    double spotGrade,
-  ) {
+      String spotGradeName, String spotGradeType, double spotGrade) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
         Text(
           spotGradeName,
+          textAlign: TextAlign.end,
           style:
               TextStyle(color: PrimaryColorDark, fontWeight: FontWeight.bold),
         ),
@@ -234,18 +252,17 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
                   color: Colors.amber,
                 ),
                 onRatingUpdate: (newGrade) {
-                  switch (spotGradeName) {
-                    case "Spot:    ":
+                  switch (spotGradeType) {
+                    case "Spot":
                       spotGradeInput = newGrade;
                       break;
-                    case "Floor:   ":
+                    case "Floor":
                       spotGradeFloorInput = newGrade;
                       break;
-                    case "Beauty:":
+                    case "Photogenic":
                       spotGradeBeautyInput = newGrade;
                       break;
                   }
-                  print(spotGradeName + newGrade.toString());
                 },
               )
             : RatingBarIndicator(
@@ -288,7 +305,7 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
   Widget showSpotDontHaveImagesMessageWidget() {
     return Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-        child: Text("We don't have pictures of this spot for the moment..."));
+        child: Text(AppLocalizations.of(context).translate("We don't have pictures of this spot yet...")));
   }
 
   Widget showSpotDescriptionWidget(String spotDescription) {

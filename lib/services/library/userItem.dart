@@ -75,7 +75,6 @@ class _UserItemState extends State<UserItem> {
                 height: widget.sizeReference / 25,
                 width: widget.sizeReference / 25,
                 child: IconButton(
-                  tooltip: "Delete from the list",
                   icon: Icon(
                     Icons.cancel,
                     color: widget.borderColor,

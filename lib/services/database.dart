@@ -711,6 +711,8 @@ class Database {
             .updateData({
           'Messages': FieldValue.arrayUnion([message.toMap()]),
           'LastMessage': Timestamp.now(),
+          'ActiveMessagesCount': FieldValue.increment(1),
+          'TotalMessagesCount': FieldValue.increment(1),
         }).catchError((err) {
           success = false;
           print("Database Error: " + err.toString());

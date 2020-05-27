@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flushbar/flushbar_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/chat_pages/chat_page.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/chatGroup.dart';
@@ -84,6 +85,8 @@ class _ChatListPageState extends State<ChatListPage> {
                 await Database().getUsersByIds(context, [otherUserId]);
           }
           print(document.data);
+          chatGroup.messages
+              .forEach((message) => message.setMessageTypeAndTransformData());
           chatGroups.add(chatGroup);
         });
         hasChatGroupConversation = true;
@@ -149,14 +152,19 @@ class _ChatListPageState extends State<ChatListPage> {
                   onChanged: (String value) {
                     query = value.trim();
                     setState(() {
-                      userIsTyping = true;
+                      if (query.length > 0) {
+                        userIsTyping = true;
+                      } else {
+                        userIsTyping = false;
+                        userIsSearching = false;
+                      }
                     });
                   },
                   style: TextStyle(color: Colors.white),
                   textInputAction: TextInputAction.search,
                   onEditingComplete: onSearchButtonPressed,
                   decoration: InputDecoration(
-                    hintText: "Search...",
+                    hintText: AppLocalizations.of(context).translate("Search..."),
                     hintStyle: TextStyle(color: Colors.white70),
                     border: InputBorder.none,
                     focusedBorder: InputBorder.none,
@@ -220,7 +228,9 @@ class _ChatListPageState extends State<ChatListPage> {
     } else if (queryResult.length == 0 || queryResult == null)
       return Padding(
         padding: EdgeInsets.only(top: widget.configuration.screenWidth / 40),
-        child: Text("No result found for \"$query\""),
+        child: Text(
+            AppLocalizations.of(context).translate("No result found for \"%DYNAMIC\".", dynamic: query),
+        ),
       );
     else
       return UsersListView(
@@ -317,19 +327,17 @@ class _ChatListPageState extends State<ChatListPage> {
           ),
         ),
         onTap: () {
-          Feedback.wrapForTap(
-                  () async {
-                    chatGroupsStream.pause();
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => ChatPage(
-                                configuration: widget.configuration,
-                                chatGroup: chatGroups[index],
-                              )));
-                    chatGroupsStream.resume();
-                  },
-                  context)
+          Feedback.wrapForTap(() async {
+            chatGroupsStream.pause();
+            await Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => ChatPage(
+                          configuration: widget.configuration,
+                          chatGroup: chatGroups[index],
+                        )));
+            chatGroupsStream.resume();
+          }, context)
               .call();
         });
   }
@@ -342,7 +350,7 @@ class _ChatListPageState extends State<ChatListPage> {
             widget.configuration.screenWidth / 60,
             0),
         child: RaisedButton(
-          child: Text("Start a new chat"),
+          child: Text(AppLocalizations.of(context).translate("Start a new chat")),
           onPressed: () {
             showChatCreationDialog();
           },
@@ -371,7 +379,7 @@ class _ChatListPageState extends State<ChatListPage> {
               shrinkWrap: true,
               children: [
                 Text(
-                  "New Chat",
+                  AppLocalizations.of(context).translate("With:"),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
@@ -425,7 +433,7 @@ class _ChatListPageState extends State<ChatListPage> {
           child: Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text("Members: "),
+              Text(AppLocalizations.of(context).translate("Members: ")),
               Padding(
                 padding: EdgeInsets.only(
                     right: widget.configuration.screenWidth / 150),
@@ -463,7 +471,7 @@ class _ChatListPageState extends State<ChatListPage> {
       );
     else if (dialogQueryResult.length == 0 &&
         widget.configuration.userData.numberOfFriends == 0)
-      return Text("No suggestions");
+      return Text(AppLocalizations.of(context).translate("No suggestions"));
     else if (dialogQueryResult.length > 0)
       return SizedBox(
         height: widget.configuration.screenWidth / 15,
@@ -495,7 +503,7 @@ class _ChatListPageState extends State<ChatListPage> {
 
   Widget showChatCreationDialogCreateButton() {
     return RaisedButton(
-      child: Text("Create"),
+      child: Text(AppLocalizations.of(context).translate("Create")),
       onPressed: () {
         if (newChatGroupMembers.length > 0) {
           List<String> membersIds = [];
@@ -519,7 +527,8 @@ class _ChatListPageState extends State<ChatListPage> {
                 onlyAdminsCanChangeChatNameOrPicture: membersIds.length == 2,
                 messages: [
                   Message(widget.configuration.userData.userId, Timestamp.now(),
-                      "${widget.configuration.userData.pseudo} has invited you in a chat.")
+                      AppLocalizations.of(context).translate("%DYNAMIC has invited you in a chat.", dynamic: INFO_TYPE + widget.configuration.userData.pseudo)
+                  ),
                 ],
               ));
           dialogQueryResult.clear();
@@ -529,7 +538,7 @@ class _ChatListPageState extends State<ChatListPage> {
           Vibrate.feedback(FeedbackType.warning);
           FlushbarHelper.createError(
                   message:
-                      'You should add at least one member to create a new chat!',
+                      AppLocalizations.of(context).translate("You should add at least one member to create a new chat!"),
                   duration: Duration(seconds: 3))
               .show(context);
         }

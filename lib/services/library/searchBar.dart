@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:the_spot/app_localizations.dart';
 
 import '../../theme.dart';
 
@@ -49,7 +50,7 @@ class _SearchBarState extends State<SearchBar>{
                     textInputAction: TextInputAction.search,
                     onEditingComplete: () => widget.onSearch.call(query),
                     decoration: InputDecoration(
-                      hintText: "Search...",
+                      hintText: AppLocalizations.of(context).translate("Search..."),
                       hintStyle:
                       TextStyle(color: Colors.white70, fontSize: widget.textSize),
                       border: InputBorder.none,

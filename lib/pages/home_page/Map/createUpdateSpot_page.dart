@@ -2,6 +2,7 @@ import 'package:flushbar/flushbar_helper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/library/gallery.dart';
@@ -63,8 +64,8 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
               showPhotos(),
               showAddLimitationText(),
               showAddButton(),
-              showInput("Spot name", Icons.text_fields),
-              showInput("Spot description", Icons.textsms, maxLines: 6),
+              showInput("Spot name", AppLocalizations.of(context).translate("Spot name"), Icons.text_fields),
+              showInput("Spot description", AppLocalizations.of(context).translate("Spot description"), Icons.textsms, maxLines: 6),
               showSpotGradesWidget(),
               showConfirmButton(),
             ],
@@ -85,7 +86,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
   Widget showAddLimitationText() {
     return Center(
       child: Text(
-        "You can add up to $maxAmountOfPictures photos!",
+        AppLocalizations.of(context).translate("You can add up to %DYNAMIC photos!", dynamic: maxAmountOfPictures.toString()),
         style: TextStyle(color: PrimaryColorLight),
       ),
     );
@@ -102,7 +103,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Text(
-            "Add a Picture",
+            AppLocalizations.of(context).translate("Add a picture"),
             style: TextStyle(fontSize: 20.0, color: Colors.white),
           ),
           Divider(
@@ -135,11 +136,11 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
       print(imagesAddress);
     } else {
       Vibrate.feedback(FeedbackType.warning);
-      FlushbarHelper.createError(message: 'You riched the limit amount of photos!', duration: Duration(milliseconds: 1500)).show(context);
+      FlushbarHelper.createError(message: AppLocalizations.of(context).translate("You reached the limit amount of pictures!"), duration: Duration(milliseconds: 1500)).show(context);
     }
   }
 
-  Widget showInput(String inputType, IconData icon, {int maxLines = 1}) {
+  Widget showInput(String inputType, String hint, IconData icon, {int maxLines = 1}) {
     return Padding(
       padding: EdgeInsets.fromLTRB(0, 20.0, 0, 0.0),
       child: TextFormField(
@@ -147,7 +148,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
         maxLines: maxLines,
         autofocus: false,
         decoration: InputDecoration(
-            hintText: inputType,
+            hintText: hint,
             hintStyle: TextStyle(color: Colors.blueGrey[100]),
             fillColor: SecondaryColorDark,
             filled: true,
@@ -161,11 +162,11 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
             )),
         validator: (value) {
           if (value.isEmpty)
-            return "You must complete this field!";
+            return AppLocalizations.of(context).translate("You must complete this field!");
           else if (value.length > 35 && inputType == "Spot name")
-            return "The spot name must not exceed 20 characters!";
+            return AppLocalizations.of(context).translate("The spot name must not exceed 20 characters!");
           else if (value.length > 2000 && inputType == "Spot descritpion")
-            return "The spot description must not exceed 2000 characters!";
+            return AppLocalizations.of(context).translate("The spot description must not exceed 2000 characters!");
           else
             return null;
         },
@@ -192,22 +193,24 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
           borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: <Widget>[
-            showSpotGradeWidget("Spot:    "),
-            showSpotGradeWidget("Floor:   "),
-            showSpotGradeWidget("Beauty:"),
+            showSpotGradeWidget("Spot:", "Spot"),
+            showSpotGradeWidget(AppLocalizations.of(context).translate("Floor:"), "Floor"),
+            showSpotGradeWidget(AppLocalizations.of(context).translate("Photogenic:"), "Photogenic"),
           ],
         ),
       ),
     );
   }
 
-  Widget showSpotGradeWidget(String spotGradeName) {
+  Widget showSpotGradeWidget(String spotGradeName, String spotGradeType) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
         Text(
           spotGradeName,
+          textAlign: TextAlign.end,
           style: TextStyle(
               color: PrimaryColorDark,
               fontWeight: FontWeight.bold,
@@ -226,18 +229,17 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
             color: Colors.amber,
           ),
           onRatingUpdate: (newGrade) {
-            switch (spotGradeName) {
-              case "Spot:    ":
+            switch (spotGradeType) {
+              case "Spot":
                 spotGradeInput = newGrade;
                 break;
-              case "Floor:   ":
+              case "Floor":
                 spotGradeFloorInput = newGrade;
                 break;
-              case "Beauty:":
+              case "Photogenic":
                 spotGradeBeautyInput = newGrade;
                 break;
             }
-            print(spotGradeName + newGrade.toString());
           },
         ),
       ],
@@ -253,7 +255,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
         color: SecondaryColorDark,
         child: Text(
-          "Save",
+          AppLocalizations.of(context).translate("Save"),
           style: TextStyle(fontSize: 20.0, color: Colors.white),
         ),
         onPressed: save,
@@ -266,8 +268,6 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
       if (spotGradeInput != null &&
           spotGradeBeautyInput != null &&
           spotGradeFloorInput != null) {
-        print("Spot name: " + spotName);
-        print("Spot description: " + spotDescription);
         UserGrades userGrades = UserGrades(
             userId: widget.configuration.userData.userId,
             spotGrade: spotGradeInput,
@@ -287,7 +287,7 @@ class _CreateUpdateSpotPage extends State<CreateUpdateSpotPage> {
         Navigator.pop(context);
       } else {
         Vibrate.feedback(FeedbackType.warning);
-        FlushbarHelper.createError(message: "You must give a global grade, a floor grade and a beauty grade! Minimum grade is 1 star.", duration: Duration(milliseconds: 4000)).show(context);
+        FlushbarHelper.createError(message: AppLocalizations.of(context).translate("You must give a global grade, a floor grade and a \"photogenic grade!\" Minimum grade is 1 star."), duration: Duration(milliseconds: 4000)).show(context);
       }
     }
   }

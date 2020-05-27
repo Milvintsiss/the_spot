@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/library/userProfile.dart';
@@ -42,8 +44,8 @@ class _FollowersFollowingFriendsPageState
       case "Followers":
         {
           noResultMessage =
-              "This user haven't been followed by anyone for the moment.";
-          appBarTitle = "Users following " + widget.userProfile.pseudo;
+              AppLocalizations.of(context).translate("This user haven't been followed by anyone for the yet.");
+          appBarTitle = AppLocalizations.of(context).translate("Users following ") + widget.userProfile.pseudo;
 
           Map<String, Object> res = await Database().getFollowersOf(
               context,
@@ -62,8 +64,8 @@ class _FollowersFollowingFriendsPageState
 
       case "Following":
         {
-          noResultMessage = "This user doesn't follow anyone for the moment.";
-          appBarTitle = "Users followed by " + widget.userProfile.pseudo;
+          noResultMessage = AppLocalizations.of(context).translate("This user doesn't follow anyone yet.");
+          appBarTitle = AppLocalizations.of(context).translate("Users followed by ") + widget.userProfile.pseudo;
 
           Map<String, Object> res = await Database().getFollowingOf(
               context,
@@ -81,8 +83,8 @@ class _FollowersFollowingFriendsPageState
         break;
       case "Friends":
         {
-          noResultMessage = "This user hasn't added friends yet.";
-          appBarTitle = "Friends of " + widget.userProfile.pseudo;
+          noResultMessage = AppLocalizations.of(context).translate("This user hasn't added friends yet.");
+          appBarTitle = AppLocalizations.of(context).translate("Friends of ") + widget.userProfile.pseudo;
 
           List<String> friends = widget.userProfile.friends.reversed.toList();
 
@@ -131,7 +133,7 @@ class _FollowersFollowingFriendsPageState
     } else if (queryResult.length == 0 || queryResult == null)
       return Padding(
         padding: EdgeInsets.only(top: widget.configuration.screenWidth / 20),
-        child: Center(child: Text(noResultMessage)),
+        child: Center(child: Text(noResultMessage, textAlign: TextAlign.center,)),
       );
     else
       return Column(

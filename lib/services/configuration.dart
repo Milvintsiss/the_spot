@@ -27,6 +27,8 @@ class Configuration with ChangeNotifier {
 
   PushNotificationsManager pushNotificationsManager = PushNotificationsManager();
 
+  VoidCallback logoutCallback;
+
   bool updateIsAvailable;
   bool isAlgoliaOperational;
   bool isFirestoreOperational;
@@ -81,8 +83,6 @@ class Configuration with ChangeNotifier {
         userData.userId = event.documentID;
         notifyListeners();
       });
-      Database().addDeviceTokenToUserProfile(
-          context, userId, [await pushNotificationsManager.getToken()]);
     }
   }
 }

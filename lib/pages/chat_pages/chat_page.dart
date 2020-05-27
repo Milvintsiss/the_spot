@@ -3,6 +3,8 @@ import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:the_spot/app_localizations.dart';
+import 'package:the_spot/pages/home_page/profile.dart';
 import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/chatGroup.dart';
@@ -61,13 +63,14 @@ class _ChatPageState extends State<ChatPage> {
         chatGroup = convertMapToChatGroup(document.data);
         chatGroup.messages
             .forEach((message) => message.setMessageTypeAndTransformData());
+        chatGroup.messages = chatGroup.messages.reversed.toList();
         setState(() {});
         if (userReachedTheBottomOfTheList) {
-          scrollController.animateTo(
-              scrollController.position.maxScrollExtent +
-                  widget.configuration.screenHeight,
-              duration: Duration(seconds: 1),
-              curve: Curves.ease);
+//          scrollController.animateTo(
+//              scrollController.position.maxScrollExtent +
+//                  widget.configuration.screenHeight,
+//              duration: Duration(seconds: 1),
+//              curve: Curves.ease);
         }
       }
     });
@@ -102,7 +105,7 @@ class _ChatPageState extends State<ChatPage> {
 
   AppBar showAppBar() {
     return AppBar(
-      title: Text(chatGroup.name),
+      title: Text(widget.chatGroup.isGroup ? chatGroup.name : widget.chatGroup.members[0].pseudo),
     );
   }
 
@@ -111,8 +114,9 @@ class _ChatPageState extends State<ChatPage> {
       child: Stack(
         children: [
           NotificationListener<ScrollNotification>(
-            onNotification: onListModification,
+            onNotification: onListNotification,
             child: ListView.builder(
+              reverse: true,
                 controller: scrollController,
                 padding: EdgeInsets.symmetric(
                     horizontal: widget.configuration.screenWidth / 40,
@@ -126,9 +130,9 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  bool onListModification(ScrollNotification scrollNotification) {
-    if (scrollNotification.metrics.pixels >
-        (scrollNotification.metrics.maxScrollExtent -
+  bool onListNotification(ScrollNotification scrollNotification) {
+    if (scrollNotification.metrics.pixels <
+        (scrollNotification.metrics.minScrollExtent +
             widget.configuration.screenHeight)) {
       setState(() {
         userReachedTheBottomOfTheList = true;
@@ -149,81 +153,106 @@ class _ChatPageState extends State<ChatPage> {
       sender = members.firstWhere(
           (member) => member.userId == chatGroup.messages[index].senderId);
 
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: widget.configuration.screenWidth / 40,
-        right: isUserMessage ? 0 : widget.configuration.screenWidth / 5,
-        left: isUserMessage ? widget.configuration.screenWidth / 5 : 0,
-      ),
-      child: Align(
-        alignment: isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-                begin: isUserMessage
-                    ? Alignment.centerRight
-                    : Alignment.centerLeft,
-                end: isUserMessage
-                    ? Alignment.centerLeft
-                    : Alignment.centerRight,
-                colors: [PrimaryColor, PrimaryColorLight],
-                stops: [0, 0.5]),
-            borderRadius:
-                BorderRadius.circular(widget.configuration.screenWidth / 10),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment:
-                isUserMessage ? MainAxisAlignment.start : MainAxisAlignment.end,
-            textDirection:
-                isUserMessage ? TextDirection.rtl : TextDirection.ltr,
-            children: [
-              ProfilePicture(isUserMessage
-                  ? widget.configuration.userData.profilePictureDownloadPath
-                  : membersDataIsLoaded
-                      ? sender.profilePictureDownloadPath
-                      : null),
-              chatGroup.messages[index].messageType == MessageType.TEXT
-                  ? Flexible(
-                      fit: FlexFit.loose,
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                            widget.configuration.screenWidth / 30,
-                            widget.configuration.screenWidth / 80,
-                            widget.configuration.screenWidth / 20,
-                            widget.configuration.screenWidth / 80),
-                        child: Text(
-                          chatGroup.messages[index].data,
-                          textAlign:
-                              isUserMessage ? TextAlign.right : TextAlign.left,
-                          style: TextStyle(
-                              fontSize:
-                                  12 * widget.configuration.textSizeFactor),
-                        ),
-                      ),
+    if (chatGroup.messages[index].messageType == MessageType.INFO)
+      return Padding(
+        padding: EdgeInsets.only(
+          bottom: widget.configuration.screenWidth / 40,
+        ),
+        child: Center(
+          child: Text(chatGroup.messages[index].data2,
+              style: TextStyle(
+              fontSize:
+              14 * widget.configuration.textSizeFactor)),
+        ),
+      );
+    else
+      return Padding(
+        padding: EdgeInsets.only(
+          bottom: widget.configuration.screenWidth / 40,
+          right: isUserMessage ? 0 : widget.configuration.screenWidth / 5,
+          left: isUserMessage ? widget.configuration.screenWidth / 5 : 0,
+        ),
+        child: Align(
+          alignment:
+              isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                  begin: isUserMessage
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+                  end: isUserMessage
+                      ? Alignment.centerLeft
+                      : Alignment.centerRight,
+                  colors: [PrimaryColor, PrimaryColorLight],
+                  stops: [0, 0.5]),
+              borderRadius:
+                  BorderRadius.circular(widget.configuration.screenWidth / 10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: isUserMessage
+                  ? MainAxisAlignment.start
+                  : MainAxisAlignment.end,
+              textDirection:
+                  isUserMessage ? TextDirection.rtl : TextDirection.ltr,
+              children: [
+                GestureDetector(
+                  onTap: membersDataIsLoaded ? isUserMessage ? null :
+                  () => Navigator.push(context, MaterialPageRoute(
+                    builder: (context) => Profile(
+                      configuration: widget.configuration,
+                      userProfile: members.firstWhere((member) => member.userId == chatGroup.messages[index].senderId),
                     )
-                  : chatGroup.messages[index].messageType == MessageType.PICTURE
-                      ? Expanded(
-                          child: ClipRRect(
-                              borderRadius: BorderRadius.horizontal(
-                                  left: isUserMessage
-                                      ? Radius.circular(
-                                          widget.configuration.screenWidth / 10)
-                                      : Radius.zero,
-                                  right: isUserMessage
-                                      ? Radius.zero
-                                      : Radius.circular(
-                                          widget.configuration.screenWidth /
-                                              10)),
-                              child: Image.network(
-                                  chatGroup.messages[index].data)),
-                        )
-                      : Container(),
-            ],
+                  )) : null,
+                  child: ProfilePicture(isUserMessage
+                      ? widget.configuration.userData.profilePictureDownloadPath
+                      : membersDataIsLoaded
+                          ? sender.profilePictureDownloadPath
+                          : null),
+                ),
+                chatGroup.messages[index].messageType == MessageType.TEXT
+                    ? Flexible(
+                        fit: FlexFit.loose,
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            isUserMessage ?
+                              widget.configuration.screenWidth / 15 : widget.configuration.screenWidth / 30,
+                              widget.configuration.screenWidth / 80,
+                              isUserMessage ? widget.configuration.screenWidth / 30 : widget.configuration.screenWidth / 15,
+                              widget.configuration.screenWidth / 80),
+                          child: Text(
+                            chatGroup.messages[index].data,
+                            style: TextStyle(
+                                fontSize:
+                                    14 * widget.configuration.textSizeFactor),
+                          ),
+                        ),
+                      )
+                    : chatGroup.messages[index].messageType ==
+                            MessageType.PICTURE
+                        ? Expanded(
+                            child: ClipRRect(
+                                borderRadius: BorderRadius.horizontal(
+                                    left: isUserMessage
+                                        ? Radius.circular(
+                                            widget.configuration.screenWidth /
+                                                10)
+                                        : Radius.zero,
+                                    right: isUserMessage
+                                        ? Radius.zero
+                                        : Radius.circular(
+                                            widget.configuration.screenWidth /
+                                                10)),
+                                child: Image.network(
+                                    chatGroup.messages[index].data2)),
+                          )
+                        : Container(),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget showNewMessagesButton() {
@@ -242,12 +271,11 @@ class _ChatPageState extends State<ChatPage> {
                     width: widget.configuration.screenWidth / 300),
                 borderRadius:
                     BorderRadius.circular(widget.configuration.screenWidth)),
-            child: Text("show new messages"),
+            child: Text(AppLocalizations.of(context).translate("show new messages")),
           ),
           onTap: () {
             scrollController.animateTo(
-                scrollController.position.maxScrollExtent +
-                    widget.configuration.screenHeight,
+                scrollController.position.minScrollExtent,
                 duration: Duration(seconds: 1),
                 curve: Curves.ease);
           },
@@ -304,7 +332,7 @@ class _ChatPageState extends State<ChatPage> {
         getPhotoFromGallery: getPhotoFromGallery,
         letUserChooseImageSource: false)) {
       String url = await Storage().getUrlPhoto(storageRef);
-      String message = "%#%PICTURE%#%$url";
+      String message = PICTURE_TYPE + url;
       Database().sendMessageToGroup(
           context,
           widget.configuration.userData.userId,
@@ -337,10 +365,12 @@ class _ChatPageState extends State<ChatPage> {
               style: TextStyle(
                   color: Colors.white,
                   fontSize: 14 * widget.configuration.textSizeFactor),
-              textInputAction: TextInputAction.search,
+              textInputAction: TextInputAction.send,
               decoration: InputDecoration(
-                contentPadding: EdgeInsets.symmetric(horizontal: widget.configuration.screenWidth / 25),
-                hintText: "Send a message...",
+                contentPadding: EdgeInsets.symmetric(
+                    horizontal: widget.configuration.screenWidth / 25,
+                    vertical: widget.configuration.screenHeight / 47),
+                hintText: AppLocalizations.of(context).translate("Send a message..."),
                 hintStyle: TextStyle(
                     color: Colors.white70,
                     fontSize: 14 * widget.configuration.textSizeFactor),

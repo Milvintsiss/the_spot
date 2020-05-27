@@ -47,5 +47,8 @@
     <string>To localize you on the map.</string>
     <key>NSLocationAlwaysUsageDescription</key>
     <string>To help us know how many riders are in a spot</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Send audio records to your friends</string>
+
 </dict>
 </plist>

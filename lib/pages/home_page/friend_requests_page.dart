@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/userProfile.dart';
@@ -5,6 +6,7 @@ import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/theme.dart';
 
+import '../../app_localizations.dart';
 import 'profile.dart';
 
 class FriendRequestsPage extends StatefulWidget {
@@ -47,22 +49,18 @@ class _FriendRequestsPageState extends State<FriendRequestsPage> {
   Future getUsersData() async {
     noResult = false;
     print(widget.configuration.userData.pendingFriendsId);
-    List<String> pendingFriends = widget.configuration.userData.pendingFriendsId.reversed.toList();
+    List<String> pendingFriends =
+        widget.configuration.userData.pendingFriendsId.reversed.toList();
     queryResult.clear();
     if (pendingFriends.length == 0) {
       setState(() {
         noResult = true;
       });
     } else {
-      for (int i = 0;
-          i < pendingFriends.length;
-          i = i + 10) {
+      for (int i = 0; i < pendingFriends.length; i = i + 10) {
         List<String> query = pendingFriends
-            .getRange(
-                i,
-                i + 10 > pendingFriends.length
-                    ? pendingFriends.length
-                    : i + 10)
+            .getRange(i,
+                i + 10 > pendingFriends.length ? pendingFriends.length : i + 10)
             .toList();
         queryResult.addAll(await Database().getUsersByIds(context, query));
       }
@@ -81,7 +79,14 @@ class _FriendRequestsPageState extends State<FriendRequestsPage> {
       backgroundColor: PrimaryColorDark,
       appBar: AppBar(),
       body: noResult
-          ? Center(child: Text("You don't have any friends request yet.", style: TextStyle(fontSize: widget.configuration.textSizeFactor * 20),))
+          ? Center(
+              child: Text(
+              AppLocalizations.of(context)
+                  .translate("You don't have any friends request yet."),
+              textAlign: TextAlign.center,
+              style:
+                  TextStyle(fontSize: widget.configuration.textSizeFactor * 20),
+            ))
           : isDataLoaded
               ? ListView.builder(
                   padding: EdgeInsets.fromLTRB(
@@ -179,7 +184,7 @@ class _FriendRequestsPageState extends State<FriendRequestsPage> {
     return RaisedButton(
       color: Colors.green,
       child: Text(
-        'Accept',
+        AppLocalizations.of(context).translate("Accept"),
         style: TextStyle(
             fontSize: 12 * widget.configuration.textSizeFactor,
             color: Colors.white),
@@ -200,7 +205,7 @@ class _FriendRequestsPageState extends State<FriendRequestsPage> {
     return RaisedButton(
       color: Colors.red,
       child: Text(
-        'Refuse',
+        AppLocalizations.of(context).translate("Refuse"),
         style: TextStyle(
             fontSize: 12 * widget.configuration.textSizeFactor,
             color: Colors.white),
