@@ -182,7 +182,6 @@ Widget userItem(
                 height: sizeReference / 25,
                 width: sizeReference / 25,
                 child: IconButton(
-                  tooltip: "Delete from the list",
                   icon: Icon(
                     Icons.cancel,
                     color: borderColor,
@@ -206,7 +205,7 @@ Flushbar friendRequestInAppNotification(
     String userId) {
   return Flushbar(
     messageText: Text(
-      "$userPseudo wants to add you as friend!",
+      userPseudo + AppLocalizations.of(context).translate(" wants to add you as friend!"),
       style: TextStyle(color: PrimaryColorLight),
     ),
     backgroundColor: PrimaryColorDark,
@@ -223,7 +222,7 @@ Flushbar friendRequestInAppNotification(
     dismissDirection: FlushbarDismissDirection.HORIZONTAL,
     duration: Duration(seconds: 6),
     mainButton: FlatButton(
-      child: Text('Accept'),
+      child: Text(AppLocalizations.of(context).translate("Accept")),
       onPressed: () async {
         Database().acceptFriendRequest(
             context, configuration.userData.userId, userId);
@@ -231,7 +230,6 @@ Flushbar friendRequestInAppNotification(
       },
     ),
     onTap: (flushbar) async {
-      print('cliked');
       UserProfile user = await Database().getProfileData(userId, context);
       Navigator.push(
           context,

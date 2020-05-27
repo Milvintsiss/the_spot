@@ -72,6 +72,7 @@ dependencies:
 
   shared_preferences: ^0.5.6
 
+
   scoped_model: ^1.0.1
 
   vibrate: ^0.0.4

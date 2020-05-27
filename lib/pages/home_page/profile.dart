@@ -1,8 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/home_page/followers_following_friends_page.dart';
 import 'package:the_spot/pages/home_page/friend_requests_page.dart';
 import 'package:the_spot/pages/inscription_page.dart';
@@ -70,15 +69,6 @@ class _Profile extends State<Profile> {
     super.dispose();
   }
 
-  void signOut() async {
-    try {
-      await widget.auth.signOut();
-      widget.logoutCallback();
-    } catch (e) {
-      print(e);
-    }
-  }
-
   void uploadAvatar() async {
     print("add an Avatar");
     await Storage().getPhotoFromUserStorageAndUpload(
@@ -86,8 +76,8 @@ class _Profile extends State<Profile> {
       context: context,
       cropStyle: CropStyle.circle,
       cropAspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
-      maxHeight: 150,
-      maxWidth: 150,
+      maxHeight: 300,
+      maxWidth: 300,
       compressQuality: 75,
     );
 
@@ -190,11 +180,11 @@ class _Profile extends State<Profile> {
           child: ListView(
             children: <Widget>[
               showTopDrawer(),
-              showListTileButton("Edit my Profile", Icons.edit),
-              showListTileButton('Clear cache', Icons.phonelink_erase),
-              showListTileButton('SignOut', Icons.power_settings_new),
-              showListTileButton('Delete my account', Icons.delete_forever),
-              showListTileButton('App info', Icons.info_outline),
+              showListTileButton(AppLocalizations.of(context).translate("Edit my Profile"), 'Edit my Profile', Icons.edit),
+              showListTileButton(AppLocalizations.of(context).translate("Clear cache"), 'Clear cache', Icons.phonelink_erase),
+              showListTileButton(AppLocalizations.of(context).translate("SignOut"), 'SignOut', Icons.power_settings_new),
+              showListTileButton(AppLocalizations.of(context).translate("Delete my account"), 'Delete my account', Icons.delete_forever),
+              showListTileButton(AppLocalizations.of(context).translate("App info"), 'App info', Icons.info_outline),
             ],
           ),
         ),
@@ -216,7 +206,7 @@ class _Profile extends State<Profile> {
     );
   }
 
-  Widget showListTileButton(String text, IconData icon) {
+  Widget showListTileButton(String text, String type, IconData icon) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
       child: Container(
@@ -234,7 +224,7 @@ class _Profile extends State<Profile> {
             color: PrimaryColorLight,
           ),
           onTap: () async {
-            switch (text) {
+            switch (type) {
               case 'Edit my Profile':
                 {
                   Navigator.pop(context);
@@ -254,12 +244,17 @@ class _Profile extends State<Profile> {
                 }
                 break;
               case 'SignOut':
-                signOut();
+                {
+                  Navigator.pop(context);
+                  widget.configuration.logoutCallback();
+                }
                 break;
               case 'Delete my account':
-                DeleteUser(widget.auth, _userProfile.userId,
-                        widget.logoutCallback, context)
-                    .showDeleteUserDataConfirmDialog();
+                {
+                  Navigator.pop(context);
+                  DeleteUser(widget.configuration, context)
+                      .showDeleteUserDataConfirmDialog();
+                }
                 break;
               case 'App info':
                 Navigator.pop(context);
@@ -408,11 +403,11 @@ class _Profile extends State<Profile> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             _showNumberOfFriendsFollowersFollowing(
-                _userProfile.numberOfFriends, 'Friends'),
+                _userProfile.numberOfFriends, AppLocalizations.of(context).translate("Friends")),
             _showNumberOfFriendsFollowersFollowing(
-                _userProfile.numberOfFollowers, 'Followers'),
+                _userProfile.numberOfFollowers, AppLocalizations.of(context).translate("Followers")),
             _showNumberOfFriendsFollowersFollowing(
-                _userProfile.numberOfFollowing, 'Following'),
+                _userProfile.numberOfFollowing, AppLocalizations.of(context).translate("Following")),
           ],
         ),
       ),
@@ -495,7 +490,7 @@ class _Profile extends State<Profile> {
                 ),
               )
             : Text(
-                _userProfile.isFollowed ? 'Unfollow' : 'Follow',
+                _userProfile.isFollowed ? AppLocalizations.of(context).translate("Unfollow") : AppLocalizations.of(context).translate("Follow"),
                 style: TextStyle(
                     fontSize: 12 * widget.configuration.textSizeFactor,
                     color: !_userProfile.isFollowed
@@ -547,7 +542,7 @@ class _Profile extends State<Profile> {
                   ),
                 )
               : Text(
-                  "Remove",
+                  AppLocalizations.of(context).translate("Remove"),
                   style: TextStyle(
                       fontSize: 12 * widget.configuration.textSizeFactor,
                       color: Colors.black54),
@@ -585,7 +580,7 @@ class _Profile extends State<Profile> {
                   ),
                 )
               : Text(
-                  !requested ? 'Add+' : 'Requested',
+                  !requested ? AppLocalizations.of(context).translate("Add+") : AppLocalizations.of(context).translate("Requested"),
                   style: TextStyle(
                       fontSize: 12 * widget.configuration.textSizeFactor,
                       color: !requested ? Colors.black : Colors.black54),
@@ -658,7 +653,7 @@ class _Profile extends State<Profile> {
       child: RaisedButton(
         color: Colors.green,
         child: Text(
-          'Accept',
+          AppLocalizations.of(context).translate("Accept"),
           style: TextStyle(
               fontSize: 12 * widget.configuration.textSizeFactor,
               color: Colors.white),
@@ -682,7 +677,7 @@ class _Profile extends State<Profile> {
       child: RaisedButton(
         color: Colors.red,
         child: Text(
-          'Refuse',
+          AppLocalizations.of(context).translate("Refuse"),
           style: TextStyle(
               fontSize: 12 * widget.configuration.textSizeFactor,
               color: Colors.white),
@@ -757,12 +752,14 @@ class _Profile extends State<Profile> {
                   size: widget.configuration.screenWidth / 20,
                   color: isInstaClipSelected ? Colors.white70 : Colors.black,
                 ),
-                Text(
-                  'InstaClips',
-                  style: TextStyle(
-                      color:
-                          isInstaClipSelected ? Colors.white70 : Colors.black,
-                      fontSize: 12 * widget.configuration.textSizeFactor),
+                Center(
+                  child: Text(
+                    'InstaClips',
+                    style: TextStyle(
+                        color:
+                            isInstaClipSelected ? Colors.white70 : Colors.black,
+                        fontSize: 12 * widget.configuration.textSizeFactor),
+                  ),
                 )
               ],
             ),
@@ -792,7 +789,8 @@ class _Profile extends State<Profile> {
                     ),
                     Divider(height: widget.configuration.screenWidth / 20),
                     Text(
-                      'This user hasn\'t posted any vid for the moment',
+                      AppLocalizations.of(context).translate("This user hasn't posted any vid for the moment"),
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                           color: Colors.black,
                           fontSize: 18 * widget.configuration.textSizeFactor),

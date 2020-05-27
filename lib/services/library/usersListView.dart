@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/home_page/profile.dart';
 import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/configuration.dart';
@@ -236,7 +237,7 @@ class _UsersListViewState extends State<UsersListView> {
               ),
             )
           : Text(
-              'Accept',
+              AppLocalizations.of(context).translate("Accept"),
               style: TextStyle(
                   fontSize: 12 * widget.configuration.textSizeFactor,
                   color: Colors.white),
@@ -267,7 +268,7 @@ class _UsersListViewState extends State<UsersListView> {
               ),
             )
           : Text(
-              widget.query[index].isFollowed ? 'Unfollow' : 'Follow',
+              widget.query[index].isFollowed ? AppLocalizations.of(context).translate("Unfollow") : AppLocalizations.of(context).translate("Follow"),
               style: TextStyle(
                   fontSize: 12 * widget.configuration.textSizeFactor,
                   color: !widget.query[index].isFollowed
@@ -320,7 +321,7 @@ class _UsersListViewState extends State<UsersListView> {
                 ),
               )
             : Text(
-                !friendRequestAlreadyDone[index] ? 'Add+' : 'Requested',
+                !friendRequestAlreadyDone[index] ? AppLocalizations.of(context).translate("Add+") : AppLocalizations.of(context).translate("Requested"),
                 style: TextStyle(
                     fontSize: 12 * widget.configuration.textSizeFactor,
                     color: !friendRequestAlreadyDone[index]

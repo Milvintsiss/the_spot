@@ -400,8 +400,8 @@ class _InscriptionPage_AddProfilePicture
       context: context,
       cropStyle: CropStyle.circle,
       cropAspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
-      maxHeight: 150,
-      maxWidth: 150,
+      maxHeight: 300,
+      maxWidth: 300,
       compressQuality: 75,
     );
 
@@ -461,7 +461,7 @@ class _InscriptionPage_AddProfilePicture
       padding: const EdgeInsets.only(top: 40),
       child: Center(
         child: Text(
-          "Adding a photo makes you more recognizable!",
+          AppLocalizations.of(context).translate("Adding a picture makes you more recognizable!"),
           style: TextStyle(
             fontSize: 24,
             color: PrimaryColorLight,

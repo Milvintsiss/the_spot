@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'The Spot',
+        title: 'TheSpot',
         theme: MyTheme.defaultTheme,
       // List all of the app's supported locales here
       supportedLocales: [

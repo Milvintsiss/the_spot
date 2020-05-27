@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_spot/app_localizations.dart';
 
 class FeatureNotAvailable extends StatefulWidget {
   @override
@@ -30,7 +31,7 @@ class _FeatureNotAvailableState extends State<FeatureNotAvailable>
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.red,
+      color: Colors.red[400],
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -40,7 +41,7 @@ class _FeatureNotAvailableState extends State<FeatureNotAvailable>
             size: 150,
           ),
           Text(
-            "This feature isn't available for the moment, please wait for the next update",
+            AppLocalizations.of(context).translate("This feature isn't available yet, please wait for the next update"),
             textAlign: TextAlign.center,
             style: TextStyle(
                 fontSize: 30, color: Colors.black, fontWeight: FontWeight.bold),

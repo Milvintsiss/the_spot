@@ -1,5 +1,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const FieldValue = require('firebase-admin').firestore.FieldValue;
 const algoliasearch = require('algoliasearch');
 
 const ALGOLIA_APP_ID = "D5GGEY9O41";
@@ -32,11 +33,133 @@ exports.onUserDataCreation = functions.firestore.document('users/{userId}')
 //        return usersIndex.saveObject({...algoliaData, objectID});
 //    });
 
-exports.onUserDataDelete = functions.firestore.document('users/{userId}')
-    .onDelete(snapshot => {
-        //algolia
-        return usersIndex.deleteObject(snapshot.id);
+exports.deleteUser = functions.https.onCall(async (data, context) => {
+    let id = context.auth.uid;
+    console.log('Delete user: ' + id);
+
+    //delete from algolia
+    usersIndex.deleteObject(id);
+    console.log(id + 'Deleted from algolia');
+
+    //delete user following
+    await admin.firestore().collection('users').doc(id).collection('Following').get()
+        .then(async (snapshot) => {
+            for await (const document of snapshot.docs) {
+                await admin.firestore().collection('users').doc(document.id)
+                    .update(
+                        {'NumberOfFollowers': FieldValue.increment(-1)}
+                    );
+                await admin.firestore().collection('users').doc(document.id).collection('Followers')
+                    .doc(id).delete();
+            }
+            return console.log('Following of ' + id + ' deleted');
+        });
+
+    // delete user followers
+    await admin.firestore().collection('users').doc(id).collection('Followers').get()
+        .then(async (snapshot) => {
+            for await (const document of snapshot.docs) {
+                await admin.firestore().collection('users').doc(document.id)
+                    .update(
+                        {'NumberOfFollowing': FieldValue.increment(-1)}
+                    );
+                await admin.firestore().collection('users').doc(document.id).collection('Following')
+                    .doc(id).delete();
+            }
+            return console.log('Followers of ' + id + ' deleted');
+        });
+    //delete user friends
+    await admin.firestore().collection('users').doc(id).get()
+        .then(async (snapshot) => {
+            let friends = snapshot.data()['Friends'];
+            if (friends !== undefined) {
+                for await (const friend of friends) {
+                    await admin.firestore().collection('users').doc(friend)
+                        .update(
+                            {
+                                'Friends': FieldValue.arrayRemove(id),
+                                'NumberOfFriends': FieldValue.increment(-1)
+                            }
+                        );
+                }
+            }
+            return console.log('Friends of ' + id + ' deleted');
+        });
+
+    //delete pending friends
+    await admin.firestore().collection('users').where('PendingFriendsId', "array-contains", id)
+        .get()
+        .then(async (snapshot) => {
+            for await (const document of snapshot.docs) {
+                await admin.firestore().collection('users').doc(document.id)
+                    .update({'PendingFriendsId': FieldValue.arrayRemove(id)});
+            }
+            return console.log('PendingFriends of ' + id + ' deleted');
+        });
+
+
+    //delete user profile picture
+    await admin.storage().bucket().file('ProfilePictures/' + id).delete().then(() => {
+        return console.log('Profile picture of ' + id + ' deleted');
+    }).catch((err) => {
+        console.log(err);
     });
+
+    //delete user message ///WARN\\\ delete archived messages when this will be implemented
+    await admin.firestore().collection('groupChats')
+        .where('MembersIds', "array-contains", id)
+        .get()
+        .then(async (snapshot) => {
+            for await (const document of snapshot.docs) {
+                let messagesArray = [];
+                let isGroup;
+                await admin.firestore().collection('groupChats').doc(document.id)
+                    .get()
+                    .then((data) => {
+                            data.data()['Messages'].forEach((message) => {
+                                if (message['SenderId'] === id) {
+                                    messagesArray.push(message);
+                                }
+                            })
+                            isGroup = data.data()['MembersIds'].length > 2;
+                            return true;
+                        }
+                    );
+                if (isGroup) {
+                    console.log(messagesArray);
+                    if(messagesArray.length > 0)
+                        await admin.firestore().collection('groupChats').doc(document.id)
+                            .update({
+                                'MembersIds': FieldValue.arrayRemove(id),
+                                'AdminsIds': FieldValue.arrayRemove(id),
+                                'Messages': FieldValue.arrayRemove(...messagesArray),
+                            });
+                    else
+                        await admin.firestore().collection('groupChats').doc(document.id)
+                            .update({
+                                'MembersIds': FieldValue.arrayRemove(id),
+                                'AdminsIds': FieldValue.arrayRemove(id),
+                            });
+                }
+                else
+                    await admin.firestore().collection('groupChats').doc(document.id)
+                        .delete();
+            }
+            return console.log('Messages of ' + id + ' deleted');
+        });
+
+    //delete userData
+    await admin.firestore().collection('users').doc(id)
+        .delete()
+        .catch((err) => {
+            return console.error(err);
+        });
+    console.log(id + ' data deleted');
+
+    //delete from auth
+    await admin.auth().deleteUser(id);
+    return console.log(id + ' deleted');
+});
 
 exports.updateUserPseudoAndUsernameInAlgolia = functions.https.onCall((data, context) => {
     console.log(data);
@@ -106,8 +229,8 @@ exports.repairCountFollowingFollowers = functions.https.onRequest((req, res) => 
                             return console.error(err);
                         });
                     }).catch((err) => {
-                    return console.error(err);
-                });
+                        return console.error(err);
+                    });
             })
         }).catch((err) => {
         return console.error(err);

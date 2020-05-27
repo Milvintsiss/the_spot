@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
+import 'package:the_spot/app_localizations.dart';
 
 class Gallery extends StatefulWidget {
   Gallery(this.imagesAddress, {Key key, this.height = 200, this.animate = true}) : super(key: key);
@@ -75,7 +76,7 @@ class _GalleryState extends State<Gallery> {
           ));
     }else{
       return Text(
-        "Vous n'avez pas encore ajouté de photos!"
+        AppLocalizations.of(context).translate("You haven't added any pictures yet!")
       );
     }
   }
@@ -162,7 +163,7 @@ class _GalleryPhotoViewWrapperState extends State<GalleryPhotoViewWrapper> {
             Container(
               padding: const EdgeInsets.all(20.0),
               child: Text(
-                "Image ${currentIndex + 1}",
+                AppLocalizations.of(context).translate("Picture %DYNAMIC", dynamic: (currentIndex + 1).toString()),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 17.0,

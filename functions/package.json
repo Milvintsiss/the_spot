@@ -10,15 +10,17 @@
     "logs": "firebase functions:log"
   },
   "engines": {
-    "node": "8"
+    "node": "10"
   },
   "dependencies": {
     "algoliasearch": "^4.2.0",
+    "core-util-is": "^1.0.2",
     "firebase-admin": "^8.6.0",
     "firebase-functions": "^3.6.1"
   },
   "devDependencies": {
     "@firebase/util": "^0.2.45",
+    "@google-cloud/firestore": "^3.8.0",
     "babel-eslint": "^10.1.0",
     "eslint": "^5.12.0",
     "eslint-plugin-promise": "^4.0.1",

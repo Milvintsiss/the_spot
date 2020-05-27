@@ -1,3 +1,5 @@
+
+import 'package:the_spot/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -59,6 +61,7 @@ class _RootPageState extends State<RootPage> {
     configuration.screenHeight = screenHeight;
     configuration.screenWidth = screenWidth;
     configuration.textSizeFactor = textSizeFactor;
+    configuration.logoutCallback = logoutCallback;
 
     if (configuration.userData != null) {
       _inscriptionState = false;
@@ -95,7 +98,8 @@ class _RootPageState extends State<RootPage> {
     getConfiguration();
   }
 
-  void logoutCallback() {
+  void logoutCallback() async {
+    await widget.auth.signOut();
     setState(() {
       status = Status.NOT_LOGGED_IN;
       _userId = null;
@@ -115,7 +119,7 @@ class _RootPageState extends State<RootPage> {
     return Scaffold(
       body: Center(
           child: Text(
-        "A new version of the spot is now available! Please update to keep using TheSpot! ",
+            AppLocalizations.of(context).translate("A new version of TheSpot is now available! Please update to keep using TheSpot!"),
         textAlign: TextAlign.center,
         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
       )),
@@ -126,7 +130,7 @@ class _RootPageState extends State<RootPage> {
     return Scaffold(
       body: Center(
           child: Text(
-        "TheSpot is not operational for the moment, we are working on it. Please retry later.",
+        AppLocalizations.of(context).translate("TheSpot is not operational for the moment, we are working on it. Please retry later."),
         textAlign: TextAlign.center,
         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
       )),

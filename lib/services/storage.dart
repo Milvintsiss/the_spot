@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:the_spot/app_localizations.dart';
 
 import '../theme.dart';
 
@@ -26,13 +27,13 @@ class Storage {
       AlertDialog errorAlertDialog = new AlertDialog(
         elevation: 0,
         backgroundColor: PrimaryColorDark,
-        title: Text("Get image from:", style: TextStyle(color: PrimaryColor),),
+        title: Text(AppLocalizations.of(context).translate("Get image from:"), style: TextStyle(color: PrimaryColor),),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             ListTile(
               title: Text(
-                "Camera",
+                AppLocalizations.of(context).translate("Camera"),
                 style: TextStyle(color: PrimaryColorLight),
               ),
               leading: Icon(
@@ -46,7 +47,7 @@ class Storage {
             ),
             ListTile(
               title: Text(
-                "Gallery",
+                AppLocalizations.of(context).translate("Gallery"),
                 style: TextStyle(color: PrimaryColorLight),
               ),
               leading: Icon(
@@ -102,44 +103,6 @@ class Storage {
       }
     }
     return false;
-  }
-
-  bool getPhotoFromGalleryOrCameraDialog(BuildContext context) {
-    AlertDialog errorAlertDialog = new AlertDialog(
-      elevation: 0,
-      content: Column(
-        children: <Widget>[
-          ListTile(
-            title: Text(
-              "Camera",
-              style: TextStyle(color: PrimaryColorLight),
-            ),
-            leading: Icon(
-              Icons.photo_camera,
-              color: PrimaryColorLight,
-            ),
-            onTap: () {
-              return false;
-            },
-          ),
-          ListTile(
-            title: Text(
-              "Gallery",
-              style: TextStyle(color: PrimaryColorLight),
-            ),
-            leading: Icon(
-              Icons.photo_library,
-              color: PrimaryColorLight,
-            ),
-            onTap: () {
-              return true;
-            },
-          ),
-        ],
-      ),
-    );
-
-    showDialog(context: context, child: errorAlertDialog);
   }
 
   Future<String> getUrlPhoto(String locationOnStorage) async {

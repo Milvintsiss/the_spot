@@ -80,15 +80,22 @@ ChatGroup convertMapToChatGroup(Map map) {
   return chatGroup;
 }
 
+
+const String PICTURE_TYPE = '%#%PICTURE%#%';
+const String VOICE_RECORD_TYPE = '%#%VOICE_RECORD%#%';
+const String INFO_TYPE = '%#%INFO%#%';
+
 enum MessageType{
   TEXT,
   PICTURE,
   VOICE_RECORD,
+  INFO,
 }
 class Message {
   String senderId;
   Timestamp date;
   String data;
+  String data2;
   MessageType messageType;
 
   Message(this.senderId, this.date, this.data);
@@ -102,13 +109,20 @@ class Message {
   }
 
   void setMessageTypeAndTransformData(){
-    if(data.contains("%#%PICTURE%#%")){
-      data = data.replaceAll("%#%PICTURE%#%", "");
+    if(data.contains(PICTURE_TYPE)){
+      data2 = data.replaceAll(PICTURE_TYPE, "");
+      data = "Picture";
       messageType = MessageType.PICTURE;
-    } else if (data.contains("%#%VOICE_RECORD%#%")){
-      data = data.replaceAll("%#%VOICE_RECORD%#%", "");
+    } else if (data.contains(VOICE_RECORD_TYPE)){
+      data2 = data.replaceAll(VOICE_RECORD_TYPE, "");
+      data = "Voice record";
       messageType = MessageType.VOICE_RECORD;
-    } else{
+    } else if (data.contains(INFO_TYPE)){
+      data2 = data.replaceAll(INFO_TYPE, "");
+      data = data.replaceAll(INFO_TYPE, "");
+      messageType = MessageType.INFO;
+    } else {
+      data2 = data;
       messageType = MessageType.TEXT;
     }
   }
