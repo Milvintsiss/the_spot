@@ -1,4 +1,4 @@
-
+import 'package:package_info/package_info.dart';
 import 'package:the_spot/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,6 +10,7 @@ import 'package:the_spot/pages/home_page.dart';
 import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/theme.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 enum Status {
   UPDATE_AVAILABLE,
@@ -63,6 +64,10 @@ class _RootPageState extends State<RootPage> {
     configuration.textSizeFactor = textSizeFactor;
     configuration.logoutCallback = logoutCallback;
 
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    String version = packageInfo.version;
+    print("Version: $version");
+
     if (configuration.userData != null) {
       _inscriptionState = false;
       configuration.userData.userId = _userId;
@@ -71,7 +76,7 @@ class _RootPageState extends State<RootPage> {
       _inscriptionState = true;
     }
 
-    if (configuration.updateIsAvailable)
+    if (configuration.updateIsAvailable || configuration.version != version)
       status = Status.UPDATE_AVAILABLE;
     else if (!configuration.isApplicationOperational)
       status = Status.APP_NOT_OPERATIONAL;
@@ -108,9 +113,23 @@ class _RootPageState extends State<RootPage> {
 
   Widget buildWaitingScreen() {
     return Scaffold(
-      body: Container(
-        alignment: Alignment.center,
-        child: CircularProgressIndicator(),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: screenWidth / 5),
+              child: Image.asset('assets/logos/Logo_TheSpot_blackWhite_whitoutText.png'),
+            ),
+            Divider(
+              height: screenHeight / 20,
+              indent: screenWidth / 3,
+              endIndent: screenWidth / 3,
+            ),
+            CircularProgressIndicator(),
+          ],
+        ),
       ),
     );
   }
@@ -118,10 +137,21 @@ class _RootPageState extends State<RootPage> {
   Widget buildUpdateAvailableScreen() {
     return Scaffold(
       body: Center(
-          child: Text(
-            AppLocalizations.of(context).translate("A new version of TheSpot is now available! Please update to keep using TheSpot!"),
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            AppLocalizations.of(context).translate(
+                "A new version of TheSpot is now available! Please update to keep using TheSpot!"),
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          RaisedButton(
+            child: Text(AppLocalizations.of(context).translate("Update")),
+            onPressed: () => launch('http://thespot.social',),
+          )
+        ],
       )),
     );
   }
@@ -130,7 +160,8 @@ class _RootPageState extends State<RootPage> {
     return Scaffold(
       body: Center(
           child: Text(
-        AppLocalizations.of(context).translate("TheSpot is not operational for the moment, we are working on it. Please retry later."),
+        AppLocalizations.of(context).translate(
+            "TheSpot is not operational for the moment, we are working on it. Please retry later."),
         textAlign: TextAlign.center,
         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
       )),
