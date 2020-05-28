@@ -7,6 +7,7 @@ import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/library/usersListView.dart';
 import 'package:the_spot/theme.dart';
+import 'package:after_layout/after_layout.dart';
 
 class FollowersFollowingFriendsPage extends StatefulWidget {
   final Configuration configuration;
@@ -23,15 +24,16 @@ class FollowersFollowingFriendsPage extends StatefulWidget {
 }
 
 class _FollowersFollowingFriendsPageState
-    extends State<FollowersFollowingFriendsPage> {
+    extends State<FollowersFollowingFriendsPage>
+    with AfterLayoutMixin<FollowersFollowingFriendsPage> {
   bool isWaiting = true;
   List<UserProfile> queryResult = [];
   Timestamp index = Timestamp.now();
   int friendsIndex = 0;
   int querySize = 10;
 
-  String noResultMessage;
-  String appBarTitle;
+  String noResultMessage = "";
+  String appBarTitle = "";
 
   @override
   void initState() {
@@ -39,14 +41,46 @@ class _FollowersFollowingFriendsPageState
     init();
   }
 
+  @override
+  void afterFirstLayout(BuildContext context) {
+    switch (widget.type) {
+      case "Followers":
+        {
+          noResultMessage = AppLocalizations.of(context)
+              .translate("This user haven't been followed by anyone yet.");
+          appBarTitle =
+              AppLocalizations.of(context).translate("Users following ") +
+                  widget.userProfile.pseudo;
+          setState(() {});
+        }
+        break;
+
+      case "Following":
+        {
+          noResultMessage = AppLocalizations.of(context)
+              .translate("This user doesn't follow anyone yet.");
+          appBarTitle =
+              AppLocalizations.of(context).translate("Users followed by ") +
+                  widget.userProfile.pseudo;
+          setState(() {});
+        }
+        break;
+      case "Friends":
+        {
+          noResultMessage = AppLocalizations.of(context)
+              .translate("This user hasn't added friends yet.");
+          appBarTitle = AppLocalizations.of(context).translate("Friends of ") +
+              widget.userProfile.pseudo;
+          setState(() {});
+        }
+        break;
+    }
+  }
+
   Future init() async {
     switch (widget.type) {
       case "Followers":
         {
-          noResultMessage =
-              AppLocalizations.of(context).translate("This user haven't been followed by anyone for the yet.");
-          appBarTitle = AppLocalizations.of(context).translate("Users following ") + widget.userProfile.pseudo;
-
           Map<String, Object> res = await Database().getFollowersOf(
               context,
               widget.configuration.userData.userId,
@@ -64,9 +98,6 @@ class _FollowersFollowingFriendsPageState
 
       case "Following":
         {
-          noResultMessage = AppLocalizations.of(context).translate("This user doesn't follow anyone yet.");
-          appBarTitle = AppLocalizations.of(context).translate("Users followed by ") + widget.userProfile.pseudo;
-
           Map<String, Object> res = await Database().getFollowingOf(
               context,
               widget.configuration.userData.userId,
@@ -83,19 +114,14 @@ class _FollowersFollowingFriendsPageState
         break;
       case "Friends":
         {
-          noResultMessage = AppLocalizations.of(context).translate("This user hasn't added friends yet.");
-          appBarTitle = AppLocalizations.of(context).translate("Friends of ") + widget.userProfile.pseudo;
-
           List<String> friends = widget.userProfile.friends.reversed.toList();
 
           if (friendsIndex < friends.length) {
-            int range =
-            friendsIndex + querySize > friends.length
+            int range = friendsIndex + querySize > friends.length
                 ? friends.length
                 : friendsIndex + querySize;
 
-            List<String> query =
-            friends.getRange(friendsIndex, range).toList();
+            List<String> query = friends.getRange(friendsIndex, range).toList();
 
             List<UserProfile> res = await Database().getUsersByIds(
                 context, query,
@@ -133,7 +159,11 @@ class _FollowersFollowingFriendsPageState
     } else if (queryResult.length == 0 || queryResult == null)
       return Padding(
         padding: EdgeInsets.only(top: widget.configuration.screenWidth / 20),
-        child: Center(child: Text(noResultMessage, textAlign: TextAlign.center,)),
+        child: Center(
+            child: Text(
+          noResultMessage,
+          textAlign: TextAlign.center,
+        )),
       );
     else
       return Column(
