@@ -33,13 +33,32 @@ class PushNotificationsManager {
 
                   friendRequestInAppNotification(
                           context,
-                          configuration,
-                          message['data']['userPseudo'],
-                          message['data']['picturePath'],
-                          message['data']['userToAddId'])
+                          configuration: configuration,
+                          userPseudo: message['data']['userPseudo'],
+                          userPictureDownloadPath: message['data']['mainUserProfilePictureDownloadPath'],
+                          userId: message['data']['userToAddId'])
                       .show(context);
                 }
               }
+              break;
+            case 'message':
+              {
+                String usersIds = message['data']['usersIds'];
+                List<String> usersTargetedIds = usersIds.split('/');
+                usersTargetedIds.removeAt(0);
+                if(usersTargetedIds.contains(configuration.userData.userId)){
+                  messageInAppNotification(
+                    context,
+                    configuration: configuration,
+                    chatGroupId: message['data']['conversationId'],
+                    conversationPictureDownloadPath: message['data']['conversationPictureDownloadPath'],
+                    message: message['data']['message'],
+                    senderPseudo: message['data']['senderPseudo'],
+                  ).show(context);
+                }
+              }
+              break;
+
           }
         },
         onLaunch: (Map<String, dynamic> message) async {

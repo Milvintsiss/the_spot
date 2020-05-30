@@ -150,32 +150,30 @@ class Database {
 
     if (await checkConnection(context) && ids.length > 0) {
       try {
-          for (int i = 0;
-          i < ids.length;
-          i = i + 10) {
-            List<String> query = ids
-                .getRange(
-                i,
-                i + 10 > ids.length //if there is more than 10, do query in few times
-                    ? ids.length
-                    : i + 10)
-                .toList();
-            await database
-                .collection(USERS_COLLECTION)
-                .where(FieldPath.documentId, whereIn: query)
-                .getDocuments()
-                .then((QuerySnapshot querySnapshot) => query.forEach((id) {
-              usersProfile.add(convertMapToUserProfile(querySnapshot
-                  .documents
-                  .firstWhere((document) => document.documentID == id)
-                  .data)); //returns documents in query order
-              usersProfile[usersProfile.length - 1].userId = id;
-            }))
-                .catchError((err) {
-              print("Database Error: " + err.toString());
-              error("Database Error: " + err.toString(), context);
-            });
-
+        for (int i = 0; i < ids.length; i = i + 10) {
+          List<String> query = ids
+              .getRange(
+                  i,
+                  i + 10 >
+                          ids.length //if there is more than 10, do query in few times
+                      ? ids.length
+                      : i + 10)
+              .toList();
+          await database
+              .collection(USERS_COLLECTION)
+              .where(FieldPath.documentId, whereIn: query)
+              .getDocuments()
+              .then((QuerySnapshot querySnapshot) => query.forEach((id) {
+                    usersProfile.add(convertMapToUserProfile(querySnapshot
+                        .documents
+                        .firstWhere((document) => document.documentID == id)
+                        .data)); //returns documents in query order
+                    usersProfile[usersProfile.length - 1].userId = id;
+                  }))
+              .catchError((err) {
+            print("Database Error: " + err.toString());
+            error("Database Error: " + err.toString(), context);
+          });
         }
         if (verifyIfFriendsOrFollowed) {
           usersProfile =
@@ -377,12 +375,8 @@ class Database {
     return succeed;
   }
 
-  Future<bool> sendFriendRequest(
-      BuildContext context,
-      String mainUserId,
-      String userSendindRequestPseudo,
-      String userSendingRequestPictureDownloadPath,
-      String userToAddAsFriendId) async {
+  Future<bool> sendFriendRequest(BuildContext context,
+      {@required UserProfile mainUser, @required UserProfile userToAdd}) async {
     final HttpsCallable sendFriendRequestNotificationTo = CloudFunctions
         .instance
         .getHttpsCallable(functionName: 'sendFriendRequestNotificationTo');
@@ -392,9 +386,9 @@ class Database {
       try {
         await database
             .collection(USERS_COLLECTION)
-            .document(userToAddAsFriendId)
+            .document(userToAdd.userId)
             .updateData({
-              'PendingFriendsId': FieldValue.arrayUnion([mainUserId])
+              'PendingFriendsId': FieldValue.arrayUnion([mainUser.userId])
             })
             .then((value) => success = true)
             .catchError((err) {
@@ -403,9 +397,12 @@ class Database {
               success = false;
             });
         sendFriendRequestNotificationTo.call(<String, dynamic>{
-          'userId': userToAddAsFriendId,
-          'pseudo': userSendindRequestPseudo,
-          'picturePath': userSendingRequestPictureDownloadPath ?? ""
+          'userToAddAsFriendId': userToAdd.userId,
+          'mainUserId': mainUser.userId,
+          'mainUserPseudo': mainUser.pseudo,
+          'mainUserProfilePictureDownloadPath':
+              mainUser.profilePictureDownloadPath ?? "",
+          'userToAddTokens': userToAdd.devicesTokens
         });
       } catch (err) {
         print(err.toString());
@@ -536,16 +533,15 @@ class Database {
           usersId.add(user.userId);
           user.isFollowed = false;
         });
-        for (int i = 0;
-        i < usersId.length;
-        i = i + 10) {
+        for (int i = 0; i < usersId.length; i = i + 10) {
           List<String> query = usersId
               .getRange(
-              i,
-              i + 10 > usersId
-                  .length //if there is more than 10, do query in few times
-                  ? usersId.length
-                  : i + 10)
+                  i,
+                  i + 10 >
+                          usersId
+                              .length //if there is more than 10, do query in few times
+                      ? usersId.length
+                      : i + 10)
               .toList();
           await database
               .collection(USERS_COLLECTION)
@@ -557,8 +553,7 @@ class Database {
             query.forEach((userId) {
               int index = snapshots.documents
                   .indexWhere((document) => document.documentID == userId);
-              if (index != -1)
-                users[usersId.indexOf(userId)].isFollowed = true;
+              if (index != -1) users[usersId.indexOf(userId)].isFollowed = true;
             });
           }).catchError((err) {
             print("Database Error: " + err.toString());
@@ -572,7 +567,6 @@ class Database {
           else
             user.isFriend = false;
         });
-
 
         //code if friends are stocked in a collection
 //        await database
@@ -700,14 +694,17 @@ class Database {
     return newChatGroup;
   }
 
-  Future<bool> sendMessageToGroup(BuildContext context, String mainUserId,
-      String groupId, Message message) async {
+  Future<bool> sendMessageToGroup(BuildContext context, UserProfile mainUser,
+      ChatGroup group, Message message, List<UserProfile> members) async {
+    final HttpsCallable sendMessageNotificationTo = CloudFunctions.instance
+        .getHttpsCallable(functionName: 'sendMessageNotificationTo');
+
     bool success = true;
     if (await checkConnection(context)) {
       try {
         await database
             .collection(GROUP_CHATS_COLLECTION)
-            .document(groupId)
+            .document(group.id)
             .updateData({
           'Messages': FieldValue.arrayUnion([message.toMap()]),
           'LastMessage': Timestamp.now(),
@@ -718,6 +715,26 @@ class Database {
           print("Database Error: " + err.toString());
           error("Database Error: " + err.toString(), context);
         });
+
+        message.setMessageTypeAndTransformData();
+        List<String> usersTokens = [];
+        String usersIds = "";
+        members.forEach((member) {
+          if (member.devicesTokens != null && member.devicesTokens.length > 0) {
+            usersTokens.addAll(member.devicesTokens);
+            usersIds = "$usersIds/${member.userId}";
+          }
+        });
+
+        sendMessageNotificationTo.call(<String, dynamic>{
+          'conversationId': group.id,
+          'conversationName': group.name,
+          'conversationPictureDownloadPath': group.imageDownloadPath ?? "",
+          'usersTokens': usersTokens,
+          'usersIds': usersIds,
+          'message': message.data,
+          'senderPseudo': mainUser.pseudo,
+        });
       } catch (err) {
         success = false;
         print(err);
@@ -725,6 +742,27 @@ class Database {
       }
     }
     return success;
+  }
+  
+  Future<ChatGroup> getGroup(BuildContext context, {@required String groupId}) async {
+    ChatGroup chatGroup;
+    if(await checkConnection(context)){
+      try{
+        await database.collection(GROUP_CHATS_COLLECTION).document(groupId).get()
+            .then((document) {
+              chatGroup = convertMapToChatGroup(document.data);
+              chatGroup.id = groupId;
+            })
+            .catchError((err) {
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
+        });
+      } catch (err) {
+        print(err);
+        error(err.toString(), context);
+      }
+    }
+    return chatGroup;
   }
 
   Future<String> updateASpot(

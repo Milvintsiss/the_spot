@@ -11,6 +11,8 @@ import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/theme.dart';
 import 'package:vibrate/vibrate.dart';
+import 'package:the_spot/services/library/chatGroup.dart';
+import 'package:the_spot/pages/chat_pages/chat_page.dart';
 
 import '../database.dart';
 
@@ -199,10 +201,10 @@ Widget userItem(
 
 Flushbar friendRequestInAppNotification(
     BuildContext context,
-    Configuration configuration,
+{Configuration configuration,
     String userPseudo,
     String userPictureDownloadPath,
-    String userId) {
+    String userId}) {
   return Flushbar(
     messageText: Text(
       userPseudo + AppLocalizations.of(context).translate(" wants to add you as friend!"),
@@ -235,9 +237,46 @@ Flushbar friendRequestInAppNotification(
           context,
           MaterialPageRoute(
               builder: (context) => Profile(
-                    userProfile: user,
-                    configuration: configuration,
-                  )));
+                userProfile: user,
+                configuration: configuration,
+              )));
+    },
+  );
+}
+
+Flushbar messageInAppNotification(
+    BuildContext context,{
+    Configuration configuration,
+    String senderPseudo,
+    String message,
+    String chatGroupId,
+    String conversationPictureDownloadPath,}) {
+  return Flushbar(
+    messageText: Text(
+      "$senderPseudo: $message",
+      style: TextStyle(color: PrimaryColorLight),
+    ),
+    backgroundColor: PrimaryColorDark,
+    icon: Hero(
+      tag: chatGroupId,
+      child: ProfilePicture(conversationPictureDownloadPath,
+          size: 41, borderColor: PrimaryColorLight, borderSize: 1, isAnUser: false),
+    ),
+    borderRadius: 100,
+    borderColor: PrimaryColorLight,
+    borderWidth: 1,
+    flushbarPosition: FlushbarPosition.TOP,
+    isDismissible: true,
+    dismissDirection: FlushbarDismissDirection.HORIZONTAL,
+    duration: Duration(seconds: 4),
+    onTap: (flushbar) async {
+      ChatGroup chatGroup = await Database().getGroup(context, groupId: chatGroupId);
+      Navigator.push(context, MaterialPageRoute(
+        builder: (context) => ChatPage(
+          chatGroup: chatGroup,
+          configuration: configuration,
+        )
+      ));
     },
   );
 }

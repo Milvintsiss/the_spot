@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/services/database.dart';
+import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/library/gallery.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
 import 'package:the_spot/services/library/userGrade.dart';
@@ -9,12 +10,14 @@ import 'package:the_spot/theme.dart';
 
 class SpotInfoWidget extends StatefulWidget {
   SpotInfoWidget(
-      {@required this.setStateBottomSheet,
+      {@required this.configuration,
+      @required this.setStateBottomSheet,
       @required this.spot,
       @required this.userId,
       @required this.screenWidth,
       @required this.screenHeight});
 
+  final Configuration configuration;
   final StateSetter setStateBottomSheet;
   final MapMarker spot;
   final String userId;
@@ -139,36 +142,44 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
                   ],
                 ),
                 Divider(
-                  indent: 30,
+                  indent: widget.configuration.screenWidth / 50,
                 ),
-                RaisedButton(
-                  child: Text(userIsRatingTheSpot
-                      ? AppLocalizations.of(context).translate("Confirm")
-                      : indexOfUserRate != -1
-                          ? AppLocalizations.of(context)
-                              .translate("Change my rating")
-                          : AppLocalizations.of(context)
-                              .translate("Rate this spot")),
-                  onPressed: () => onGradeButtonPressed(),
-                ),
-                userIsRatingTheSpot
-                    ? SizedBox(
-                        width: 50,
-                        child: RaisedButton(
-                          child: Icon(
-                            Icons.undo,
-                            size: 20,
-                          ),
-                          onPressed: () => widget.setStateBottomSheet(() {
-                            userIsRatingTheSpot = false;
-                            userRatingNotComplete = false;
-                            spotGradeInput = null;
-                            spotGradeBeautyInput = null;
-                            spotGradeFloorInput = null;
-                          }),
+                Expanded(
+                  child: Wrap(
+                    children: [
+                      RaisedButton(
+                        child: Text(
+                          userIsRatingTheSpot
+                              ? AppLocalizations.of(context).translate("Confirm")
+                              : indexOfUserRate != -1
+                                  ? AppLocalizations.of(context)
+                                      .translate("Change my rating")
+                                  : AppLocalizations.of(context)
+                                      .translate("Rate this spot"),
                         ),
-                      )
-                    : Container()
+                        onPressed: () => onGradeButtonPressed(),
+                      ),
+                      userIsRatingTheSpot
+                          ? SizedBox(
+                              width: 50,
+                              child: RaisedButton(
+                                child: Icon(
+                                  Icons.undo,
+                                  size: 20,
+                                ),
+                                onPressed: () => widget.setStateBottomSheet(() {
+                                  userIsRatingTheSpot = false;
+                                  userRatingNotComplete = false;
+                                  spotGradeInput = null;
+                                  spotGradeBeautyInput = null;
+                                  spotGradeFloorInput = null;
+                                }),
+                              ),
+                            )
+                          : Container(),
+                    ],
+                  ),
+                )
               ],
             ),
             userRatingNotComplete
@@ -305,7 +316,8 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
   Widget showSpotDontHaveImagesMessageWidget() {
     return Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-        child: Text(AppLocalizations.of(context).translate("We don't have pictures of this spot yet...")));
+        child: Text(AppLocalizations.of(context)
+            .translate("We don't have pictures of this spot yet...")));
   }
 
   Widget showSpotDescriptionWidget(String spotDescription) {

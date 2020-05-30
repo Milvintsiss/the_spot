@@ -46,6 +46,7 @@ class _FollowersFollowingFriendsPageState
     switch (widget.type) {
       case "Followers":
         {
+          print("ok");
           noResultMessage = AppLocalizations.of(context)
               .translate("This user haven't been followed by anyone yet.");
           appBarTitle =

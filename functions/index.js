@@ -127,7 +127,7 @@ exports.deleteUser = functions.https.onCall(async (data, context) => {
                     );
                 if (isGroup) {
                     console.log(messagesArray);
-                    if(messagesArray.length > 0)
+                    if (messagesArray.length > 0)
                         await admin.firestore().collection('groupChats').doc(document.id)
                             .update({
                                 'MembersIds': FieldValue.arrayRemove(id),
@@ -140,8 +140,7 @@ exports.deleteUser = functions.https.onCall(async (data, context) => {
                                 'MembersIds': FieldValue.arrayRemove(id),
                                 'AdminsIds': FieldValue.arrayRemove(id),
                             });
-                }
-                else
+                } else
                     await admin.firestore().collection('groupChats').doc(document.id)
                         .delete();
             }
@@ -149,6 +148,22 @@ exports.deleteUser = functions.https.onCall(async (data, context) => {
         });
 
     //delete userData
+    await admin.firestore().collection('users').doc(id).collection('Followers').get()
+        .then(async (snapshot) => {
+            for await (const document of snapshot.docs) {
+                await admin.firestore().collection('users').doc(id).collection('Followers')
+                    .doc(document.id).delete();
+            }
+            return console.log('Followers collection of ' + id + 'deleted');
+        })
+    await admin.firestore().collection('users').doc(id).collection('Following').get()
+        .then(async (snapshot) => {
+            for await (const document of snapshot.docs) {
+                await admin.firestore().collection('users').doc(id).collection('Following')
+                    .doc(document.id).delete();
+            }
+            return console.log('Following collection of ' + id + 'deleted');
+        })
     await admin.firestore().collection('users').doc(id)
         .delete()
         .catch((err) => {
@@ -170,38 +185,65 @@ exports.updateUserPseudoAndUsernameInAlgolia = functions.https.onCall((data, con
 });
 
 
-exports.sendFriendRequestNotificationTo = functions.https.onCall(async (data, context) => {
-    console.log('Send friend request notification to ' + data['userId'] + ' from ' + data['pseudo']);
-    let userDevicesTokens = [];
-    await admin.firestore().collection('users').doc(data['userId']).get()
-        .then((snapshot) => {
-            return userDevicesTokens = snapshot.data()['DevicesTokens'];
-        })
-        .catch((err) => {
-            return console.error(err);
-        });
+exports.sendFriendRequestNotificationTo = functions.https.onCall((data, context) => {
+    const userToAddAsFriendId = data['userToAddAsFriendId'];
+    const mainUserId = data['mainUserId'];
+    const mainUserPseudo = data['mainUserPseudo'];
+    const mainUserProfilePictureDownloadPath = data['mainUserProfilePictureDownloadPath'];
+    const userToAddTokens = data['userToAddTokens'];
+    console.log('Send friend request notification to ' + userToAddAsFriendId + ' from ' + mainUserPseudo);
+
     return admin.messaging().sendToDevice(
-        userDevicesTokens,
+        userToAddTokens,
         {
             notification: {
                 title: 'New friend request',
-                body: data['pseudo'] + ` wants to add you as friend`,
-                image: data['picturePath'],
+                body: mainUserPseudo + ` wants to add you as friend`,
+                image: mainUserProfilePictureDownloadPath,
                 click_action: 'FLUTTER_NOTIFICATION_CLICK',
-
             },
             data: {
                 'type': 'friendRequest',
-                'userToAddId': context.auth.uid,
-                'userPseudo': data['pseudo'],
-                'picturePath': data['picturePath'],
-                'mainUserId': data['userId']
+                'userToAddId': mainUserId,
+                'userPseudo': mainUserPseudo,
+                'mainUserProfilePictureDownloadPath': mainUserProfilePictureDownloadPath,
+                'mainUserId': userToAddAsFriendId,
             }
         }
-    ).catch((err) => {
-        return console.error(err);
-    });
+    )
 });
+
+exports.sendMessageNotificationTo = functions.https.onCall((data, context) => {
+    const conversationId = data['conversationId'];
+    const conversationName = data['conversationName'];
+    const conversationPictureDownloadPath = data['conversationPictureDownloadPath'];
+    const usersTokens = data['usersTokens'];
+    const usersIds = data['usersIds']; //string containing ids in format "id/id/id/id/..."
+    const message = data['message'];
+    const senderPseudo = data['senderPseudo'];
+
+    return admin.messaging().sendToDevice(
+        usersTokens,
+        {
+            notification: {
+                title: conversationName,
+                body: senderPseudo + ": " + message,
+                image: conversationPictureDownloadPath,
+                click_action: 'FLUTTER_NOTIFICATION_CLICK',
+            },
+            data: {
+                'type': 'message',
+                'message': message,
+                'senderPseudo': senderPseudo,
+                'conversationId': conversationId,
+                'conversationName': conversationName,
+                'conversationPictureDownloadPath': conversationPictureDownloadPath,
+                'usersIds': usersIds,
+            }
+        }
+    )
+});
+
 
 exports.repairCountFollowingFollowers = functions.https.onRequest((req, res) => {
     admin.firestore().collection('users').get()
