@@ -110,12 +110,15 @@ class Message {
 
   void setMessageTypeAndTransformData(){
     if(data.contains(PICTURE_TYPE)){
-      data2 = data.replaceAll(PICTURE_TYPE, "");
-      data = "Picture";
+      data = data.replaceFirst(PICTURE_TYPE, "");
+      data2 = data.split(PICTURE_TYPE)[1];
+      data = data.split(PICTURE_TYPE)[0];
+      print(data2);
       messageType = MessageType.PICTURE;
     } else if (data.contains(VOICE_RECORD_TYPE)){
-      data2 = data.replaceAll(VOICE_RECORD_TYPE, "");
-      data = "Voice record";
+      data = data.replaceFirst(VOICE_RECORD_TYPE, "");
+      data2 = data.split(VOICE_RECORD_TYPE)[1];
+      data = data.split(VOICE_RECORD_TYPE)[0];
       messageType = MessageType.VOICE_RECORD;
     } else if (data.contains(INFO_TYPE)){
       data2 = data.replaceAll(INFO_TYPE, "");

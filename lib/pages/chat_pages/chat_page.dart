@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/home_page/profile.dart';
@@ -105,7 +106,9 @@ class _ChatPageState extends State<ChatPage> {
 
   AppBar showAppBar() {
     return AppBar(
-      title: Text(widget.chatGroup.isGroup ? chatGroup.name : widget.chatGroup.members[0].pseudo),
+      title: Text(widget.chatGroup.isGroup
+          ? chatGroup.name
+          : widget.chatGroup.members[0].pseudo),
     );
   }
 
@@ -116,7 +119,7 @@ class _ChatPageState extends State<ChatPage> {
           NotificationListener<ScrollNotification>(
             onNotification: onListNotification,
             child: ListView.builder(
-              reverse: true,
+                reverse: true,
                 controller: scrollController,
                 padding: EdgeInsets.symmetric(
                     horizontal: widget.configuration.screenWidth / 40,
@@ -161,8 +164,7 @@ class _ChatPageState extends State<ChatPage> {
         child: Center(
           child: Text(chatGroup.messages[index].data2,
               style: TextStyle(
-              fontSize:
-              14 * widget.configuration.textSizeFactor)),
+                  fontSize: 14 * widget.configuration.textSizeFactor)),
         ),
       );
     else
@@ -198,13 +200,21 @@ class _ChatPageState extends State<ChatPage> {
                   isUserMessage ? TextDirection.rtl : TextDirection.ltr,
               children: [
                 GestureDetector(
-                  onTap: membersDataIsLoaded ? isUserMessage ? null :
-                  () => Navigator.push(context, MaterialPageRoute(
-                    builder: (context) => Profile(
-                      configuration: widget.configuration,
-                      userProfile: members.firstWhere((member) => member.userId == chatGroup.messages[index].senderId),
-                    )
-                  )) : null,
+                  onTap: membersDataIsLoaded
+                      ? isUserMessage
+                          ? null
+                          : () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => Profile(
+                                        configuration: widget.configuration,
+                                        userProfile: members.firstWhere(
+                                            (member) =>
+                                                member.userId ==
+                                                chatGroup
+                                                    .messages[index].senderId),
+                                      )))
+                      : null,
                   child: ProfilePicture(isUserMessage
                       ? widget.configuration.userData.profilePictureDownloadPath
                       : membersDataIsLoaded
@@ -216,10 +226,13 @@ class _ChatPageState extends State<ChatPage> {
                         fit: FlexFit.loose,
                         child: Padding(
                           padding: EdgeInsets.fromLTRB(
-                            isUserMessage ?
-                              widget.configuration.screenWidth / 15 : widget.configuration.screenWidth / 30,
+                              isUserMessage
+                                  ? widget.configuration.screenWidth / 15
+                                  : widget.configuration.screenWidth / 30,
                               widget.configuration.screenWidth / 80,
-                              isUserMessage ? widget.configuration.screenWidth / 30 : widget.configuration.screenWidth / 15,
+                              isUserMessage
+                                  ? widget.configuration.screenWidth / 30
+                                  : widget.configuration.screenWidth / 15,
                               widget.configuration.screenWidth / 80),
                           child: Text(
                             chatGroup.messages[index].data,
@@ -271,7 +284,8 @@ class _ChatPageState extends State<ChatPage> {
                     width: widget.configuration.screenWidth / 300),
                 borderRadius:
                     BorderRadius.circular(widget.configuration.screenWidth)),
-            child: Text(AppLocalizations.of(context).translate("show new messages")),
+            child: Text(
+                AppLocalizations.of(context).translate("show new messages")),
           ),
           onTap: () {
             scrollController.animateTo(
@@ -290,6 +304,7 @@ class _ChatPageState extends State<ChatPage> {
       color: PrimaryColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           showSendPictureFromCameraButton(),
           showSendPictureFromStorageButton(),
@@ -323,30 +338,39 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void sendPicture(bool getPhotoFromGallery) async {
-    String storageRef =
-        "ChatGroupsStorage/${widget.chatGroup.id}/${Timestamp.now().millisecondsSinceEpoch}${math.Random().nextInt(999999)}";
-    print(storageRef);
-    if (await Storage().getPhotoFromUserStorageAndUpload(
-        storageRef: storageRef,
-        context: context,
-        getPhotoFromGallery: getPhotoFromGallery,
-        letUserChooseImageSource: false)) {
-      String url = await Storage().getUrlPhoto(storageRef);
-      String message = PICTURE_TYPE + url;
-      Database().sendMessageToGroup(
-          context,
-          widget.configuration.userData.userId,
-          widget.chatGroup.id,
-          Message(
-              widget.configuration.userData.userId, Timestamp.now(), message));
+    if(membersDataIsLoaded) {
+      String storageRef =
+          "ChatGroupsStorage/${widget.chatGroup.id}/${Timestamp
+          .now()
+          .millisecondsSinceEpoch}${math.Random().nextInt(999999)}";
+      print(storageRef);
+      if (await Storage().getPhotoFromUserStorageAndUpload(
+          storageRef: storageRef,
+          context: context,
+          getPhotoFromGallery: getPhotoFromGallery,
+          letUserChooseImageSource: false)) {
+        String url = await Storage().getUrlPhoto(storageRef);
+        String message = PICTURE_TYPE + AppLocalizations.of(context).translate(
+            "%DYNAMIC sent a picture",
+            dynamic: widget.configuration.userData.pseudo) + PICTURE_TYPE + url;
+        Database().sendMessageToGroup(
+            context,
+            widget.configuration.userData,
+            widget.chatGroup,
+            Message(
+                widget.configuration.userData.userId, Timestamp.now(), message),
+            members
+        );
+      }
     }
   }
 
   Widget showSendMessageEditor() {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: EdgeInsets.all(widget.configuration.screenHeight / 100),
         child: Container(
+          alignment: Alignment.center,
           decoration: BoxDecoration(
               color: PrimaryColorLight,
               border: Border.all(
@@ -354,34 +378,42 @@ class _ChatPageState extends State<ChatPage> {
                   width: widget.configuration.screenWidth / 300),
               borderRadius:
                   BorderRadius.circular(widget.configuration.screenWidth)),
-          child: Center(
-            child: TextField(
-              minLines: 1,
-              maxLines: 10,
-              textAlignVertical: TextAlignVertical.center,
-              controller: sendBoxController,
-              onChanged: (value) => newMessage = value.trim(),
-              onSubmitted: (value) => sendMessage(),
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14 * widget.configuration.textSizeFactor),
-              textInputAction: TextInputAction.send,
-              decoration: InputDecoration(
-                contentPadding: EdgeInsets.symmetric(
-                    horizontal: widget.configuration.screenWidth / 25,
-                    vertical: widget.configuration.screenHeight / 47),
-                hintText: AppLocalizations.of(context).translate("Send a message..."),
-                hintStyle: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14 * widget.configuration.textSizeFactor),
-                border: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                errorBorder: InputBorder.none,
-                disabledBorder: InputBorder.none,
+          child: membersDataIsLoaded
+              ? TextField(
+                  minLines: 1,
+                  maxLines: 10,
+                  maxLength: 1000,
+                  textAlignVertical: TextAlignVertical.center,
+                  controller: sendBoxController,
+                  onChanged: (value) => newMessage = value.trim(),
+                  onSubmitted: (value) => sendMessage(),
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12 * widget.configuration.textSizeFactor),
+                  textInputAction: TextInputAction.send,
+                  decoration: InputDecoration(
+                    counterText: "",
+                    contentPadding: EdgeInsets.symmetric(
+                        horizontal: widget.configuration.screenWidth / 25,
+                        vertical: widget.configuration.screenHeight / 50,
+                    ),
+                    hintText: AppLocalizations.of(context)
+                        .translate("Send a message..."),
+                    hintMaxLines: 1,
+                    hintStyle: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12 * widget.configuration.textSizeFactor),
+                    border: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                  ),
+                )
+              : Padding(
+                padding: EdgeInsets.all(widget.configuration.screenHeight / 50),
+                child: CircularProgressIndicator(),
               ),
-            ),
-          ),
         ),
       ),
     );
@@ -395,13 +427,15 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void sendMessage() async {
-    if (newMessage != "" && newMessage != null) {
+    if (newMessage != "" && newMessage != null && membersDataIsLoaded) {
       Database().sendMessageToGroup(
           context,
-          widget.configuration.userData.userId,
-          widget.chatGroup.id,
+          widget.configuration.userData,
+          widget.chatGroup,
           Message(widget.configuration.userData.userId, Timestamp.now(),
-              newMessage));
+              newMessage),
+          members
+      );
       sendBoxController.clear();
       newMessage = "";
     }

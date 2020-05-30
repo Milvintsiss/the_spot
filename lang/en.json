@@ -86,6 +86,7 @@
   "Gallery": "Gallery",
   "Friends": "Friends",
   "Followers": "Followers",
-  "Following": "Following"
-
+  "Following": "Following",
+  "Camera": "Camera",
+  "%DYNAMIC sent a picture": "%DYNAMIC sent a picture"
 }

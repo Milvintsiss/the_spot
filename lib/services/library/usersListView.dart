@@ -337,10 +337,8 @@ class _UsersListViewState extends State<UsersListView> {
                 if (!friendRequestAlreadyDone[index]) {
                   await Database().sendFriendRequest(
                       context,
-                      widget.configuration.userData.userId,
-                      widget.configuration.userData.pseudo,
-                      widget.configuration.userData.profilePictureDownloadPath,
-                      widget.query[index].userId);
+                      mainUser: widget.configuration.userData,
+                      userToAdd: widget.query[index]);
                   widget.query[index].pendingFriendsId.add(widget.configuration.userData.userId);
                 } else {
                   await Database().removeFriendRequest(

@@ -13,6 +13,7 @@ import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/services/library/library.dart';
 
+import '../../about.dart';
 import '../../theme.dart';
 
 class Profile extends StatefulWidget {
@@ -257,7 +258,11 @@ class _Profile extends State<Profile> {
                 }
                 break;
               case 'App info':
-                Navigator.pop(context);
+                {
+                  Navigator.pop(context);
+                  aboutDialog(context);
+                }
+                break;
             }
           },
         ),
@@ -403,25 +408,25 @@ class _Profile extends State<Profile> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             _showNumberOfFriendsFollowersFollowing(
-                _userProfile.numberOfFriends, AppLocalizations.of(context).translate("Friends")),
+                _userProfile.numberOfFriends, AppLocalizations.of(context).translate("Friends"), 'Friends'),
             _showNumberOfFriendsFollowersFollowing(
-                _userProfile.numberOfFollowers, AppLocalizations.of(context).translate("Followers")),
+                _userProfile.numberOfFollowers, AppLocalizations.of(context).translate("Followers"), 'Followers'),
             _showNumberOfFriendsFollowersFollowing(
-                _userProfile.numberOfFollowing, AppLocalizations.of(context).translate("Following")),
+                _userProfile.numberOfFollowing, AppLocalizations.of(context).translate("Following"), 'Following'),
           ],
         ),
       ),
     );
   }
 
-  Widget _showNumberOfFriendsFollowersFollowing(int value, String text) {
+  Widget _showNumberOfFriendsFollowersFollowing(int value, String text, String type) {
     return InkWell(
       onTap: () async {
         await Navigator.of(context).push(MaterialPageRoute(
             builder: (context) => FollowersFollowingFriendsPage(
                   configuration: widget.configuration,
                   userProfile: _userProfile,
-                  type: text,
+                  type: type,
                 )));
         setState(() {});
       },
@@ -594,11 +599,8 @@ class _Profile extends State<Profile> {
                   if (!requested) {
                     await Database().sendFriendRequest(
                         context,
-                        widget.configuration.userData.userId,
-                        widget.configuration.userData.pseudo,
-                        widget
-                            .configuration.userData.profilePictureDownloadPath,
-                        _userProfile.userId);
+                        mainUser: widget.configuration.userData,
+                        userToAdd: _userProfile);
                     requested = true;
                   } else {
                     await Database().removeFriendRequest(

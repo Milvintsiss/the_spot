@@ -436,6 +436,7 @@ class _Map extends State<Map> {
           return StatefulBuilder(
               builder: (BuildContext context, StateSetter setStateBottomSheet) {
             return SpotInfoWidget(
+              configuration: widget.configuration,
               setStateBottomSheet: setStateBottomSheet,
               userId: widget.configuration.userData.userId,
               screenHeight: screenHeight,
