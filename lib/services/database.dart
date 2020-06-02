@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/services/library/chatGroup.dart';
 
 import 'package:the_spot/services/library/library.dart';
@@ -397,6 +398,8 @@ class Database {
               success = false;
             });
         sendFriendRequestNotificationTo.call(<String, dynamic>{
+          'title': AppLocalizations.of(context).translate("New friend request"),
+          'body': AppLocalizations.of(context).translate("%DYNAMIC wants to add you as friend", dynamic: mainUser.pseudo),
           'userToAddAsFriendId': userToAdd.userId,
           'mainUserId': mainUser.userId,
           'mainUserPseudo': mainUser.pseudo,
@@ -729,7 +732,7 @@ class Database {
         sendMessageNotificationTo.call(<String, dynamic>{
           'conversationId': group.id,
           'conversationName': group.name,
-          'conversationPictureDownloadPath': group.imageDownloadPath ?? "",
+          'conversationPictureDownloadPath': group.isGroup ? group.imageDownloadPath ?? "" : members[0].profilePictureDownloadPath ?? "",
           'usersTokens': usersTokens,
           'usersIds': usersIds,
           'message': message.data,

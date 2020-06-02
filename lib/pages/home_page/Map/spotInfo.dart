@@ -117,18 +117,14 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: <Widget>[
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      child: Text(
-                        AppLocalizations.of(context).translate(
-                            "This spot was rated %DYNAMIC times!",
-                            dynamic: widget.spot.usersGrades.length.toString()),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            color: PrimaryColorDark,
-                            fontStyle: FontStyle.italic),
-                      ),
+                    Text(
+                      AppLocalizations.of(context).translate(
+                          "This spot was rated %DYNAMIC times!",
+                          dynamic: widget.spot.usersGrades.length.toString()),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: PrimaryColorDark,
+                          fontStyle: FontStyle.italic),
                     ),
                     showSpotGradeWidget("Spot:", "Spot", spotGrade),
                     showSpotGradeWidget(
@@ -144,7 +140,10 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
                 Divider(
                   indent: widget.configuration.screenWidth / 50,
                 ),
-                Expanded(
+                ButtonTheme(
+                  padding: EdgeInsets.all(widget.configuration.screenWidth / 40),
+                  minWidth: 0,
+                  buttonColor: SecondaryColorDark,
                   child: Wrap(
                     children: [
                       RaisedButton(
@@ -156,12 +155,13 @@ class _SpotInfoWidgetState extends State<SpotInfoWidget> {
                                       .translate("Change my rating")
                                   : AppLocalizations.of(context)
                                       .translate("Rate this spot"),
+                          style: TextStyle(fontSize: 11 * widget.configuration.textSizeFactor),
                         ),
                         onPressed: () => onGradeButtonPressed(),
                       ),
                       userIsRatingTheSpot
                           ? SizedBox(
-                              width: 50,
+                              width: widget.configuration.screenWidth / 10,
                               child: RaisedButton(
                                 child: Icon(
                                   Icons.undo,

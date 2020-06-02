@@ -127,7 +127,7 @@ class _FollowersFollowingFriendsPageState
             List<UserProfile> res = await Database().getUsersByIds(
                 context, query,
                 verifyIfFriendsOrFollowed: true,
-                mainUserId: widget.userProfile.userId);
+                mainUserId: widget.configuration.userData.userId);
             friendsIndex = friendsIndex + querySize;
             setState(() {
               queryResult.addAll(res);

@@ -10,7 +10,7 @@ import 'package:the_spot/pages/home_page/profile.dart';
 import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/theme.dart';
-import 'package:vibrate/vibrate.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:the_spot/services/library/chatGroup.dart';
 import 'package:the_spot/pages/chat_pages/chat_page.dart';
 

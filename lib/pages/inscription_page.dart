@@ -11,7 +11,7 @@ import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/theme.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
-import 'package:vibrate/vibrate.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 
 class InscriptionPage extends StatefulWidget {
   const InscriptionPage({Key key, this.auth, this.userId, this.configuration})

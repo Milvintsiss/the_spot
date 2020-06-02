@@ -88,5 +88,7 @@
   "Followers": "Followers",
   "Following": "Following",
   "Camera": "Camera",
-  "%DYNAMIC sent a picture": "%DYNAMIC sent a picture"
+  "%DYNAMIC sent a picture": "%DYNAMIC sent a picture",
+  "New friend request": "New friend request",
+  "%DYNAMIC wants to add you as friend": "%DYNAMIC wants to add you as friend"
 }

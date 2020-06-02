@@ -269,6 +269,9 @@ class _UsersListViewState extends State<UsersListView> {
             )
           : Text(
               widget.query[index].isFollowed ? AppLocalizations.of(context).translate("Unfollow") : AppLocalizations.of(context).translate("Follow"),
+              maxLines: 1,
+              softWrap: true,
+              overflow: TextOverflow.fade,
               style: TextStyle(
                   fontSize: 12 * widget.configuration.textSizeFactor,
                   color: !widget.query[index].isFollowed
