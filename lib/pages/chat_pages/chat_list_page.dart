@@ -15,7 +15,7 @@ import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/library/usersListView.dart';
 import 'package:the_spot/services/search_engine.dart';
 import 'package:the_spot/theme.dart';
-import 'package:vibrate/vibrate.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 
 class ChatListPage extends StatefulWidget {
   ChatListPage({this.configuration});

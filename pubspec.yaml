@@ -54,6 +54,7 @@ dependencies:
   image_picker: ^0.6.3+1
 
   photo_view: ^0.9.2
+  flutter_blurhash: ^0.5.0
   flutter_svg:
 
   image: ^2.1.4
@@ -79,7 +80,7 @@ dependencies:
 
   scoped_model: ^1.0.1
 
-  vibrate: ^0.0.4
+  flutter_vibrate: ^1.0.0
 
   flutter_rating_bar: ^3.0.1+1
 

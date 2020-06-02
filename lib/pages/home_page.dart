@@ -9,7 +9,12 @@ import 'package:the_spot/services/configuration.dart';
 import '../theme.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({Key key, this.initialIndex = 4, this.auth, this.configuration, this.logoutCallback})
+  HomePage(
+      {Key key,
+      this.initialIndex = 4,
+      this.auth,
+      this.configuration,
+      this.logoutCallback})
       : super(key: key);
 
   final int initialIndex; //0 chat, 1 news, 2 home, 3 map, 4 profile
@@ -28,14 +33,36 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    widget.configuration.addListener(onUserDataChanged);
+
     _currentIndex = widget.initialIndex;
     _children = [
-      ChatListPage(configuration: widget.configuration,),
+      ChatListPage(
+        configuration: widget.configuration,
+      ),
       FeatureNotAvailable(),
       FeatureNotAvailable(),
-      Map(configuration: widget.configuration, context: context,),
-      Profile(auth: widget.auth, userProfile: widget.configuration.userData, configuration: widget.configuration, logoutCallback: widget.logoutCallback,)
+      Map(
+        configuration: widget.configuration,
+        context: context,
+      ),
+      Profile(
+        auth: widget.auth,
+        userProfile: widget.configuration.userData,
+        configuration: widget.configuration,
+        logoutCallback: widget.logoutCallback,
+      )
     ];
+  }
+
+  void onUserDataChanged() {
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.configuration.removeListener(onUserDataChanged);
+    super.dispose();
   }
 
   void signOut() async {
@@ -80,12 +107,38 @@ class _HomePageState extends State<HomePage> {
               title: Text("Map"),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              title: Text("Profile")
+              icon: Stack(children: [
+                Center(
+                  child: Icon(
+                    Icons.person,
+                  ),
+                ),
+                widget.configuration.userData.pendingFriendsId.length > 0
+                    ? Positioned(
+                        top: 0,
+                        right: 15,
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(100),
+                              color: Colors.red),
+                          child: Center(
+                              child: Text(
+                            widget
+                                .configuration.userData.pendingFriendsId.length
+                                .toString(),
+                            style: TextStyle(color: Colors.white),
+                          )),
+                        ),
+                      )
+                    : Container()
+              ]),
+              title: Text("Profile"),
             )
           ]),
 
-      body: _children[_currentIndex],//build the corresponding page
+      body: _children[_currentIndex], //build the corresponding page
     );
   }
 }

@@ -134,11 +134,11 @@ class _Profile extends State<Profile> {
           ),
           _userProfile.pendingFriendsId.length > 0
               ? Positioned(
-                  top: widget.configuration.screenWidth / 50,
+                  top: 10,
                   right: 0,
                   child: Container(
-                    width: widget.configuration.screenWidth / 20,
-                    height: widget.configuration.screenWidth / 20,
+                    width: 20,
+                    height: 20,
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(100),
                         color: Colors.red),

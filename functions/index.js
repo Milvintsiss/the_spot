@@ -186,6 +186,8 @@ exports.updateUserPseudoAndUsernameInAlgolia = functions.https.onCall((data, con
 
 
 exports.sendFriendRequestNotificationTo = functions.https.onCall((data, context) => {
+    const title = data['title'];
+    const body = data['body'];
     const userToAddAsFriendId = data['userToAddAsFriendId'];
     const mainUserId = data['mainUserId'];
     const mainUserPseudo = data['mainUserPseudo'];
@@ -197,8 +199,8 @@ exports.sendFriendRequestNotificationTo = functions.https.onCall((data, context)
         userToAddTokens,
         {
             notification: {
-                title: 'New friend request',
-                body: mainUserPseudo + ` wants to add you as friend`,
+                title: title,
+                body: body,
                 image: mainUserProfilePictureDownloadPath,
                 click_action: 'FLUTTER_NOTIFICATION_CLICK',
             },

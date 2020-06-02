@@ -5,17 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:the_spot/app_localizations.dart';
+import 'package:the_spot/services/library/blurhash_encoding.dart';
 
 import '../theme.dart';
 
 class Storage {
-
-
-  Future<bool> getPhotoFromUserStorageAndUpload(
+  Future<String> getPhotoFromUserStorageAndUpload(
       {@required String storageRef,
       @required BuildContext context,
       bool getPhotoFromGallery = false,
       bool letUserChooseImageSource = true,
+      bool getBlurHash = false,
       CropAspectRatio cropAspectRatio,
       CropStyle cropStyle,
       int maxHeight = 1080,
@@ -27,7 +27,10 @@ class Storage {
       AlertDialog errorAlertDialog = new AlertDialog(
         elevation: 0,
         backgroundColor: PrimaryColorDark,
-        title: Text(AppLocalizations.of(context).translate("Get image from:"), style: TextStyle(color: PrimaryColor),),
+        title: Text(
+          AppLocalizations.of(context).translate("Get image from:"),
+          style: TextStyle(color: PrimaryColor),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -95,14 +98,17 @@ class Storage {
         await uploadTask.onComplete;
         if (uploadTask.isSuccessful) {
           print("Image uploaded with success");
-          return true;
+          if (getBlurHash)
+            return getImageBlurHash(_file, addWidthAndHeightToHash: true);
+          else
+            return "success";
         } else {
           print("Error when uploading image...");
-          return false;
+          return "error";
         }
       }
     }
-    return false;
+    return "error";
   }
 
   Future<String> getUrlPhoto(String locationOnStorage) async {

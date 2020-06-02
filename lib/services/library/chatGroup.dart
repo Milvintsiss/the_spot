@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:the_spot/services/library/blurhash_encoding.dart';
 import 'package:the_spot/services/library/userProfile.dart';
 
 class ChatGroup {
@@ -96,6 +97,9 @@ class Message {
   Timestamp date;
   String data;
   String data2;
+  String hash;
+  int height;
+  int width;
   MessageType messageType;
 
   Message(this.senderId, this.date, this.data);
@@ -111,6 +115,10 @@ class Message {
   void setMessageTypeAndTransformData(){
     if(data.contains(PICTURE_TYPE)){
       data = data.replaceFirst(PICTURE_TYPE, "");
+      hash = data.split(PICTURE_TYPE)[2];
+      width = getWidthFromBlurHashWidthHeight(hash);
+      height = getHeightFromBlurHashWidthHeight(hash);
+      hash = getHashFromBlurHashWidthHeight(hash);
       data2 = data.split(PICTURE_TYPE)[1];
       data = data.split(PICTURE_TYPE)[0];
       print(data2);

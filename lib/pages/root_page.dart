@@ -67,6 +67,7 @@ class _RootPageState extends State<RootPage> {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     String version = packageInfo.version;
     print("Version: $version");
+    print(AppLocalizations.of(context).locale.toLanguageTag());
 
     if (configuration.userData != null) {
       _inscriptionState = false;

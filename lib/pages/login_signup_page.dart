@@ -1,10 +1,10 @@
 import 'package:basic_utils/basic_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:the_spot/services/authentication.dart';
 
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/theme.dart';
-import 'package:vibrate/vibrate.dart';
 
 class LoginSignupPage extends StatefulWidget {
   LoginSignupPage({this.auth, this.loginCallBack});
