@@ -8,6 +8,7 @@ import 'package:the_spot/pages/inscription_page.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/deleteUser.dart';
+import 'package:the_spot/services/library/profilePictureWidget.dart';
 import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/storage.dart';
@@ -72,9 +73,10 @@ class _Profile extends State<Profile> {
 
   void uploadAvatar() async {
     print("add an Avatar");
-    await Storage().getPhotoFromUserStorageAndUpload(
+    String hash = await Storage().getPhotoFromUserStorageAndUpload(
       storageRef: "ProfilePictures/" + _userProfile.userId,
       context: context,
+      getBlurHash: true,
       cropStyle: CropStyle.circle,
       cropAspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
       maxHeight: 300,
@@ -86,10 +88,12 @@ class _Profile extends State<Profile> {
         await Storage().getUrlPhoto("ProfilePictures/" + _userProfile.userId);
 
     await Database().updateProfile(context, _userProfile.userId,
-        profilePictureDownloadPath: profilePictureDownloadPath);
+        profilePictureDownloadPath: profilePictureDownloadPath,
+        profilePictureHash: hash != 'error' ? hash : null);
 
     setState(() {
       _userProfile.profilePictureDownloadPath = profilePictureDownloadPath;
+      _userProfile.profilePictureHash = hash != 'error' ? hash : null;
     });
   }
 
@@ -181,11 +185,26 @@ class _Profile extends State<Profile> {
           child: ListView(
             children: <Widget>[
               showTopDrawer(),
-              showListTileButton(AppLocalizations.of(context).translate("Edit my Profile"), 'Edit my Profile', Icons.edit),
-              showListTileButton(AppLocalizations.of(context).translate("Clear cache"), 'Clear cache', Icons.phonelink_erase),
-              showListTileButton(AppLocalizations.of(context).translate("SignOut"), 'SignOut', Icons.power_settings_new),
-              showListTileButton(AppLocalizations.of(context).translate("Delete my account"), 'Delete my account', Icons.delete_forever),
-              showListTileButton(AppLocalizations.of(context).translate("App info"), 'App info', Icons.info_outline),
+              showListTileButton(
+                  AppLocalizations.of(context).translate("Edit my Profile"),
+                  'Edit my Profile',
+                  Icons.edit),
+              showListTileButton(
+                  AppLocalizations.of(context).translate("Clear cache"),
+                  'Clear cache',
+                  Icons.phonelink_erase),
+              showListTileButton(
+                  AppLocalizations.of(context).translate("SignOut"),
+                  'SignOut',
+                  Icons.power_settings_new),
+              showListTileButton(
+                  AppLocalizations.of(context).translate("Delete my account"),
+                  'Delete my account',
+                  Icons.delete_forever),
+              showListTileButton(
+                  AppLocalizations.of(context).translate("App info"),
+                  'App info',
+                  Icons.info_outline),
             ],
           ),
         ),
@@ -329,7 +348,9 @@ class _Profile extends State<Profile> {
       child: GestureDetector(
         onTap: isUser ? uploadAvatar : null,
         child: Stack(overflow: Overflow.visible, children: <Widget>[
-          ProfilePicture(_userProfile.profilePictureDownloadPath,
+          ProfilePicture(
+              downloadUrl: _userProfile.profilePictureDownloadPath,
+              hash: _userProfile.profilePictureHash,
               size: widget.configuration.screenWidth / 3,
               borderColor: PrimaryColor),
           isUser
@@ -407,19 +428,24 @@ class _Profile extends State<Profile> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
+            _showNumberOfFriendsFollowersFollowing(_userProfile.numberOfFriends,
+                AppLocalizations.of(context).translate("Friends"), 'Friends'),
             _showNumberOfFriendsFollowersFollowing(
-                _userProfile.numberOfFriends, AppLocalizations.of(context).translate("Friends"), 'Friends'),
+                _userProfile.numberOfFollowers,
+                AppLocalizations.of(context).translate("Followers"),
+                'Followers'),
             _showNumberOfFriendsFollowersFollowing(
-                _userProfile.numberOfFollowers, AppLocalizations.of(context).translate("Followers"), 'Followers'),
-            _showNumberOfFriendsFollowersFollowing(
-                _userProfile.numberOfFollowing, AppLocalizations.of(context).translate("Following"), 'Following'),
+                _userProfile.numberOfFollowing,
+                AppLocalizations.of(context).translate("Following"),
+                'Following'),
           ],
         ),
       ),
     );
   }
 
-  Widget _showNumberOfFriendsFollowersFollowing(int value, String text, String type) {
+  Widget _showNumberOfFriendsFollowersFollowing(
+      int value, String text, String type) {
     return InkWell(
       onTap: () async {
         await Navigator.of(context).push(MaterialPageRoute(
@@ -495,7 +521,9 @@ class _Profile extends State<Profile> {
                 ),
               )
             : Text(
-                _userProfile.isFollowed ? AppLocalizations.of(context).translate("Unfollow") : AppLocalizations.of(context).translate("Follow"),
+                _userProfile.isFollowed
+                    ? AppLocalizations.of(context).translate("Unfollow")
+                    : AppLocalizations.of(context).translate("Follow"),
                 style: TextStyle(
                     fontSize: 12 * widget.configuration.textSizeFactor,
                     color: !_userProfile.isFollowed
@@ -585,7 +613,9 @@ class _Profile extends State<Profile> {
                   ),
                 )
               : Text(
-                  !requested ? AppLocalizations.of(context).translate("Add+") : AppLocalizations.of(context).translate("Requested"),
+                  !requested
+                      ? AppLocalizations.of(context).translate("Add+")
+                      : AppLocalizations.of(context).translate("Requested"),
                   style: TextStyle(
                       fontSize: 12 * widget.configuration.textSizeFactor,
                       color: !requested ? Colors.black : Colors.black54),
@@ -597,8 +627,7 @@ class _Profile extends State<Profile> {
                     waitForSendingFriendRequest = true;
                   });
                   if (!requested) {
-                    await Database().sendFriendRequest(
-                        context,
+                    await Database().sendFriendRequest(context,
                         mainUser: widget.configuration.userData,
                         userToAdd: _userProfile);
                     requested = true;
@@ -791,7 +820,8 @@ class _Profile extends State<Profile> {
                     ),
                     Divider(height: widget.configuration.screenWidth / 20),
                     Text(
-                      AppLocalizations.of(context).translate("This user hasn't posted any vid for the moment"),
+                      AppLocalizations.of(context).translate(
+                          "This user hasn't posted any vid for the moment"),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           color: Colors.black,

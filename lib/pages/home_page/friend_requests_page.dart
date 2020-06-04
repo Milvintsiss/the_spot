@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:the_spot/services/database.dart';
+import 'package:the_spot/services/library/profilePictureWidget.dart';
 import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/configuration.dart';
-import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/theme.dart';
 
 import '../../app_localizations.dart';
@@ -131,7 +131,8 @@ class _FriendRequestsPageState extends State<FriendRequestsPage> {
               Hero(
                   tag: queryResult[index].userId,
                   child: ProfilePicture(
-                      queryResult[index].profilePictureDownloadPath,
+                      downloadUrl: queryResult[index].profilePictureDownloadPath,
+                      hash: queryResult[index].profilePictureHash,
                       size: widget.configuration.screenWidth / 8)),
               Divider(
                 indent: widget.configuration.screenWidth / 50,

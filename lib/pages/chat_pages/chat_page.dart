@@ -4,13 +4,13 @@ import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_blurhash/flutter_blurhash.dart';
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/home_page/profile.dart';
 import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/database.dart';
+import 'package:the_spot/services/library/blurhash_encoding.dart';
 import 'package:the_spot/services/library/chatGroup.dart';
-import 'package:the_spot/services/library/library.dart';
+import 'package:the_spot/services/library/profilePictureWidget.dart';
 import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/theme.dart';
@@ -216,11 +216,11 @@ class _ChatPageState extends State<ChatPage> {
                                                     .messages[index].senderId),
                                       )))
                       : null,
-                  child: ProfilePicture(isUserMessage
+                  child: ProfilePicture(downloadUrl: isUserMessage
                       ? widget.configuration.userData.profilePictureDownloadPath
                       : membersDataIsLoaded
                           ? sender.profilePictureDownloadPath
-                          : null),
+                          : null, hash: isUserMessage ? widget.configuration.userData.profilePictureHash : membersDataIsLoaded ? sender.profilePictureHash : null,),
                 ),
                 chatGroup.messages[index].messageType == MessageType.TEXT
                     ? Flexible(
@@ -245,30 +245,32 @@ class _ChatPageState extends State<ChatPage> {
                       )
                     : chatGroup.messages[index].messageType ==
                             MessageType.PICTURE
-                        ? SizedBox(
-                            width: widget.configuration.screenWidth * 3/5,
-                            height: widget.configuration.screenWidth * 3/5 /
-                                chatGroup.messages[index].width *
-                                chatGroup.messages[index].height,
-                            child: ClipRRect(
-                                borderRadius: BorderRadius.horizontal(
-                                    left: isUserMessage
-                                        ? Radius.circular(
-                                            widget.configuration.screenWidth /
-                                                10)
-                                        : Radius.zero,
-                                    right: isUserMessage
-                                        ? Radius.zero
-                                        : Radius.circular(
-                                            widget.configuration.screenWidth /
-                                                10)),
-                                child: BlurHash(
-                                  decodingHeight: 1,
-                                  decodingWidth: 1,
-                                  hash: chatGroup.messages[index].hash,
-                                  image: chatGroup.messages[index].data2,
-                                )),
-                          )
+                        ? Expanded(
+                          child: ClipRRect(
+                              borderRadius: BorderRadius.horizontal(
+                                  left: isUserMessage
+                                      ? Radius.circular(
+                                          widget.configuration.screenWidth / 10)
+                                      : Radius.zero,
+                                  right: isUserMessage
+                                      ? Radius.zero
+                                      : Radius.circular(
+                                          widget.configuration.screenWidth / 10)),
+                              child: chatGroup.messages[index].hash != null
+                                  ? SizedBlurHash(
+                                      pictureDownloadUrl:
+                                          chatGroup.messages[index].data2,
+                                      hashWithSize:
+                                          chatGroup.messages[index].hash,
+                                      width: widget.configuration.screenWidth *
+                                          3 /
+                                          5,
+                                    )
+                                  : Image.network(
+                                      chatGroup.messages[index].data2,
+                                  ),
+                            ),
+                        )
                         : Container(),
               ],
             ),

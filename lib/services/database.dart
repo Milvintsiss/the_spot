@@ -34,6 +34,7 @@ class Database {
       bool Skateboard,
       String description,
       String profilePictureDownloadPath,
+      String profilePictureHash,
       LatLng actualLocation}) async {
     final HttpsCallable updateUserPseudoAndUsernameInAlgolia = cloudFunctions
         .getHttpsCallable(functionName: 'updateUserPseudoAndUsernameInAlgolia');
@@ -64,6 +65,9 @@ class Database {
     }
     if (profilePictureDownloadPath != null)
       update['ProfilePictureDownloadPath'] = profilePictureDownloadPath;
+
+    if (profilePictureHash != null)
+      update['ProfilePictureHash'] = profilePictureHash;
 
     if (creationDate != null) update['CreationDate'] = creationDate;
 
@@ -399,12 +403,15 @@ class Database {
             });
         sendFriendRequestNotificationTo.call(<String, dynamic>{
           'title': AppLocalizations.of(context).translate("New friend request"),
-          'body': AppLocalizations.of(context).translate("%DYNAMIC wants to add you as friend", dynamic: mainUser.pseudo),
+          'body': AppLocalizations.of(context).translate(
+              "%DYNAMIC wants to add you as friend",
+              dynamic: mainUser.pseudo),
           'userToAddAsFriendId': userToAdd.userId,
           'mainUserId': mainUser.userId,
           'mainUserPseudo': mainUser.pseudo,
           'mainUserProfilePictureDownloadPath':
               mainUser.profilePictureDownloadPath ?? "",
+          'mainUserProfilePictureHash': mainUser.profilePictureHash,
           'userToAddTokens': userToAdd.devicesTokens
         });
       } catch (err) {
@@ -732,7 +739,10 @@ class Database {
         sendMessageNotificationTo.call(<String, dynamic>{
           'conversationId': group.id,
           'conversationName': group.name,
-          'conversationPictureDownloadPath': group.isGroup ? group.imageDownloadPath ?? "" : members[0].profilePictureDownloadPath ?? "",
+          'conversationPictureDownloadPath': group.isGroup
+              ? group.pictureDownloadPath ?? ""
+              : members[0].profilePictureDownloadPath ?? "",
+          'conversationPictureHash': group.pictureHash,
           'usersTokens': usersTokens,
           'usersIds': usersIds,
           'message': message.data,
@@ -746,17 +756,20 @@ class Database {
     }
     return success;
   }
-  
-  Future<ChatGroup> getGroup(BuildContext context, {@required String groupId}) async {
+
+  Future<ChatGroup> getGroup(BuildContext context,
+      {@required String groupId}) async {
     ChatGroup chatGroup;
-    if(await checkConnection(context)){
-      try{
-        await database.collection(GROUP_CHATS_COLLECTION).document(groupId).get()
+    if (await checkConnection(context)) {
+      try {
+        await database
+            .collection(GROUP_CHATS_COLLECTION)
+            .document(groupId)
+            .get()
             .then((document) {
-              chatGroup = convertMapToChatGroup(document.data);
-              chatGroup.id = groupId;
-            })
-            .catchError((err) {
+          chatGroup = convertMapToChatGroup(document.data);
+          chatGroup.id = groupId;
+        }).catchError((err) {
           print("Database Error: " + err.toString());
           error("Database Error: " + err.toString(), context);
         });

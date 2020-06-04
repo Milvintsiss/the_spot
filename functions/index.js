@@ -192,6 +192,7 @@ exports.sendFriendRequestNotificationTo = functions.https.onCall((data, context)
     const mainUserId = data['mainUserId'];
     const mainUserPseudo = data['mainUserPseudo'];
     const mainUserProfilePictureDownloadPath = data['mainUserProfilePictureDownloadPath'];
+    const mainUserProfilePictureHash = data['mainUserProfilePictureHash'];
     const userToAddTokens = data['userToAddTokens'];
     console.log('Send friend request notification to ' + userToAddAsFriendId + ' from ' + mainUserPseudo);
 
@@ -209,6 +210,7 @@ exports.sendFriendRequestNotificationTo = functions.https.onCall((data, context)
                 'userToAddId': mainUserId,
                 'userPseudo': mainUserPseudo,
                 'mainUserProfilePictureDownloadPath': mainUserProfilePictureDownloadPath,
+                'mainUserProfilePictureHash': mainUserProfilePictureHash,
                 'mainUserId': userToAddAsFriendId,
             }
         }
@@ -219,6 +221,7 @@ exports.sendMessageNotificationTo = functions.https.onCall((data, context) => {
     const conversationId = data['conversationId'];
     const conversationName = data['conversationName'];
     const conversationPictureDownloadPath = data['conversationPictureDownloadPath'];
+    const conversationPictureHash = data['conversationPictureHash'];
     const usersTokens = data['usersTokens'];
     const usersIds = data['usersIds']; //string containing ids in format "id/id/id/id/..."
     const message = data['message'];
@@ -240,6 +243,7 @@ exports.sendMessageNotificationTo = functions.https.onCall((data, context) => {
                 'conversationId': conversationId,
                 'conversationName': conversationName,
                 'conversationPictureDownloadPath': conversationPictureDownloadPath,
+                'conversationPictureHash': conversationPictureHash,
                 'usersIds': usersIds,
             }
         }

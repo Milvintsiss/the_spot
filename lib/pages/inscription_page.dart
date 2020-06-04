@@ -7,6 +7,7 @@ import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/root_page.dart';
 import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/library/library.dart';
+import 'package:the_spot/services/library/profilePictureWidget.dart';
 import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/theme.dart';
 import 'package:the_spot/services/authentication.dart';
@@ -392,11 +393,13 @@ class InscriptionPage_AddProfilePicture extends StatefulWidget {
 class _InscriptionPage_AddProfilePicture
     extends State<InscriptionPage_AddProfilePicture> {
   String _profilePictureDownloadPath;
+  String _hash;
 
   void uploadAvatar() async {
     print("add an Avatar");
-    await Storage().getPhotoFromUserStorageAndUpload(
+    String hash = await Storage().getPhotoFromUserStorageAndUpload(
       storageRef: "ProfilePictures/" + widget.userId,
+      getBlurHash: true,
       context: context,
       cropStyle: CropStyle.circle,
       cropAspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
@@ -409,10 +412,13 @@ class _InscriptionPage_AddProfilePicture
         await Storage().getUrlPhoto("ProfilePictures/" + widget.userId);
 
     await Database().updateProfile(context, widget.userId,
-        profilePictureDownloadPath: profilePictureDownloadPath);
+        profilePictureDownloadPath: profilePictureDownloadPath,
+        profilePictureHash: hash != 'error' ? hash : null,
+    );
 
     setState(() {
       _profilePictureDownloadPath = profilePictureDownloadPath;
+      _hash = hash != 'error' ? hash : null;
     });
   }
 
@@ -442,7 +448,7 @@ class _InscriptionPage_AddProfilePicture
       child: Padding(
           padding: EdgeInsets.fromLTRB(0, 60, 0, 0),
           child: Stack(overflow: Overflow.visible, children: <Widget>[
-            ProfilePicture(_profilePictureDownloadPath,
+            ProfilePicture(downloadUrl: _profilePictureDownloadPath, hash: _hash,
                 size: 250, borderColor: PrimaryColor),
             Positioned(
                 bottom: -15,

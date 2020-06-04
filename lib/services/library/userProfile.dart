@@ -17,6 +17,7 @@ class UserProfile {
     this.Scooter,
     this.Skateboard,
     this.profilePictureDownloadPath,
+    this.profilePictureHash,
     this.isFriend,
     this.isFollowed,
     this.pendingFriendsId,
@@ -40,6 +41,7 @@ class UserProfile {
   String description;
   LatLng actualLocation;
   String profilePictureDownloadPath;
+  String profilePictureHash;
   bool isFollowed;
   bool isFriend;
 
@@ -67,6 +69,7 @@ class UserProfile {
       'ActualLocationLongitude': actualLocation.longitude,
       'ActualLocationLatitude': actualLocation.latitude,
       'ProfilePictureDownloadPath': profilePictureDownloadPath,
+      'ProfilePictureHash': profilePictureHash,
       'PendingFriendsId' : pendingFriendsId,
       'DevicesTokens' : devicesTokens,
       'SubscribedTopics': subscribedTopics,
@@ -106,6 +109,7 @@ UserProfile convertMapToUserProfile(Map userProfile) {
     Scooter: userProfile['Scooter'],
     Skateboard: userProfile['Skateboard'],
     profilePictureDownloadPath: userProfile['ProfilePictureDownloadPath'],
+    profilePictureHash: userProfile['ProfilePictureHash'],
     pendingFriendsId: pendingFriendsId,
     devicesTokens: devicesTokens,
     subscribedTopics: subscribedTopics,

@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:the_spot/services/library/blurhash_encoding.dart';
 import 'package:the_spot/services/library/userProfile.dart';
 
 class ChatGroup {
   String id;
   String name;
-  String imageDownloadPath;
+  String pictureDownloadPath;
+  String pictureHash;
   List<String> adminsIds;
   List<String> membersIds;
   String creatorId;
@@ -22,11 +22,11 @@ class ChatGroup {
   List<UserProfile> members;
   bool isGroup;
 
-
   ChatGroup(
       {this.id,
       this.name,
-      this.imageDownloadPath,
+      this.pictureDownloadPath,
+      this.pictureHash,
       this.adminsIds,
       this.membersIds,
       this.creatorId,
@@ -43,12 +43,14 @@ class ChatGroup {
   Map<String, dynamic> toMap() {
     return {
       'Name': name,
-      'ImageDownloadPath': imageDownloadPath,
+      'PictureDownloadPath': pictureDownloadPath,
+      'PictureHash': pictureHash,
       'AdminsIds': adminsIds,
       'MembersIds': membersIds,
-      'CreatorId' : creatorId,
+      'CreatorId': creatorId,
       'Messages': convertListOfMessagesToListOfMap(messages),
-      'OnlyAdminsCanChangeChatNameOrPicture': onlyAdminsCanChangeChatNameOrPicture,
+      'OnlyAdminsCanChangeChatNameOrPicture':
+          onlyAdminsCanChangeChatNameOrPicture,
       'HasArchiveMessages': hasArchiveMessages,
       'ActiveMessagesCount': activeMessagesCount,
       'TotalMessagesCount': totalMessagesCount,
@@ -62,12 +64,14 @@ class ChatGroup {
 ChatGroup convertMapToChatGroup(Map map) {
   ChatGroup chatGroup = ChatGroup(
       name: map['Name'],
-      imageDownloadPath: map['ImageDownloadPath'],
+      pictureDownloadPath: map['PictureDownloadPath'],
+      pictureHash: map['PictureHash'],
       adminsIds: map['AdminsIds'].cast<String>(),
       membersIds: map['MembersIds'].cast<String>(),
       creatorId: map['CreatorId'],
       messages: convertListOfMapsToListOfMessages(map['Messages'].cast<Map>()),
-      onlyAdminsCanChangeChatNameOrPicture: map['OnlyAdminsCanChangeChatNameOrPicture'],
+      onlyAdminsCanChangeChatNameOrPicture:
+          map['OnlyAdminsCanChangeChatNameOrPicture'],
       hasArchiveMessages: map['HasArchiveMessages'],
       activeMessagesCount: map['ActiveMessagesCount'],
       totalMessagesCount: map['TotalMessagesCount'],
@@ -81,25 +85,23 @@ ChatGroup convertMapToChatGroup(Map map) {
   return chatGroup;
 }
 
-
 const String PICTURE_TYPE = '%#%PICTURE%#%';
 const String VOICE_RECORD_TYPE = '%#%VOICE_RECORD%#%';
 const String INFO_TYPE = '%#%INFO%#%';
 
-enum MessageType{
+enum MessageType {
   TEXT,
   PICTURE,
   VOICE_RECORD,
   INFO,
 }
+
 class Message {
   String senderId;
   Timestamp date;
   String data;
   String data2;
   String hash;
-  int height;
-  int width;
   MessageType messageType;
 
   Message(this.senderId, this.date, this.data);
@@ -112,23 +114,20 @@ class Message {
     };
   }
 
-  void setMessageTypeAndTransformData(){
-    if(data.contains(PICTURE_TYPE)){
-      data = data.replaceFirst(PICTURE_TYPE, "");
-      hash = data.split(PICTURE_TYPE)[2];
-      width = getWidthFromBlurHashWidthHeight(hash);
-      height = getHeightFromBlurHashWidthHeight(hash);
-      hash = getHashFromBlurHashWidthHeight(hash);
-      data2 = data.split(PICTURE_TYPE)[1];
-      data = data.split(PICTURE_TYPE)[0];
+  void setMessageTypeAndTransformData() {
+    if (data.contains(PICTURE_TYPE)) {
+      List<String> dataSplit = data.split(PICTURE_TYPE);
+      if (dataSplit.length > 3) hash = dataSplit[3];
+      data2 = dataSplit[2];
+      data = dataSplit[1];
       print(data2);
       messageType = MessageType.PICTURE;
-    } else if (data.contains(VOICE_RECORD_TYPE)){
+    } else if (data.contains(VOICE_RECORD_TYPE)) {
       data = data.replaceFirst(VOICE_RECORD_TYPE, "");
       data2 = data.split(VOICE_RECORD_TYPE)[1];
       data = data.split(VOICE_RECORD_TYPE)[0];
       messageType = MessageType.VOICE_RECORD;
-    } else if (data.contains(INFO_TYPE)){
+    } else if (data.contains(INFO_TYPE)) {
       data2 = data.replaceAll(INFO_TYPE, "");
       data = data.replaceAll(INFO_TYPE, "");
       messageType = MessageType.INFO;
@@ -149,9 +148,9 @@ List<Message> convertListOfMapsToListOfMessages(List<Map> maps) {
   return messages;
 }
 
-List<Map> convertListOfMessagesToListOfMap(List<Message> messages, {bool reverse = false}) {
-  if(reverse)
-    messages = messages.reversed.toList();
+List<Map> convertListOfMessagesToListOfMap(List<Message> messages,
+    {bool reverse = false}) {
+  if (reverse) messages = messages.reversed.toList();
   List<Map> messagesMaps = [];
   messages.forEach((element) => messagesMaps.add(element.toMap()));
   return messagesMaps;
