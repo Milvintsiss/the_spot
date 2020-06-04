@@ -36,6 +36,7 @@ class PushNotificationsManager {
                           configuration: configuration,
                           userPseudo: message['data']['userPseudo'],
                           userPictureDownloadPath: message['data']['mainUserProfilePictureDownloadPath'],
+                          userPictureHash: message['data']['mainUserProfilePictureHash'],
                           userId: message['data']['userToAddId'])
                       .show(context);
                 }
@@ -52,6 +53,7 @@ class PushNotificationsManager {
                     configuration: configuration,
                     chatGroupId: message['data']['conversationId'],
                     conversationPictureDownloadPath: message['data']['conversationPictureDownloadPath'],
+                    conversationPictureHash: message['data']['conversationPictureHash'],
                     message: message['data']['message'],
                     senderPseudo: message['data']['senderPseudo'],
                   ).show(context);

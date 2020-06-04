@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:the_spot/services/library/profilePictureWidget.dart';
 
 import '../../theme.dart';
-import 'library.dart';
 import 'userProfile.dart';
 
 class UserItem extends StatefulWidget {
@@ -58,7 +58,8 @@ class _UserItemState extends State<UserItem> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ProfilePicture(widget.user.profilePictureDownloadPath,
+              ProfilePicture(downloadUrl: widget.user.profilePictureDownloadPath,
+                  hash: widget.user.profilePictureHash,
                   size: widget.sizeReference / 20, borderSize: 0.5),
               Divider(
                 indent: widget.sizeReference / 120,

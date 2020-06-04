@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/home_page/profile.dart';
+import 'package:the_spot/services/library/profilePictureWidget.dart';
 import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/configuration.dart';
 
@@ -172,7 +173,8 @@ class _UsersListViewState extends State<UsersListView> {
               Hero(
                   tag: widget.query[index].userId,
                   child: ProfilePicture(
-                      widget.query[index].profilePictureDownloadPath,
+                      downloadUrl: widget.query[index].profilePictureDownloadPath,
+                      hash: widget.query[index].profilePictureHash,
                       size: widget.configuration.screenWidth / 8)),
               Divider(
                 indent: widget.configuration.screenWidth / 50,

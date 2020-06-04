@@ -7,7 +7,7 @@ import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/chat_pages/chat_page.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/chatGroup.dart';
-import 'package:the_spot/services/library/library.dart';
+import 'package:the_spot/services/library/profilePictureWidget.dart';
 import 'package:the_spot/services/library/searchBar.dart';
 import 'package:the_spot/services/library/userItem.dart';
 import 'package:the_spot/services/library/userProfile.dart';
@@ -273,9 +273,11 @@ class _ChatListPageState extends State<ChatListPage> {
   }
 
   Widget showChatGroupTile(int index) {
-    String picture = chatGroups[index].imageDownloadPath;
+    String picture = chatGroups[index].pictureDownloadPath;
+    String hash = chatGroups[index].pictureHash;
     if (picture == null && !chatGroups[index].isGroup) {
       picture = chatGroups[index].members[0].profilePictureDownloadPath;
+      hash = chatGroups[index].members[0].profilePictureHash;
     }
     return GestureDetector(
         child: Padding(
@@ -291,7 +293,7 @@ class _ChatListPageState extends State<ChatListPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                ProfilePicture(picture, isAnUser: false),
+                ProfilePicture(downloadUrl: picture, hash: hash, isAnUser: false),
                 Divider(
                   indent: widget.configuration.screenWidth / 40,
                 ),

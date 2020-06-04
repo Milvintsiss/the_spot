@@ -4,7 +4,40 @@ import 'dart:io';
 import 'dart:math';
 
 import 'dart:typed_data';
+import 'package:flutter/material.dart';
+import 'package:flutter_blurhash/flutter_blurhash.dart';
 import 'package:image/image.dart' as img;
+
+
+class SizedBlurHash extends StatefulWidget {
+  final String pictureDownloadUrl;
+  final String hashWithSize;
+  final double height;
+  final double width;
+
+  const SizedBlurHash({Key key, @required this.pictureDownloadUrl, @required this.hashWithSize, this.height, this.width}) : super(key: key);
+
+  @override
+  _SizedBlurHashState createState() => _SizedBlurHashState();
+}
+
+class _SizedBlurHashState extends State<SizedBlurHash> {
+  @override
+  Widget build(BuildContext context) {
+    int imageWidth = getWidthFromBlurHashWidthHeight(widget.hashWithSize);
+    int imageHeight = getHeightFromBlurHashWidthHeight(widget.hashWithSize);
+    String hash = getHashFromBlurHashWidthHeight(widget.hashWithSize);
+    return SizedBox(
+      width: widget.width != null ? widget.width : widget.height != null ? widget.height / imageHeight * imageWidth : imageHeight.toDouble(),
+      height: widget.height != null ? widget.height : widget.width != null ? widget.width / imageWidth * imageHeight : imageWidth.toDouble(),
+      child: BlurHash(
+        hash: hash,
+        image: widget.pictureDownloadUrl,
+        imageFit: BoxFit.fill,
+      ),
+    );
+  }
+}
 
 String getImageBlurHash(File file, {bool addWidthAndHeightToHash = false}){
   final Uint8List fileData = file.readAsBytesSync();
@@ -50,7 +83,7 @@ String encodeBlurHash(
           "The expected format is RGBA32");
   }
 
-  final factors = List<Color>(numCompX * numpCompY);
+  final factors = List<ColorHash>(numCompX * numpCompY);
   int i = 0;
   for (var y = 0; y < numpCompY; ++y) {
     for (var x = 0; x < numCompX; ++x) {
@@ -73,7 +106,7 @@ String encodeBlurHash(
 
   var maxVal = 1.0;
   if (ac.isNotEmpty) {
-    final maxElem = (Color c) => max(c.r.abs(), max(c.g.abs(), c.b.abs()));
+    final maxElem = (ColorHash c) => max(c.r.abs(), max(c.g.abs(), c.b.abs()));
     final actualMax = ac.map(maxElem).reduce(max);
     final quantisedMax = max(0, min(82, (actualMax * 166.0 - 0.5).floor()));
     maxVal = (quantisedMax + 1.0) / 166.0;
@@ -102,7 +135,7 @@ String encode83(int value, int length) {
   return buffer.toString();
 }
 
-Color _multiplyBasisFunction(
+ColorHash _multiplyBasisFunction(
     Uint8List pixels,
     int width,
     int height,
@@ -124,49 +157,49 @@ Color _multiplyBasisFunction(
   }
 
   final scale = 1.0 / (width * height);
-  return Color(r * scale, g * scale, b * scale);
+  return ColorHash(r * scale, g * scale, b * scale);
 }
 
-class Color {
-  Color(this.r, this.g, this.b);
+class ColorHash {
+  ColorHash(this.r, this.g, this.b);
 
   final double r;
   final double g;
   final double b;
 }
 
-Color decodeDC(int value) {
+ColorHash decodeDC(int value) {
   final r = value >> 16;
   final g = (value >> 8) & 255;
   final b = value & 255;
 
-  return Color(
+  return ColorHash(
     sRGBtoLinear(r),
     sRGBtoLinear(g),
     sRGBtoLinear(b),
   );
 }
 
-Color decodeAC(int value, double maxVal) {
+ColorHash decodeAC(int value, double maxVal) {
   final r = value / (19.0 * 19.0);
   final g = (value / 19.0) % 19.0;
   final b = value % 19.0;
 
-  return Color(
+  return ColorHash(
     signPow((r - 9.0) / 9.0, 2.0) * maxVal,
     signPow((g - 9.0) / 9.0, 2.0) * maxVal,
     signPow((b - 9.0) / 9.0, 2.0) * maxVal,
   );
 }
 
-int encodeDC(Color color) {
+int encodeDC(ColorHash color) {
   final r = linearTosRGB(color.r);
   final g = linearTosRGB(color.g);
   final b = linearTosRGB(color.b);
   return (r << 16) + (g << 8) + b;
 }
 
-int encodeAC(Color color, double maxVal) {
+int encodeAC(ColorHash color, double maxVal) {
   final r = max(0, min(18, signPow(color.r / maxVal, 0.5) * 9 + 9.5)).floor();
   final g = max(0, min(18, signPow(color.g / maxVal, 0.5) * 9 + 9.5)).floor();
   final b = max(0, min(18, signPow(color.b / maxVal, 0.5) * 9 + 9.5)).floor();
