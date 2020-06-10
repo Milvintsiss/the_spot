@@ -411,7 +411,7 @@ class Database {
           'mainUserPseudo': mainUser.pseudo,
           'mainUserProfilePictureDownloadPath':
               mainUser.profilePictureDownloadPath ?? "",
-          'mainUserProfilePictureHash': mainUser.profilePictureHash,
+          'mainUserProfilePictureHash': mainUser.profilePictureHash ?? "",
           'userToAddTokens': userToAdd.devicesTokens
         });
       } catch (err) {
@@ -741,8 +741,10 @@ class Database {
           'conversationName': group.name,
           'conversationPictureDownloadPath': group.isGroup
               ? group.pictureDownloadPath ?? ""
-              : members[0].profilePictureDownloadPath ?? "",
-          'conversationPictureHash': group.pictureHash,
+              : mainUser.profilePictureDownloadPath ?? "",
+          'conversationPictureHash': group.isGroup
+              ? group.pictureHash ?? ""
+              : mainUser.profilePictureHash ?? "",
           'usersTokens': usersTokens,
           'usersIds': usersIds,
           'message': message.data,
@@ -779,6 +781,38 @@ class Database {
       }
     }
     return chatGroup;
+  }
+
+  Future<List<ChatGroup>> getGroups(BuildContext context,
+      {@required String userId,
+      @required Timestamp startAfter,
+      int limit = 10}) async {
+    List<ChatGroup> chatGroups = [];
+    if (await checkConnection(context)) {
+      try {
+        await database
+            .collection(GROUP_CHATS_COLLECTION)
+            .orderBy('LastMessage', descending: true)
+            .where('MembersIds', arrayContains: userId)
+            .startAfter([startAfter])
+            .limit(limit)
+            .getDocuments()
+            .then((snapshot) => snapshot.documents.forEach((document) {
+                  print(document.data);
+                  ChatGroup chatGroup = convertMapToChatGroup(document.data);
+                  chatGroup.id = document.documentID;
+                  chatGroups.add(chatGroup);
+                }))
+            .catchError((err) {
+              print("Database Error: " + err.toString());
+              error("Database Error: " + err.toString(), context);
+            });
+      } catch (err) {
+        print(err);
+        error(err.toString(), context);
+      }
+    }
+    return chatGroups;
   }
 
   Future<String> updateASpot(

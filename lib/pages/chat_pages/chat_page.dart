@@ -107,9 +107,40 @@ class _ChatPageState extends State<ChatPage> {
 
   AppBar showAppBar() {
     return AppBar(
-      title: Text(widget.chatGroup.isGroup
-          ? chatGroup.name
-          : widget.chatGroup.members[0].pseudo),
+      title: GestureDetector(
+        onTap: !widget.chatGroup.isGroup && membersDataIsLoaded
+            ? () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => Profile(
+                          configuration: widget.configuration,
+                          userProfile: members[0],
+                        )))
+            : null,
+        child: Row(
+          children: [
+            widget.chatGroup.isGroup
+                ? ProfilePicture(
+                    downloadUrl: chatGroup.pictureDownloadPath,
+                    hash: chatGroup.pictureHash,
+                    background: PrimaryColorDark,
+                    isAnUser: false,
+                  )
+                : ProfilePicture(
+                    downloadUrl:
+                        widget.chatGroup.members[0].profilePictureDownloadPath,
+                    hash: widget.chatGroup.members[0].profilePictureHash,
+                    background: PrimaryColorDark,
+                  ),
+            Divider(
+              indent: widget.configuration.screenWidth / 20,
+            ),
+            Text(widget.chatGroup.isGroup
+                ? chatGroup.name
+                : widget.chatGroup.members[0].pseudo),
+          ],
+        ),
+      ),
     );
   }
 
@@ -216,11 +247,19 @@ class _ChatPageState extends State<ChatPage> {
                                                     .messages[index].senderId),
                                       )))
                       : null,
-                  child: ProfilePicture(downloadUrl: isUserMessage
-                      ? widget.configuration.userData.profilePictureDownloadPath
-                      : membersDataIsLoaded
-                          ? sender.profilePictureDownloadPath
-                          : null, hash: isUserMessage ? widget.configuration.userData.profilePictureHash : membersDataIsLoaded ? sender.profilePictureHash : null,),
+                  child: ProfilePicture(
+                    downloadUrl: isUserMessage
+                        ? widget
+                            .configuration.userData.profilePictureDownloadPath
+                        : membersDataIsLoaded
+                            ? sender.profilePictureDownloadPath
+                            : null,
+                    hash: isUserMessage
+                        ? widget.configuration.userData.profilePictureHash
+                        : membersDataIsLoaded
+                            ? sender.profilePictureHash
+                            : null,
+                  ),
                 ),
                 chatGroup.messages[index].messageType == MessageType.TEXT
                     ? Flexible(
@@ -246,7 +285,7 @@ class _ChatPageState extends State<ChatPage> {
                     : chatGroup.messages[index].messageType ==
                             MessageType.PICTURE
                         ? Expanded(
-                          child: ClipRRect(
+                            child: ClipRRect(
                               borderRadius: BorderRadius.horizontal(
                                   left: isUserMessage
                                       ? Radius.circular(
@@ -255,7 +294,8 @@ class _ChatPageState extends State<ChatPage> {
                                   right: isUserMessage
                                       ? Radius.zero
                                       : Radius.circular(
-                                          widget.configuration.screenWidth / 10)),
+                                          widget.configuration.screenWidth /
+                                              10)),
                               child: chatGroup.messages[index].hash != null
                                   ? SizedBlurHash(
                                       pictureDownloadUrl:
@@ -268,9 +308,9 @@ class _ChatPageState extends State<ChatPage> {
                                     )
                                   : Image.network(
                                       chatGroup.messages[index].data2,
-                                  ),
+                                    ),
                             ),
-                        )
+                          )
                         : Container(),
               ],
             ),

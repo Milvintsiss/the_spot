@@ -65,8 +65,8 @@ class _RootPageState extends State<RootPage> {
     configuration.logoutCallback = logoutCallback;
 
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    String version = packageInfo.version;
-    print("Version: $version");
+    configuration.version = packageInfo.version;
+    print("Version: ${configuration.version}");
     print(AppLocalizations.of(context).locale.toLanguageTag());
 
     if (configuration.userData != null) {
@@ -77,7 +77,7 @@ class _RootPageState extends State<RootPage> {
       _inscriptionState = true;
     }
 
-    if (configuration.updateIsAvailable || configuration.version != version)
+    if (configuration.updateIsAvailable || !configuration.versions.contains(configuration.version))
       status = Status.UPDATE_AVAILABLE;
     else if (!configuration.isApplicationOperational)
       status = Status.APP_NOT_OPERATIONAL;
