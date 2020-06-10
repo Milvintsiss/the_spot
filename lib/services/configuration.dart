@@ -30,6 +30,7 @@ class Configuration with ChangeNotifier {
   VoidCallback logoutCallback;
 
   String version;
+  List<String> versions;
   bool updateIsAvailable;
   bool isAlgoliaOperational;
   bool isFirestoreOperational;
@@ -46,7 +47,7 @@ class Configuration with ChangeNotifier {
           .document('Configuration')
           .get()
           .then((document) {
-            configuration.version = document.data['Version'];
+            configuration.versions = document.data['Versions'].cast<String>();
         configuration.updateIsAvailable = document.data['UpdateIsAvailable'];
         configuration.isApplicationOperational =
             document.data['IsApplicationOperational'];

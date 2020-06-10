@@ -39,12 +39,12 @@ class _SizedBlurHashState extends State<SizedBlurHash> {
   }
 }
 
-String getImageBlurHash(File file, {bool addWidthAndHeightToHash = false}){
+String getImageBlurHash(File file, {bool addWidthAndHeightToHash = false, int xRes = 9, int yRes = 9}){
   final Uint8List fileData = file.readAsBytesSync();
   final img.Image image = img.decodeImage(fileData.toList());
   final int imageWidth = image.width;
   final int imageHeight = image.height;
-  String hash = encodeBlurHash(image.getBytes(format: img.Format.rgba), imageWidth, imageHeight);
+  String hash = encodeBlurHash(image.getBytes(format: img.Format.rgba), imageWidth, imageHeight, numCompX: xRes, numpCompY: yRes);
   if(addWidthAndHeightToHash)
     hash = _addWidthAndHeightToHash(hash, imageWidth, imageHeight);
   print("BlurHash: $hash");
