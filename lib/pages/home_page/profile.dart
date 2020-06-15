@@ -160,7 +160,6 @@ class _Profile extends State<Profile> {
           return IconButton(
             icon: Icon(Icons.settings),
             onPressed: () => Scaffold.of(context).openEndDrawer(),
-            tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
           );
         }),
       ]);

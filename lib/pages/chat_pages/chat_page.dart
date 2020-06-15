@@ -4,7 +4,9 @@ import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' as dateFormat;
 import 'package:the_spot/app_localizations.dart';
+import 'package:the_spot/pages/chat_pages/chat_options_page.dart';
 import 'package:the_spot/pages/home_page/profile.dart';
 import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/database.dart';
@@ -38,6 +40,7 @@ class _ChatPageState extends State<ChatPage> {
 
   bool membersDataIsLoaded = false;
   bool userReachedTheBottomOfTheList = true;
+  List<bool> showHour = [];
 
   StreamSubscription chatGroupStream;
 
@@ -63,9 +66,14 @@ class _ChatPageState extends State<ChatPage> {
         .listen((document) async {
       if (document.exists) {
         chatGroup = convertMapToChatGroup(document.data);
+        chatGroup.id = widget.chatGroup.id;
         chatGroup.messages
             .forEach((message) => message.setMessageTypeAndTransformData());
         chatGroup.messages = chatGroup.messages.reversed.toList();
+        showHour.clear();
+        chatGroup.messages.forEach((message) {
+          showHour.add(false);
+        });
         setState(() {});
         if (userReachedTheBottomOfTheList) {
 //          scrollController.animateTo(
@@ -135,12 +143,29 @@ class _ChatPageState extends State<ChatPage> {
             Divider(
               indent: widget.configuration.screenWidth / 20,
             ),
-            Text(widget.chatGroup.isGroup
-                ? chatGroup.name
-                : widget.chatGroup.members[0].pseudo),
+            Expanded(
+              child: Text(widget.chatGroup.isGroup
+                  ? chatGroup.name
+                  : widget.chatGroup.members[0].pseudo),
+            ),
           ],
         ),
       ),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.info_outline),
+          onPressed: membersDataIsLoaded
+              ? () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => ChatOptionsPage(
+                            configuration: widget.configuration,
+                            chatGroup: chatGroup,
+                            members: members,
+                          )))
+              : null,
+        ),
+      ],
     );
   }
 
@@ -157,7 +182,30 @@ class _ChatPageState extends State<ChatPage> {
                     horizontal: widget.configuration.screenWidth / 40,
                     vertical: widget.configuration.screenWidth / 20),
                 itemCount: chatGroup.messages.length,
-                itemBuilder: (context, index) => showMessage(index)),
+                itemBuilder: (context, index) {
+                  if (index != chatGroup.messages.length - 1 &&
+                      chatGroup.messages[index].date.toDate().day >
+                          chatGroup.messages[index + 1].date.toDate().day) {
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: widget.configuration.screenWidth / 60),
+                          child: Text(
+                            dateFormat.DateFormat(
+                                    'MMMMEEEEd',
+                                    AppLocalizations.of(context)
+                                        .locale
+                                        .toString())
+                                .format(chatGroup.messages[index].date.toDate()),
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        ),
+                        showMessage(index),
+                      ],
+                    );
+                  } else
+                    return showMessage(index);
+                }),
           ),
           userReachedTheBottomOfTheList ? Container() : showNewMessagesButton()
         ],
@@ -199,124 +247,136 @@ class _ChatPageState extends State<ChatPage> {
                   fontSize: 14 * widget.configuration.textSizeFactor)),
         ),
       );
-    else
+    else {
       return Padding(
         padding: EdgeInsets.only(
           bottom: widget.configuration.screenWidth / 40,
           right: isUserMessage ? 0 : widget.configuration.screenWidth / 5,
           left: isUserMessage ? widget.configuration.screenWidth / 5 : 0,
         ),
-        child: Align(
-          alignment:
-              isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                  begin: isUserMessage
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  end: isUserMessage
-                      ? Alignment.centerLeft
-                      : Alignment.centerRight,
-                  colors: [PrimaryColor, PrimaryColorLight],
-                  stops: [0, 0.5]),
-              borderRadius:
-                  BorderRadius.circular(widget.configuration.screenWidth / 10),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: isUserMessage
-                  ? MainAxisAlignment.start
-                  : MainAxisAlignment.end,
-              textDirection:
-                  isUserMessage ? TextDirection.rtl : TextDirection.ltr,
-              children: [
-                GestureDetector(
-                  onTap: membersDataIsLoaded
-                      ? isUserMessage
-                          ? null
-                          : () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => Profile(
-                                        configuration: widget.configuration,
-                                        userProfile: members.firstWhere(
-                                            (member) =>
-                                                member.userId ==
-                                                chatGroup
-                                                    .messages[index].senderId),
-                                      )))
-                      : null,
-                  child: ProfilePicture(
-                    downloadUrl: isUserMessage
-                        ? widget
-                            .configuration.userData.profilePictureDownloadPath
-                        : membersDataIsLoaded
-                            ? sender.profilePictureDownloadPath
-                            : null,
-                    hash: isUserMessage
-                        ? widget.configuration.userData.profilePictureHash
-                        : membersDataIsLoaded
-                            ? sender.profilePictureHash
-                            : null,
-                  ),
+        child: Column(
+          crossAxisAlignment:
+              isUserMessage ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            GestureDetector(
+              onTap: () => setState(() => showHour[index] = !showHour[index]),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                      begin: isUserMessage
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      end: isUserMessage
+                          ? Alignment.centerLeft
+                          : Alignment.centerRight,
+                      colors: [PrimaryColor, PrimaryColorLight],
+                      stops: [0, 0.5]),
+                  borderRadius: BorderRadius.circular(
+                      widget.configuration.screenWidth / 10),
                 ),
-                chatGroup.messages[index].messageType == MessageType.TEXT
-                    ? Flexible(
-                        fit: FlexFit.loose,
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(
-                              isUserMessage
-                                  ? widget.configuration.screenWidth / 15
-                                  : widget.configuration.screenWidth / 30,
-                              widget.configuration.screenWidth / 80,
-                              isUserMessage
-                                  ? widget.configuration.screenWidth / 30
-                                  : widget.configuration.screenWidth / 15,
-                              widget.configuration.screenWidth / 80),
-                          child: Text(
-                            chatGroup.messages[index].data,
-                            style: TextStyle(
-                                fontSize:
-                                    14 * widget.configuration.textSizeFactor),
-                          ),
-                        ),
-                      )
-                    : chatGroup.messages[index].messageType ==
-                            MessageType.PICTURE
-                        ? Expanded(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.horizontal(
-                                  left: isUserMessage
-                                      ? Radius.circular(
-                                          widget.configuration.screenWidth / 10)
-                                      : Radius.zero,
-                                  right: isUserMessage
-                                      ? Radius.zero
-                                      : Radius.circular(
-                                          widget.configuration.screenWidth /
-                                              10)),
-                              child: chatGroup.messages[index].hash != null
-                                  ? SizedBlurHash(
-                                      pictureDownloadUrl:
-                                          chatGroup.messages[index].data2,
-                                      hashWithSize:
-                                          chatGroup.messages[index].hash,
-                                      width: widget.configuration.screenWidth *
-                                          3 /
-                                          5,
-                                    )
-                                  : Image.network(
-                                      chatGroup.messages[index].data2,
-                                    ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: isUserMessage
+                      ? MainAxisAlignment.start
+                      : MainAxisAlignment.end,
+                  textDirection:
+                      isUserMessage ? TextDirection.rtl : TextDirection.ltr,
+                  children: [
+                    GestureDetector(
+                      onTap: membersDataIsLoaded
+                          ? isUserMessage
+                              ? null
+                              : () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => Profile(
+                                            configuration: widget.configuration,
+                                            userProfile: members.firstWhere(
+                                                (member) =>
+                                                    member.userId ==
+                                                    chatGroup.messages[index]
+                                                        .senderId),
+                                          )))
+                          : null,
+                      child: ProfilePicture(
+                        downloadUrl: isUserMessage
+                            ? widget.configuration.userData
+                                .profilePictureDownloadPath
+                            : membersDataIsLoaded
+                                ? sender.profilePictureDownloadPath
+                                : null,
+                        hash: isUserMessage
+                            ? widget.configuration.userData.profilePictureHash
+                            : membersDataIsLoaded
+                                ? sender.profilePictureHash
+                                : null,
+                      ),
+                    ),
+                    chatGroup.messages[index].messageType == MessageType.TEXT
+                        ? Flexible(
+                            fit: FlexFit.loose,
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                  isUserMessage
+                                      ? widget.configuration.screenWidth / 15
+                                      : widget.configuration.screenWidth / 30,
+                                  widget.configuration.screenWidth / 80,
+                                  isUserMessage
+                                      ? widget.configuration.screenWidth / 30
+                                      : widget.configuration.screenWidth / 15,
+                                  widget.configuration.screenWidth / 80),
+                              child: Text(
+                                chatGroup.messages[index].data,
+                                style: TextStyle(
+                                    fontSize: 14 *
+                                        widget.configuration.textSizeFactor),
+                              ),
                             ),
                           )
-                        : Container(),
-              ],
+                        : chatGroup.messages[index].messageType ==
+                                MessageType.PICTURE
+                            ? Expanded(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.horizontal(
+                                      left: isUserMessage
+                                          ? Radius.circular(
+                                              widget.configuration.screenWidth /
+                                                  10)
+                                          : Radius.zero,
+                                      right: isUserMessage
+                                          ? Radius.zero
+                                          : Radius.circular(
+                                              widget.configuration.screenWidth /
+                                                  10)),
+                                  child: chatGroup.messages[index].hash != null
+                                      ? SizedBlurHash(
+                                          pictureDownloadUrl:
+                                              chatGroup.messages[index].data2,
+                                          hashWithSize:
+                                              chatGroup.messages[index].hash,
+                                          width:
+                                              widget.configuration.screenWidth *
+                                                  3 /
+                                                  5,
+                                        )
+                                      : Image.network(
+                                          chatGroup.messages[index].data2,
+                                        ),
+                                ),
+                              )
+                            : Container(),
+                  ],
+                ),
+              ),
             ),
-          ),
+            showHour[index]
+                ? Text(
+                    "${chatGroup.messages[index].date.toDate().toLocal().toIso8601String().substring(11, 16)}")
+                : Container(),
+          ],
         ),
       );
+    }
   }
 
   Widget showNewMessagesButton() {

@@ -104,7 +104,7 @@ class Message {
   String hash;
   MessageType messageType;
 
-  Message(this.senderId, this.date, this.data);
+  Message(this.senderId, this.date, this.data, {this.data2, this.messageType});
 
   Map<String, dynamic> toMap() {
     return {
@@ -150,8 +150,10 @@ List<Message> convertListOfMapsToListOfMessages(List<Map> maps) {
 
 List<Map> convertListOfMessagesToListOfMap(List<Message> messages,
     {bool reverse = false}) {
+  if (messages == null) return null;
   if (reverse) messages = messages.reversed.toList();
   List<Map> messagesMaps = [];
   messages.forEach((element) => messagesMaps.add(element.toMap()));
   return messagesMaps;
 }
+
