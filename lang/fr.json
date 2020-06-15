@@ -90,5 +90,6 @@
   "Camera": "Camera",
   "%DYNAMIC sent a picture": "%DYNAMIC a envoyé une photo",
   "New friend request": "Nouvelle demande d'ami",
-  "%DYNAMIC wants to add you as friend": "%DYNAMIC veut vous ajouter en ami"
+  "%DYNAMIC wants to add you as friend": "%DYNAMIC veut vous ajouter en ami",
+  "Add": "Ajouter"
 }

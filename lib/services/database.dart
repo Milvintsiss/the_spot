@@ -704,6 +704,64 @@ class Database {
     return newChatGroup;
   }
 
+  Future<bool> updateChatGroupOptions(
+      BuildContext context, ChatGroup chatGroup) async {
+    ChatGroup update = ChatGroup();
+    bool success = false;
+    Timestamp date = Timestamp.now();
+    update.lastUpdate = date;
+    update.name = chatGroup.name;
+    update.membersIds = chatGroup.membersIds;
+    update.adminsIds = chatGroup.adminsIds;
+    update.pictureDownloadPath = chatGroup.pictureDownloadPath;
+    update.pictureHash = chatGroup.pictureHash;
+    update.onlyAdminsCanChangeChatNameOrPicture = chatGroup.onlyAdminsCanChangeChatNameOrPicture;
+
+    Map data = deleteMapNullKeys(update.toMap());
+
+
+    if (await checkConnection(context)) {
+      try {
+        await database
+            .collection(GROUP_CHATS_COLLECTION)
+            .document(chatGroup.id)
+            .updateData(data)
+            .then((res) => success = true)
+            .catchError((err) {
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
+        });
+      } catch (err) {
+        print(err);
+        error(err.toString(), context);
+      }
+    }
+    return success;
+  }
+
+  Future<bool> addMembersToChatGroup(BuildContext context, String chatGroupId, List<UserProfile> newMembers) async {
+    bool success = false;
+    List<String> newMembersIds = [];
+    newMembers.forEach((member) => newMembersIds.add(member.userId));
+    if (await checkConnection(context)) {
+      try {
+        await database
+            .collection(GROUP_CHATS_COLLECTION)
+            .document(chatGroupId)
+            .updateData({'MembersIds': FieldValue.arrayUnion(newMembersIds)})
+            .then((res) => success = true)
+            .catchError((err) {
+          print("Database Error: " + err.toString());
+          error("Database Error: " + err.toString(), context);
+        });
+      } catch (err) {
+        print(err);
+        error(err.toString(), context);
+      }
+    }
+    return success;
+  }
+
   Future<bool> sendMessageToGroup(BuildContext context, UserProfile mainUser,
       ChatGroup group, Message message, List<UserProfile> members) async {
     final HttpsCallable sendMessageNotificationTo = CloudFunctions.instance

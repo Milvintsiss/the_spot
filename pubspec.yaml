@@ -69,6 +69,8 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
+  intl: ^0.16.1
+
   #theme, darkmode
   dynamic_theme: ^1.0.1
 
