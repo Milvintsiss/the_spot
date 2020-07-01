@@ -1,5 +1,6 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/pages/root_page.dart';
 
@@ -10,7 +11,7 @@ import 'package:the_spot/app_localizations.dart';
 
 
 
-void main() {
+void main() async {
   // Set `enableInDevMode` to true to see reports while in debug mode
   // This is only to be used for confirming that reports are being
   // submitted as expected. It is not intended to be used for everyday
@@ -19,7 +20,28 @@ void main() {
 
   // Pass all uncaught errors from the framework to Crashlytics.
   FlutterError.onError = Crashlytics.instance.recordFlutterError;
+
+
+  //FlutterLocalNotificationsPlugin
+  WidgetsFlutterBinding.ensureInitialized();
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+// initialise the plugin. app_icon needs to be a added as a drawable resource to the Android head project
+  var initializationSettingsAndroid = AndroidInitializationSettings('ic_launcher');
+  var initializationSettingsIOS = IOSInitializationSettings(
+      onDidReceiveLocalNotification: null);
+  var initializationSettings = InitializationSettings(
+      initializationSettingsAndroid, initializationSettingsIOS);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+      onSelectNotification: selectNotification);
+
+
   runApp(MyApp());
+}
+
+Future selectNotification(String payload) async {
+  if (payload != null) {
+    print('notification payload: ' + payload);
+  }
 }
 
 class MyApp extends StatelessWidget {

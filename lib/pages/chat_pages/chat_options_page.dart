@@ -1,6 +1,8 @@
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flushbar/flushbar_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/chatGroup.dart';
@@ -56,6 +58,7 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
             showChangeChatGroupPictureWidget(),
             showChatGroupNameFormWidget(),
             showSaveButtonWidget(),
+            showQuitGroupButtonWidget(),
           ],
         ),
       ],
@@ -68,7 +71,7 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
       child: RaisedButton(
         onPressed: addMembers,
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text("Add members"),
+          Text(AppLocalizations.of(context).translate("Add members")),
           Divider(
             indent: widget.configuration.screenWidth / 60,
           ),
@@ -90,8 +93,24 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
     if (newMembers.length > 0) {
       if (await Database()
           .addMembersToChatGroup(context, widget.chatGroup.id, newMembers)) {
-        newMembers.forEach((member) => widget.chatGroup.membersIds.add(member.userId));
+        String message =
+            INFO_TYPE + widget.configuration.userData.pseudo + " added";
+        newMembers.forEach((member) {
+          message = "$message ${member.pseudo},";
+          widget.chatGroup.membersIds.add(member.userId);
+        });
+        message =
+            message.substring(0, message.length - 1); //delete the last ","
+        message = "$message to the group.";
         widget.members.addAll(newMembers);
+
+        Database().sendMessageToGroup(
+            context,
+            widget.configuration.userData,
+            widget.chatGroup,
+            Message(
+                widget.configuration.userData.userId, Timestamp.now(), message),
+            widget.members);
       }
     }
     isLoading = false;
@@ -99,25 +118,37 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
   }
 
   Widget showChangeChatGroupPictureWidget() {
-    return Column(
-      children: [
-        ProfilePicture(
-          downloadUrl: widget.chatGroup.pictureDownloadPath,
-          hash: widget.chatGroup.pictureHash,
-          isAnUser: false,
-          size: widget.configuration.screenWidth / 5,
+    return Padding(
+      padding: EdgeInsets.only(top: widget.configuration.screenWidth / 60),
+      child: Container(
+        padding: EdgeInsets.all(widget.configuration.screenWidth / 60),
+        decoration: BoxDecoration(
+            color: PrimaryColor,
+            borderRadius:
+                BorderRadius.circular(widget.configuration.screenWidth / 10)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            ProfilePicture(
+              downloadUrl: widget.chatGroup.pictureDownloadPath,
+              hash: widget.chatGroup.pictureHash,
+              isAnUser: false,
+              size: widget.configuration.screenWidth / 5,
+            ),
+            RaisedButton(
+              onPressed: changeChatGroupPicture,
+              child: Text(
+                AppLocalizations.of(context)
+                    .translate("Change chat group picture"),
+                style: TextStyle(fontSize: 12),
+              ),
+              shape: RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(widget.configuration.screenWidth)),
+            ),
+          ],
         ),
-        RaisedButton(
-          onPressed: changeChatGroupPicture,
-          child: Text(
-            "Change chat group picture",
-            style: TextStyle(fontSize: 12),
-          ),
-          shape: RoundedRectangleBorder(
-              borderRadius:
-                  BorderRadius.circular(widget.configuration.screenWidth)),
-        ),
-      ],
+      ),
     );
   }
 
@@ -128,11 +159,15 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
     String storageRef = "ChatGroupsPicture/${widget.chatGroup.id}";
     print(storageRef);
     String hash = await Storage().getPhotoFromUserStorageAndUpload(
-      storageRef: storageRef,
-      context: context,
-      letUserChooseImageSource: true,
-      getBlurHash: true,
-    );
+        storageRef: storageRef,
+        context: context,
+        letUserChooseImageSource: true,
+        getBlurHash: true,
+        compressQuality: 75,
+        cropAspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
+        cropStyle: CropStyle.circle,
+        maxHeight: 300,
+        maxWidth: 300);
     if (hash != "error") {
       String url = await Storage().getUrlPhoto(storageRef);
       setState(() {
@@ -145,41 +180,52 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
   }
 
   Widget showChatGroupNameFormWidget() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Text(
-          "Chat group name:",
+    return Padding(
+      padding: EdgeInsets.only(top: widget.configuration.screenWidth / 40),
+      child: Container(
+        padding: EdgeInsets.all(widget.configuration.screenWidth / 60),
+        decoration: BoxDecoration(
+            color: PrimaryColor,
+            borderRadius:
+                BorderRadius.circular(widget.configuration.screenWidth / 10)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Text(
+              AppLocalizations.of(context).translate("Chat group name:"),
+              textAlign: TextAlign.center,
+            ),
+            Divider(
+              height: widget.configuration.screenWidth / 30,
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(
+                  horizontal: widget.configuration.screenWidth / 20),
+              decoration: BoxDecoration(
+                  border: Border.all(color: PrimaryColor),
+                  borderRadius: BorderRadius.circular(
+                      widget.configuration.screenWidth / 13),
+                  color: transparentColor(PrimaryColorDark, 100)),
+              child: TextFormField(
+                initialValue: widget.chatGroup.name,
+                onChanged: (value) => widget.chatGroup.name = value,
+                maxLines: 1,
+                maxLength: 30,
+              ),
+            )
+          ],
         ),
-        Divider(
-          height: widget.configuration.screenWidth / 30,
-        ),
-        Container(
-          padding: EdgeInsets.symmetric(
-              horizontal: widget.configuration.screenWidth / 20),
-          decoration: BoxDecoration(
-              border: Border.all(color: PrimaryColor),
-              borderRadius:
-                  BorderRadius.circular(widget.configuration.screenWidth),
-              color: transparentColor(PrimaryColor, 100)),
-          child: TextFormField(
-            initialValue: widget.chatGroup.name,
-            onChanged: (value) => widget.chatGroup.name = value,
-            maxLines: 1,
-            maxLength: 30,
-          ),
-        )
-      ],
+      ),
     );
   }
 
   Widget showSaveButtonWidget() {
     return Padding(
-      padding: EdgeInsets.only(top: widget.configuration.screenWidth / 30),
+      padding: EdgeInsets.only(top: widget.configuration.screenWidth / 60),
       child: RaisedButton(
         onPressed: saveChanges,
-        child: Text("Save"),
+        child: Text(AppLocalizations.of(context).translate("Save")),
         shape: RoundedRectangleBorder(
             borderRadius:
                 BorderRadius.circular(widget.configuration.screenWidth)),
@@ -205,5 +251,34 @@ class _ChatOptionsPageState extends State<ChatOptionsPage> {
     setState(() {
       isLoading = false;
     });
+  }
+
+  Widget showQuitGroupButtonWidget() {
+    return Padding(
+      padding: EdgeInsets.only(top: widget.configuration.screenWidth / 60),
+      child: RaisedButton(
+        onPressed: quitGroup,
+        child: Text(AppLocalizations.of(context).translate("Leave the group")),
+        shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(widget.configuration.screenWidth)),
+        color: Colors.red[900],
+      ),
+    );
+  }
+
+  void quitGroup() async {
+    setState(() {
+      isLoading = true;
+    });
+    if (await Database().leaveChatGroup(
+        context, widget.configuration.userData.userId, widget.chatGroup.id)) {
+      int count = 0;
+      Navigator.of(context).popUntil((_) => count++ >= 2);
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 }

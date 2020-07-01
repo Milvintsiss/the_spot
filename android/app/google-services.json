@@ -8,12 +8,20 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:116648559321:android:ed9d0414ee04ec0ab874c8",
+        "mobilesdk_app_id": "1:116648559321:android:d8a720b645912f71b874c8",
         "android_client_info": {
           "package_name": "com.milvintsiss.thespot"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "116648559321-0bvjsj25b9s0jriemqt73vkh2g88rtcp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.milvintsiss.thespot",
+            "certificate_hash": "19550f8641c7ea5540af0d1344fec72f8b32ad6f"
+          }
+        },
         {
           "client_id": "116648559321-l0e65khes2tglujk99m0jugmfpt77sj6.apps.googleusercontent.com",
           "client_type": 3
@@ -30,6 +38,13 @@
             {
               "client_id": "116648559321-l0e65khes2tglujk99m0jugmfpt77sj6.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "116648559321-pi8nskcd5v0mgpupb78839opl5soknfb.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.x1026.the-spot"
+              }
             }
           ]
         }

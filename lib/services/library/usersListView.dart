@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:the_spot/app_localizations.dart';
-import 'package:the_spot/pages/home_page/profile.dart';
+import 'package:the_spot/pages/profile_pages/profile.dart';
 import 'package:the_spot/services/library/profilePictureWidget.dart';
 import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/configuration.dart';

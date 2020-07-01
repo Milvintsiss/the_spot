@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blurhash/flutter_blurhash.dart';
 import 'package:image/image.dart' as img;
@@ -39,12 +40,13 @@ class _SizedBlurHashState extends State<SizedBlurHash> {
   }
 }
 
-String getImageBlurHash(File file, {bool addWidthAndHeightToHash = false, int xRes = 9, int yRes = 9}){
+Future<String> getImageBlurHash(File file, {bool addWidthAndHeightToHash = false, int xRes = 3, int yRes = 3}) async {
   final Uint8List fileData = file.readAsBytesSync();
   final img.Image image = img.decodeImage(fileData.toList());
   final int imageWidth = image.width;
   final int imageHeight = image.height;
-  String hash = encodeBlurHash(image.getBytes(format: img.Format.rgba), imageWidth, imageHeight, numCompX: xRes, numpCompY: yRes);
+  final Uint8List data = image.getBytes(format: img.Format.rgba);
+  String hash = await compute(encodeBlurHash, EncodeBlurHashOptions(data, imageWidth, imageHeight, numCompX: xRes, numCompY: yRes));
   if(addWidthAndHeightToHash)
     hash = _addWidthAndHeightToHash(hash, imageWidth, imageHeight);
   print("BlurHash: $hash");
@@ -67,33 +69,38 @@ int getHeightFromBlurHashWidthHeight (String blurHash){
   return int.parse(blurHash.split("/")[2]);
 }
 
+
+class EncodeBlurHashOptions{
+  final Uint8List data;
+  final int width;
+  final int height;
+  final int numCompX;
+  final int numCompY;
+
+  EncodeBlurHashOptions(this.data, this.width, this.height, {this.numCompX = 4, this.numCompY = 3});
+}
 String encodeBlurHash(
-    Uint8List data,
-    int width,
-    int height, {
-      int numCompX = 4,
-      int numpCompY = 3,
-    }) {
-  if (numCompX < 1 || numCompX > 9 || numpCompY < 1 || numCompX > 9) {
+    EncodeBlurHashOptions encodeBlurHashOptions) {
+  if (encodeBlurHashOptions.numCompX < 1 || encodeBlurHashOptions.numCompX > 9 || encodeBlurHashOptions.numCompY < 1 || encodeBlurHashOptions.numCompX > 9) {
       print("BlurHash components must lie between 1 and 9.");
   }
 
-  if (width * height * 4 != data.length) {
+  if (encodeBlurHashOptions.width * encodeBlurHashOptions.height * 4 != encodeBlurHashOptions.data.length) {
     print("The width and height must match the data array."
           "The expected format is RGBA32");
   }
 
-  final factors = List<ColorHash>(numCompX * numpCompY);
+  final factors = List<ColorHash>(encodeBlurHashOptions.numCompX * encodeBlurHashOptions.numCompY);
   int i = 0;
-  for (var y = 0; y < numpCompY; ++y) {
-    for (var x = 0; x < numCompX; ++x) {
+  for (var y = 0; y < encodeBlurHashOptions.numCompY; ++y) {
+    for (var x = 0; x < encodeBlurHashOptions.numCompX; ++x) {
       final normalisation = (x == 0 && y == 0) ? 1.0 : 2.0;
       final basisFunc = (int i, int j) {
         return normalisation *
-            cos((pi * x * i) / width) *
-            cos((pi * y * j) / height);
+            cos((pi * x * i) / encodeBlurHashOptions.width) *
+            cos((pi * y * j) / encodeBlurHashOptions.height);
       };
-      factors[i++] = _multiplyBasisFunction(data, width, height, basisFunc);
+      factors[i++] = _multiplyBasisFunction(encodeBlurHashOptions.data, encodeBlurHashOptions.width, encodeBlurHashOptions.height, basisFunc);
     }
   }
 
@@ -101,7 +108,7 @@ String encodeBlurHash(
   final ac = factors.skip(1).toList();
 
   final blurHash = StringBuffer();
-  final sizeFlag = (numCompX - 1) + (numpCompY - 1) * 9;
+  final sizeFlag = (encodeBlurHashOptions.numCompX - 1) + (encodeBlurHashOptions.numCompY - 1) * 9;
   blurHash.write(encode83(sizeFlag, 1));
 
   var maxVal = 1.0;
