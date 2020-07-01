@@ -91,5 +91,10 @@
   "%DYNAMIC sent a picture": "%DYNAMIC a envoyé une photo",
   "New friend request": "Nouvelle demande d'ami",
   "%DYNAMIC wants to add you as friend": "%DYNAMIC veut vous ajouter en ami",
-  "Add": "Ajouter"
+  "Add": "Ajouter",
+  "Add members": "Ajouter des membres",
+  "Chat group name:": "Nom du groupe:",
+  "Change chat group picture": "Changer la photo",
+  "Leave the group": "Quitter le groupe",
+  "empty": "vide"
 }

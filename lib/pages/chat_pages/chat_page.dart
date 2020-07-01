@@ -4,10 +4,11 @@ import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:intl/intl.dart' as dateFormat;
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/chat_pages/chat_options_page.dart';
-import 'package:the_spot/pages/home_page/profile.dart';
+import 'package:the_spot/pages/profile_pages/profile.dart';
 import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/library/blurhash_encoding.dart';
@@ -16,6 +17,7 @@ import 'package:the_spot/services/library/profilePictureWidget.dart';
 import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/storage.dart';
 import 'package:the_spot/theme.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ChatPage extends StatefulWidget {
   final Configuration configuration;
@@ -39,6 +41,7 @@ class _ChatPageState extends State<ChatPage> {
   TextEditingController sendBoxController = TextEditingController();
 
   bool membersDataIsLoaded = false;
+  bool sendingAndHashingImage = false;
   bool userReachedTheBottomOfTheList = true;
   List<bool> showHour = [];
 
@@ -152,19 +155,21 @@ class _ChatPageState extends State<ChatPage> {
         ),
       ),
       actions: [
-        IconButton(
-          icon: Icon(Icons.info_outline),
-          onPressed: membersDataIsLoaded
-              ? () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => ChatOptionsPage(
-                            configuration: widget.configuration,
-                            chatGroup: chatGroup,
-                            members: members,
-                          )))
-              : null,
-        ),
+        chatGroup.isGroup
+            ? IconButton(
+                icon: Icon(Icons.info_outline),
+                onPressed: membersDataIsLoaded
+                    ? () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ChatOptionsPage(
+                                  configuration: widget.configuration,
+                                  chatGroup: chatGroup,
+                                  members: members,
+                                )))
+                    : null,
+              )
+            : Container()
       ],
     );
   }
@@ -184,20 +189,28 @@ class _ChatPageState extends State<ChatPage> {
                 itemCount: chatGroup.messages.length,
                 itemBuilder: (context, index) {
                   if (index != chatGroup.messages.length - 1 &&
-                      chatGroup.messages[index].date.toDate().day >
-                          chatGroup.messages[index + 1].date.toDate().day) {
+                      chatGroup.messages[index].date.toDate().toLocal().day >
+                          chatGroup.messages[index + 1].date
+                              .toDate()
+                              .toLocal()
+                              .day) {
                     return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Padding(
-                          padding: EdgeInsets.symmetric(vertical: widget.configuration.screenWidth / 60),
-                          child: Text(
-                            dateFormat.DateFormat(
-                                    'MMMMEEEEd',
-                                    AppLocalizations.of(context)
-                                        .locale
-                                        .toString())
-                                .format(chatGroup.messages[index].date.toDate()),
-                            style: TextStyle(color: Colors.white70),
+                          padding: EdgeInsets.symmetric(
+                              vertical: widget.configuration.screenWidth / 60),
+                          child: Center(
+                            child: Text(
+                              dateFormat.DateFormat(
+                                      'MMMMEEEEd',
+                                      AppLocalizations.of(context)
+                                          .locale
+                                          .toString())
+                                  .format(
+                                      chatGroup.messages[index].date.toDate()),
+                              style: TextStyle(color: Colors.white70),
+                            ),
                           ),
                         ),
                         showMessage(index),
@@ -312,7 +325,8 @@ class _ChatPageState extends State<ChatPage> {
                                 : null,
                       ),
                     ),
-                    chatGroup.messages[index].messageType == MessageType.TEXT
+                    chatGroup.messages[index].messageType ==
+                            MessageType.TEXT //if it's a text message
                         ? Flexible(
                             fit: FlexFit.loose,
                             child: Padding(
@@ -325,15 +339,31 @@ class _ChatPageState extends State<ChatPage> {
                                       ? widget.configuration.screenWidth / 30
                                       : widget.configuration.screenWidth / 15,
                                   widget.configuration.screenWidth / 80),
-                              child: Text(
-                                chatGroup.messages[index].data,
+                              child: SelectableLinkify(
+                                text: chatGroup.messages[index].data,
                                 style: TextStyle(
                                     fontSize: 14 *
                                         widget.configuration.textSizeFactor),
+
+                                linkStyle: TextStyle(
+                                    fontSize: 14 *
+                                        widget.configuration.textSizeFactor,
+                                    color: Colors.lightBlueAccent,
+                                    fontWeight: FontWeight.bold
+                                ),
+                                onOpen: (link) async {
+                                  print("Clicked ${link.url}!");
+                                  if (await canLaunch(link.url)) {
+                                    await launch(link.url);
+                                  } else {
+                                    throw 'Could not launch $link';
+                                  }
+                                },
                               ),
                             ),
                           )
-                        : chatGroup.messages[index].messageType ==
+                        : chatGroup.messages[index]
+                                    .messageType == //if it's an image
                                 MessageType.PICTURE
                             ? Expanded(
                                 child: ClipRRect(
@@ -364,14 +394,20 @@ class _ChatPageState extends State<ChatPage> {
                                         ),
                                 ),
                               )
-                            : Container(),
+                            : chatGroup.messages[index].messageType ==
+                                    MessageType.VOICE_RECORD
+                                ? //if it's a voice record
+                                Container()
+                                : Container(),
                   ],
                 ),
               ),
             ),
             showHour[index]
                 ? Text(
-                    "${chatGroup.messages[index].date.toDate().toLocal().toIso8601String().substring(11, 16)}")
+                    "${chatGroup.messages[index].date.toDate().toLocal().toIso8601String().substring(11, 16)}",
+                    style: TextStyle(color: Colors.white70),
+                  )
                 : Container(),
           ],
         ),
@@ -417,8 +453,18 @@ class _ChatPageState extends State<ChatPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          showSendPictureFromCameraButton(),
-          showSendPictureFromStorageButton(),
+          !sendingAndHashingImage
+              ? Row(
+                  children: [
+                    showSendPictureFromCameraButton(),
+                    showSendPictureFromStorageButton(),
+                  ],
+                )
+              : Padding(
+                  padding:
+                      EdgeInsets.all(widget.configuration.screenWidth / 30),
+                  child: CircularProgressIndicator(),
+                ),
           showSendVoiceRecordButton(),
           showSendMessageEditor(),
           showSendButton(),
@@ -450,6 +496,9 @@ class _ChatPageState extends State<ChatPage> {
 
   void sendPicture(bool getPhotoFromGallery) async {
     if (membersDataIsLoaded) {
+      setState(() {
+        sendingAndHashingImage = true;
+      });
       String storageRef =
           "ChatGroupsStorage/${widget.chatGroup.id}/${Timestamp.now().millisecondsSinceEpoch}${math.Random().nextInt(999999)}";
       print(storageRef);
@@ -478,6 +527,9 @@ class _ChatPageState extends State<ChatPage> {
             members);
       }
     }
+    setState(() {
+      sendingAndHashingImage = false;
+    });
   }
 
   Widget showSendMessageEditor() {

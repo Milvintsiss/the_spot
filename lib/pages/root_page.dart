@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:the_spot/pages/inscription_page.dart';
 import 'package:the_spot/pages/login_signup_page.dart';
 import 'package:the_spot/services/authentication.dart';
-import 'package:the_spot/pages/home_page.dart';
+import 'package:the_spot/pages/bottom_navigation_page.dart';
 import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/library/library.dart';
 import 'package:the_spot/theme.dart';
@@ -192,13 +192,13 @@ class _RootPageState extends State<RootPage> {
         break;
       case Status.LOGGED_IN:
         if (_userId.length > 0 && _userId != null) {
-          if (_inscriptionState) //if inscription complete go to HomePage
+          if (_inscriptionState) //if inscription complete go to BottomNavigationPage
             return InscriptionPage(
               userId: _userId,
               auth: widget.auth,
             );
           else {
-            return HomePage(
+            return BottomNavigationPage(
               configuration: configuration,
               auth: widget.auth,
               logoutCallback: logoutCallback,

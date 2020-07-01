@@ -2,12 +2,15 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:fluster/fluster.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+import '../../theme.dart';
 
 /// In here we are encapsulating all the logic required to get marker icons from url images
 /// and to show clusters using the [Fluster] package.
@@ -183,4 +186,114 @@ class MapHelper {
       return mapMarker.toMarker();
     }).toList());
   }
+}
+
+class ImageFileToBitmapDescriptor{
+  File imageFile;
+  int size;
+  bool addBorder;
+  Color borderColor;
+  double borderSize;
+  String title;
+  Color titleColor;
+  Color titleBackgroundColor;
+
+  ImageFileToBitmapDescriptor(this.imageFile,
+      {this.size = 150,
+        this.addBorder = false,
+        this.borderColor = Colors.white,
+        this.borderSize = 10,
+        this.title,
+        this.titleColor = Colors.white,
+        this.titleBackgroundColor = Colors.black});
+}
+Future<BitmapDescriptor> convertImageFileToBitmapDescriptor(ImageFileToBitmapDescriptor imageFileToBitmapDescriptor) async {
+
+  final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  final Canvas canvas = Canvas(pictureRecorder);
+  final Paint paint = Paint()..color;
+  final TextPainter textPainter = TextPainter(
+    textDirection: TextDirection.ltr,
+  );
+  final double radius = imageFileToBitmapDescriptor.size / 2;
+
+  //make canvas clip path to prevent image drawing over the circle
+  final Path clipPath = Path();
+  clipPath.addRRect(RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, imageFileToBitmapDescriptor.size.toDouble(), imageFileToBitmapDescriptor.size.toDouble()),
+      Radius.circular(1000)));
+  clipPath.addRRect(RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, imageFileToBitmapDescriptor.size * 8 / 10, imageFileToBitmapDescriptor.size.toDouble(), imageFileToBitmapDescriptor.size * 2 / 10),
+      Radius.circular(100)));
+  canvas.clipPath(clipPath);
+
+  if (imageFileToBitmapDescriptor.imageFile == null) {
+    //paint Icon background
+    paint..color = PrimaryColorLight;
+    canvas.drawCircle(Offset(radius, radius), radius, paint);
+
+    //paint Person Icon
+    final icon = Icons.person;
+    TextPainter textPainter = TextPainter(textDirection: TextDirection.rtl);
+    textPainter.text = TextSpan(
+        text: String.fromCharCode(icon.codePoint),
+        style: TextStyle(
+            fontSize: imageFileToBitmapDescriptor.size * 4 / 5,
+            fontFamily: icon.fontFamily,
+            color: PrimaryColorDark));
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(imageFileToBitmapDescriptor.size * 1 / 10, imageFileToBitmapDescriptor.size * 1 / 10));
+  } else {
+    //paint Profile Picture
+    final Uint8List imageUint8List = await imageFileToBitmapDescriptor.imageFile.readAsBytes();
+    final ui.Codec codec = await ui.instantiateImageCodec(imageUint8List,
+        targetHeight: imageFileToBitmapDescriptor.size, targetWidth: imageFileToBitmapDescriptor.size);
+    final ui.FrameInfo imageFI = await codec.getNextFrame();
+    paintImage(
+        canvas: canvas,
+        rect: Rect.fromLTWH(0, 0, imageFileToBitmapDescriptor.size.toDouble(), imageFileToBitmapDescriptor.size.toDouble()),
+        image: imageFI.image);
+  }
+  if (imageFileToBitmapDescriptor.addBorder) {
+    //draw Border
+    paint..color = imageFileToBitmapDescriptor.borderColor;
+    paint..style = PaintingStyle.stroke;
+    paint..strokeWidth = imageFileToBitmapDescriptor.borderSize;
+    canvas.drawCircle(Offset(radius, radius), radius, paint);
+  }
+
+  if (imageFileToBitmapDescriptor.title != null) {
+    if (imageFileToBitmapDescriptor.title.length > 9) {
+      imageFileToBitmapDescriptor.title = imageFileToBitmapDescriptor.title.substring(0, 9);
+    }
+    //draw Title background
+    paint..color = imageFileToBitmapDescriptor.titleBackgroundColor;
+    paint..style = PaintingStyle.fill;
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromLTWH(0, imageFileToBitmapDescriptor.size * 8 / 10, imageFileToBitmapDescriptor.size.toDouble(), imageFileToBitmapDescriptor.size * 2 / 10),
+            Radius.circular(100)),
+        paint);
+
+    //draw Title
+    textPainter.text = TextSpan(
+        text: imageFileToBitmapDescriptor.title,
+        style: TextStyle(
+          fontSize: radius / 2.5,
+          fontWeight: FontWeight.bold,
+          color: imageFileToBitmapDescriptor.titleColor,
+        ));
+    textPainter.layout();
+    textPainter.paint(
+        canvas,
+        Offset(radius - textPainter.width / 2,
+            imageFileToBitmapDescriptor.size * 9 / 10 - textPainter.height / 2));
+  }
+
+  //convert canvas as PNG bytes
+  final _image = await pictureRecorder.endRecording().toImage(imageFileToBitmapDescriptor.size, imageFileToBitmapDescriptor.size);
+  final data = await _image.toByteData(format: ui.ImageByteFormat.png);
+
+  //convert PNG bytes as BitmapDescriptor
+  return BitmapDescriptor.fromBytes(data.buffer.asUint8List());
 }

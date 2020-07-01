@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
@@ -74,36 +75,41 @@ class Storage {
               getPhotoFromGallery ? ImageSource.gallery : ImageSource.camera);
 
       if (_file != null) {
-        _file = await ImageCropper.cropImage(
-            sourcePath: _file.path,
-            aspectRatio: cropAspectRatio,
-            cropStyle: cropStyle,
-            maxHeight: maxHeight,
-            maxWidth: maxWidth,
-            compressQuality: compressQuality,
-            androidUiSettings: AndroidUiSettings(
-              toolbarColor: PrimaryColorDark,
-              toolbarWidgetColor: Colors.white,
-              activeControlsWidgetColor: PrimaryColorLight,
-              lockAspectRatio: true,
-            ),
-            iosUiSettings: IOSUiSettings(
-              aspectRatioLockEnabled: true,
-              resetAspectRatioEnabled: false,
-            ));
+        try {
+          _file = await ImageCropper.cropImage(
+              sourcePath: _file.path,
+              aspectRatio: cropAspectRatio,
+              cropStyle: cropStyle,
+              maxHeight: maxHeight,
+              maxWidth: maxWidth,
+              compressQuality: compressQuality,
+              androidUiSettings: AndroidUiSettings(
+                toolbarColor: PrimaryColorDark,
+                toolbarWidgetColor: Colors.white,
+                activeControlsWidgetColor: PrimaryColorLight,
+                lockAspectRatio: true,
+              ),
+              iosUiSettings: IOSUiSettings(
+                aspectRatioLockEnabled: true,
+                resetAspectRatioEnabled: false,
+              ));
 
-        final StorageReference storageReference =
-            FirebaseStorage().ref().child(storageRef);
-        final StorageUploadTask uploadTask = storageReference.putFile(_file);
-        await uploadTask.onComplete;
-        if (uploadTask.isSuccessful) {
-          print("Image uploaded with success");
-          if (getBlurHash)
-            return getImageBlurHash(_file, addWidthAndHeightToHash: true);
-          else
-            return "success";
-        } else {
-          print("Error when uploading image...");
+          final StorageReference storageReference =
+              FirebaseStorage().ref().child(storageRef);
+          final StorageUploadTask uploadTask = storageReference.putFile(_file);
+          await uploadTask.onComplete;
+          if (uploadTask.isSuccessful) {
+            print("Image uploaded with success");
+            if (getBlurHash)
+              return await getImageBlurHash(_file, addWidthAndHeightToHash: true);
+            else
+              return "success";
+          } else {
+            print("Error when uploading image...");
+            return "error";
+          }
+        } catch (err) {
+          print(err);
           return "error";
         }
       }

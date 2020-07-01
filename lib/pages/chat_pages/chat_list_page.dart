@@ -357,9 +357,11 @@ class _ChatListPageState extends State<ChatListPage> {
                         ),
                       ),
                       Text(
+                        chatGroups[index].messages.length > 0 ?
                         chatGroups[index]
                             .messages[chatGroups[index].messages.length - 1]
-                            .data,
+                            .data
+                        : AppLocalizations.of(context).translate("empty"),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(

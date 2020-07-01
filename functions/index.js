@@ -105,44 +105,13 @@ exports.deleteUser = functions.https.onCall(async (data, context) => {
         console.log(err);
     });
 
-    //delete user message ///WARN\\\ delete archived messages when this will be implemented
+    //quit all user groups
     await admin.firestore().collection('groupChats')
         .where('MembersIds', "array-contains", id)
         .get()
         .then(async (snapshot) => {
             for await (const document of snapshot.docs) {
-                let messagesArray = [];
-                let isGroup;
-                await admin.firestore().collection('groupChats').doc(document.id)
-                    .get()
-                    .then((data) => {
-                            data.data()['Messages'].forEach((message) => {
-                                if (message['SenderId'] === id) {
-                                    messagesArray.push(message);
-                                }
-                            })
-                            isGroup = data.data()['MembersIds'].length > 2;
-                            return true;
-                        }
-                    );
-                if (isGroup) {
-                    console.log(messagesArray);
-                    if (messagesArray.length > 0)
-                        await admin.firestore().collection('groupChats').doc(document.id)
-                            .update({
-                                'MembersIds': FieldValue.arrayRemove(id),
-                                'AdminsIds': FieldValue.arrayRemove(id),
-                                'Messages': FieldValue.arrayRemove(...messagesArray),
-                            });
-                    else
-                        await admin.firestore().collection('groupChats').doc(document.id)
-                            .update({
-                                'MembersIds': FieldValue.arrayRemove(id),
-                                'AdminsIds': FieldValue.arrayRemove(id),
-                            });
-                } else
-                    await admin.firestore().collection('groupChats').doc(document.id)
-                        .delete();
+                await leaveGroup(id, document.id);
             }
             return console.log('Messages of ' + id + ' deleted');
         });
@@ -175,6 +144,49 @@ exports.deleteUser = functions.https.onCall(async (data, context) => {
     await admin.auth().deleteUser(id);
     return console.log(id + ' deleted');
 });
+
+exports.leaveGroup = functions.https.onCall(async (data, context) => {
+   let userId = context.auth.uid;
+   let groupId = data['groupId'];
+   await leaveGroup(userId, groupId);
+});
+
+async function leaveGroup(userId, groupId) {//need changes when messages archive implemented !!!WARN WARN WARN WARN!!!
+    let messagesArray = [];
+    let isGroup;
+    await admin.firestore().collection('groupChats').doc(groupId)
+        .get()
+        .then((data) => {
+                data.data()['Messages'].forEach((message) => {
+                    if (message['SenderId'] === userId) {
+                        messagesArray.push(message);
+                    }
+                })
+                isGroup = data.data()['MembersIds'].length > 2;
+                return true;
+            }
+        );
+    if (isGroup) {
+        console.log(messagesArray);
+        if (messagesArray.length > 0)
+            await admin.firestore().collection('groupChats').doc(groupId)
+                .update({
+                    'MembersIds': FieldValue.arrayRemove(userId),
+                    'AdminsIds': FieldValue.arrayRemove(userId),
+                    'Messages': FieldValue.arrayRemove(...messagesArray),
+                });
+        else
+            await admin.firestore().collection('groupChats').doc(groupId)
+                .update({
+                    'MembersIds': FieldValue.arrayRemove(userId),
+                    'AdminsIds': FieldValue.arrayRemove(userId),
+                });
+    } else
+        await admin.firestore().collection('groupChats').doc(groupId)
+            .delete();
+
+}
+
 
 exports.updateUserPseudoAndUsernameInAlgolia = functions.https.onCall((data, context) => {
     console.log(data);
@@ -231,6 +243,7 @@ exports.sendMessageNotificationTo = functions.https.onCall((data, context) => {
         usersTokens,
         {
             notification: {
+                tag: conversationId,
                 title: conversationName,
                 body: senderPseudo + ": " + message,
                 image: conversationPictureDownloadPath,

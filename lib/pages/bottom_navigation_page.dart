@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:the_spot/pages/home_page/feature_not_available.dart';
+import 'package:the_spot/pages/feature_not_available.dart';
 import 'package:the_spot/services/authentication.dart';
-import 'package:the_spot/pages/home_page/Map/map.dart';
-import 'package:the_spot/pages/home_page/profile.dart';
 import 'package:the_spot/pages/chat_pages/chat_list_page.dart';
 import 'package:the_spot/services/configuration.dart';
 
 import '../theme.dart';
+import 'profile_pages/profile.dart';
+import 'map_pages/map.dart';
 
-class HomePage extends StatefulWidget {
-  HomePage(
+class BottomNavigationPage extends StatefulWidget {
+  BottomNavigationPage(
       {Key key,
       this.initialIndex = 4,
       this.auth,
@@ -23,10 +23,10 @@ class HomePage extends StatefulWidget {
   final Configuration configuration;
 
   @override
-  State<StatefulWidget> createState() => _HomePageState();
+  State<StatefulWidget> createState() => _BottomNavigationPageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _BottomNavigationPageState extends State<BottomNavigationPage> {
   int _currentIndex;
   List<Widget> _children;
 
@@ -41,7 +41,7 @@ class _HomePageState extends State<HomePage> {
         configuration: widget.configuration,
       ),
       FeatureNotAvailable(),
-      FeatureNotAvailable(),
+      FeatureNotAvailable(),//HomePage(configuration: widget.configuration,),
       Map(
         configuration: widget.configuration,
         context: context,

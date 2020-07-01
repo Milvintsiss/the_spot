@@ -715,10 +715,10 @@ class Database {
     update.adminsIds = chatGroup.adminsIds;
     update.pictureDownloadPath = chatGroup.pictureDownloadPath;
     update.pictureHash = chatGroup.pictureHash;
-    update.onlyAdminsCanChangeChatNameOrPicture = chatGroup.onlyAdminsCanChangeChatNameOrPicture;
+    update.onlyAdminsCanChangeChatNameOrPicture =
+        chatGroup.onlyAdminsCanChangeChatNameOrPicture;
 
     Map data = deleteMapNullKeys(update.toMap());
-
 
     if (await checkConnection(context)) {
       try {
@@ -739,7 +739,8 @@ class Database {
     return success;
   }
 
-  Future<bool> addMembersToChatGroup(BuildContext context, String chatGroupId, List<UserProfile> newMembers) async {
+  Future<bool> addMembersToChatGroup(BuildContext context, String chatGroupId,
+      List<UserProfile> newMembers) async {
     bool success = false;
     List<String> newMembersIds = [];
     newMembers.forEach((member) => newMembersIds.add(member.userId));
@@ -751,9 +752,31 @@ class Database {
             .updateData({'MembersIds': FieldValue.arrayUnion(newMembersIds)})
             .then((res) => success = true)
             .catchError((err) {
-          print("Database Error: " + err.toString());
-          error("Database Error: " + err.toString(), context);
-        });
+              print("Database Error: " + err.toString());
+              error("Database Error: " + err.toString(), context);
+            });
+      } catch (err) {
+        print(err);
+        error(err.toString(), context);
+      }
+    }
+    return success;
+  }
+
+  Future<bool> leaveChatGroup(
+      BuildContext context, String userId, String chatGroupId) async {
+    final HttpsCallable leaveGroup =
+        CloudFunctions.instance.getHttpsCallable(functionName: 'leaveGroup');
+    bool success = false;
+    if (await checkConnection(context)) {
+      try {
+        await leaveGroup
+            .call({'groupId': chatGroupId})
+            .then((value) => success = true)
+            .catchError((err) {
+              print("Functions Error: " + err.toString());
+              error("Functions Error: " + err.toString(), context);
+            });
       } catch (err) {
         print(err);
         error(err.toString(), context);

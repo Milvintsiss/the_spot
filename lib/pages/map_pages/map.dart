@@ -8,8 +8,8 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:the_spot/app_localizations.dart';
-import 'package:the_spot/pages/home_page/Map/createUpdateSpot_page.dart';
-import 'package:the_spot/pages/home_page/Map/spotInfo.dart';
+import 'package:the_spot/pages/map_pages/createUpdateSpot_page.dart';
+import 'package:the_spot/pages/map_pages/spotInfo.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/configuration.dart';
 import 'package:the_spot/services/library/library.dart';
@@ -17,7 +17,7 @@ import 'package:the_spot/services/library/map_helper.dart';
 import 'package:the_spot/services/library/mapmarker.dart';
 import 'package:the_spot/services/search_engine.dart';
 
-import '../../../theme.dart';
+import '../../theme.dart';
 
 class Map extends StatefulWidget {
   const Map({Key key, this.configuration, this.context}) : super(key: key);
@@ -224,7 +224,8 @@ class _Map extends State<Map> {
               ? await DefaultCacheManager().getSingleFile(
                   widget.configuration.userData.profilePictureDownloadPath)
               : null;
-      BitmapDescriptor avatar = await convertImageFileToBitmapDescriptor(
+      Stopwatch timeElapsed = Stopwatch()..start();
+      BitmapDescriptor avatar = await convertImageFileToBitmapDescriptor(ImageFileToBitmapDescriptor(
           avatarFile,
           size: 150,
           title: widget.configuration.userData.pseudo,
@@ -232,7 +233,8 @@ class _Map extends State<Map> {
           titleBackgroundColor: PrimaryColorDark,
           addBorder: true,
           borderColor: PrimaryColor,
-          borderSize: 15);
+          borderSize: 15));
+      print("Bitmap created in ${timeElapsed.elapsed.inMilliseconds}");
 
       users.add(MapMarker(
           id: widget.configuration.userData.userId,
