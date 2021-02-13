@@ -447,7 +447,6 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget showBottomTools() {
     return Container(
-      height: widget.configuration.screenHeight / 11,
       color: PrimaryColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -544,44 +543,51 @@ class _ChatPageState extends State<ChatPage> {
                   color: PrimaryColorDark,
                   width: widget.configuration.screenWidth / 300),
               borderRadius:
-                  BorderRadius.circular(widget.configuration.screenWidth)),
-          child: membersDataIsLoaded
-              ? TextField(
-                  minLines: 1,
-                  maxLines: 10,
-                  maxLength: 1000,
-                  textAlignVertical: TextAlignVertical.center,
-                  controller: sendBoxController,
-                  onChanged: (value) => newMessage = value.trim(),
-                  onSubmitted: (value) => sendMessage(),
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12 * widget.configuration.textSizeFactor),
-                  textInputAction: TextInputAction.send,
-                  decoration: InputDecoration(
-                    counterText: "",
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: widget.configuration.screenWidth / 25,
-                      vertical: widget.configuration.screenHeight / 50,
+                  BorderRadius.circular(widget.configuration.screenHeight / 20)),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: widget.configuration.screenHeight / 8,
+              minHeight: widget.configuration.screenHeight / 30,
+            ),
+            child:
+              membersDataIsLoaded
+                  ? TextField(
+                      minLines: 1,
+                      maxLines: 10,
+                      maxLength: 1000,
+                      textAlignVertical: TextAlignVertical.center,
+                      controller: sendBoxController,
+                      onChanged: (value) => newMessage = value.trim(),
+                      onSubmitted: (value) => sendMessage(),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12 * widget.configuration.textSizeFactor),
+                      textInputAction: TextInputAction.send,
+                      decoration: InputDecoration(
+                        counterText: "",
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: widget.configuration.screenWidth / 25,
+                          vertical: widget.configuration.screenHeight / 150,
+                        ),
+                        hintText: AppLocalizations.of(context)
+                            .translate("Send a message..."),
+                        hintMaxLines: 1,
+                        hintStyle: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12 * widget.configuration.textSizeFactor),
+                        border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                      ),
+                    )
+                  : Padding(
+                      padding:
+                          EdgeInsets.all(widget.configuration.screenHeight / 50),
+                      child: CircularProgressIndicator(),
                     ),
-                    hintText: AppLocalizations.of(context)
-                        .translate("Send a message..."),
-                    hintMaxLines: 1,
-                    hintStyle: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12 * widget.configuration.textSizeFactor),
-                    border: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    errorBorder: InputBorder.none,
-                    disabledBorder: InputBorder.none,
-                  ),
-                )
-              : Padding(
-                  padding:
-                      EdgeInsets.all(widget.configuration.screenHeight / 50),
-                  child: CircularProgressIndicator(),
-                ),
+          ),
         ),
       ),
     );

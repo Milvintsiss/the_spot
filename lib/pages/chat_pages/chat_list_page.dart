@@ -76,7 +76,9 @@ class _ChatListPageState extends State<ChatListPage> {
           documentChanges = documentChanges.reversed.toList();
           firstLoad = false;
         }
+
         await Future.forEach(documentChanges, (DocumentChange change) async {
+          print(change.document.data);
           final ChatGroup chatGroup =
               convertMapToChatGroup(change.document.data);
           chatGroup.id = change.document.documentID;
@@ -395,11 +397,14 @@ class _ChatListPageState extends State<ChatListPage> {
   Widget showStartChatButton() {
     return Padding(
         padding: EdgeInsets.fromLTRB(
-            widget.configuration.screenWidth / 60,
+            widget.configuration.screenWidth / 30,
             0,
-            widget.configuration.screenWidth / 60,
+            widget.configuration.screenWidth / 30,
             0),
         child: RaisedButton(
+          shape: RoundedRectangleBorder(
+              borderRadius:
+              BorderRadius.circular(widget.configuration.screenWidth)),
           child:
               Text(AppLocalizations.of(context).translate("Start a new chat")),
           onPressed: () {

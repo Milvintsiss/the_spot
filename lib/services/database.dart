@@ -819,7 +819,7 @@ class Database {
 
         sendMessageNotificationTo.call(<String, dynamic>{
           'conversationId': group.id,
-          'conversationName': group.name,
+          'conversationName': group.isGroup ? group.name : '%#%NOT_GROUP%#%',
           'conversationPictureDownloadPath': group.isGroup
               ? group.pictureDownloadPath ?? ""
               : mainUser.profilePictureDownloadPath ?? "",

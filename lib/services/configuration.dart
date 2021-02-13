@@ -39,6 +39,7 @@ class Configuration with ChangeNotifier {
 
   Future<Configuration> getConfiguration(
       BuildContext context, String userId) async {
+    print("UserID: $userId");
     Configuration configuration = Configuration();
     await configuration.pushNotificationsManager.init(context); //init notificationsHandler
     if (await checkConnection(context)) {
@@ -66,6 +67,7 @@ class Configuration with ChangeNotifier {
         if(configuration.userData != null) {
           configuration.userData.devicesTokens =
           [await configuration.pushNotificationsManager.getToken()];
+
           Database().addDeviceTokenToUserProfile(
               context, userId, configuration.userData.devicesTokens);
         }

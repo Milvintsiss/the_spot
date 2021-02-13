@@ -238,15 +238,16 @@ exports.sendMessageNotificationTo = functions.https.onCall((data, context) => {
     const usersIds = data['usersIds']; //string containing ids in format "id/id/id/id/..."
     const message = data['message'];
     const senderPseudo = data['senderPseudo'];
+    const isGroup = conversationName !== '%#%NOT_GROUP%#%';
 
     return admin.messaging().sendToDevice(
         usersTokens,
         {
             notification: {
                 tag: conversationId,
-                title: conversationName,
-                body: senderPseudo + ": " + message,
-                image: conversationPictureDownloadPath,
+                title: isGroup ? conversationName : senderPseudo,
+                body: isGroup ? senderPseudo + ": " + message : message,
+                //image: conversationPictureDownloadPath,
                 click_action: 'FLUTTER_NOTIFICATION_CLICK',
             },
             data: {

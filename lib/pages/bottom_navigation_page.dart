@@ -41,7 +41,7 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
         configuration: widget.configuration,
       ),
       FeatureNotAvailable(),
-      FeatureNotAvailable(),//HomePage(configuration: widget.configuration,),
+      FeatureNotAvailable(), //HomePage(configuration: widget.configuration,),
       Map(
         configuration: widget.configuration,
         context: context,
@@ -92,19 +92,19 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
           items: [
             BottomNavigationBarItem(
               icon: Icon(Icons.chat_bubble),
-              title: Text("Chat"),
+              label: "Chat",
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.short_text),
-              title: Text("News"),
+              label: "News",
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
-              title: Text("Home"),
+              label: "Home",
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.map),
-              title: Text("Map"),
+              label: "Map",
             ),
             BottomNavigationBarItem(
               icon: Stack(children: [
@@ -134,7 +134,7 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
                       )
                     : Container()
               ]),
-              title: Text("Profile"),
+              label: "Profile",
             )
           ]),
 

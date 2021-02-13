@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:the_spot/app_localizations.dart';
 import 'package:the_spot/pages/profile_pages/followers_following_friends_page.dart';
@@ -8,6 +9,7 @@ import 'package:the_spot/pages/inscription_page.dart';
 import 'package:the_spot/services/authentication.dart';
 import 'package:the_spot/services/database.dart';
 import 'package:the_spot/services/deleteUser.dart';
+import 'package:the_spot/services/library/cluster_encoding.dart';
 import 'package:the_spot/services/library/profilePictureWidget.dart';
 import 'package:the_spot/services/library/userProfile.dart';
 import 'package:the_spot/services/configuration.dart';
@@ -204,6 +206,10 @@ class _Profile extends State<Profile> {
                   AppLocalizations.of(context).translate("App info"),
                   'App info',
                   Icons.info_outline),
+              showListTileButton(
+                  "...",
+                  'test',
+                  Icons.block),
             ],
           ),
         ),
@@ -279,6 +285,11 @@ class _Profile extends State<Profile> {
                 {
                   Navigator.pop(context);
                   aboutDialog(context);
+                }
+                break;
+              case 'test':
+                {
+                  print(CLusterEncoding().getClusterIdForLocation(LatLng(48.0440, -16703)));
                 }
                 break;
             }
