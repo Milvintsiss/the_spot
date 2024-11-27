@@ -19,7 +19,7 @@
     "firebase-functions": "^3.6.1"
   },
   "devDependencies": {
-    "@firebase/util": "^0.2.45",
+    "@firebase/util": "^0.3.4",
     "@google-cloud/firestore": "^3.8.0",
     "babel-eslint": "^10.1.0",
     "eslint": "^5.12.0",
